@@ -33,6 +33,12 @@ Declare which components an entity is composed from.
 - Declaring the same component twice raises `Rorecs::DuplicateComponent`
   (RFC-0002).
 - Subclasses inherit their parent's declarations.
+- **Entity classes must be named.** The registry keys by class name, so
+  `Class.new(ApplicationEntity) { component Email }` raises `ArgumentError`.
+  Specs must use `stub_const` rather than anonymous classes — the example tests
+  below are written that way for exactly this reason. If deferring registration
+  to `inherited`/`const_added` would lift this restriction, that is a design
+  option worth weighing, not a given.
 
 ## Tests
 
@@ -42,12 +48,13 @@ it "defines a reader named for the component" do
 end
 
 it "rejects a non-component" do
-  expect { Class.new(ApplicationEntity) { component String } }
-    .to raise_error(Rorecs::InvalidComponent)
+  stub_const("Thing", Class.new(ApplicationEntity))
+  expect { Thing.component String }.to raise_error(Rorecs::InvalidComponent)
 end
 
 it "rejects only: and except: together" do
-  expect { Class.new(ApplicationEntity) { component Email, only: [:a], except: [:b] } }
+  stub_const("Thing", Class.new(ApplicationEntity))
+  expect { Thing.component Email, only: [:a], except: [:b] }
     .to raise_error(ArgumentError)
 end
 

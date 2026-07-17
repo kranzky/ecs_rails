@@ -54,7 +54,16 @@ end
 
 ## Notes
 
-`component.entity` returning the correct subclass is the subtle bit. The
-`belongs_to` targets the abstract `ApplicationEntity`; the loaded row's `model`
-column determines which subclass to instantiate. This is the mirror image of how
-`entities.model` is written in RFC-0001, and it must round-trip.
+`component.entity` returning the correct subclass is the subtle bit, and as of
+RFC-0001 landing it **does not work yet** — see architecture.md open question 5.
+`ApplicationEntity.find(id)` returns an `ApplicationEntity`, not a `User`.
+
+This RFC is therefore blocked on deciding that question, and resolving it is the
+bulk of the work here, not an afterthought. The `belongs_to` targets the abstract
+`ApplicationEntity`; the loaded row's `model` column must determine which
+subclass to instantiate. This is the mirror image of how `entities.model` is
+written in RFC-0001, and it must round-trip.
+
+The likely mechanism is overriding `discriminate_class_for_record` — Rails'
+own STI hook — because `model` holds plurals (`"users"`) rather than class names.
+Be honest in the ADR about what that means for the "No STI" claim.
