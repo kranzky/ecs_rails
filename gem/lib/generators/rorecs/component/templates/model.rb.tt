@@ -1,0 +1,13 @@
+# frozen_string_literal: true
+
+<% module_namespacing do -%>
+# A component: data and behaviour, owned by exactly one entity.
+#
+# Methods defined here execute with `self` bound to the component, never the
+# entity (ADR-0001), and are delegated onto any entity that declares
+# `component <%= class_name %>`.
+#
+# This class must never reference an entity subclass.
+class <%= class_name %> < ApplicationComponent
+end
+<% end -%>

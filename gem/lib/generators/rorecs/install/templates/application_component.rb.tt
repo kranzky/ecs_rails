@@ -1,0 +1,16 @@
+# frozen_string_literal: true
+
+# The base class for every component in this application.
+#
+# A component is an ordinary ActiveRecord model that owns one table and belongs
+# to exactly one entity. It may hold behaviour as well as data, and it must
+# never reference an entity subclass.
+#
+# Generate one with:
+#
+#   rails g rorecs:component Email address:string verified:boolean
+#
+# See docs/architecture.md §1.
+class ApplicationComponent < Rorecs::Component
+  self.abstract_class = true
+end
