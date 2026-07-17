@@ -23,6 +23,7 @@ Rails.
 | [0005](adr/0005-one-component-per-entity.md) | Exactly one component instance per entity |
 | [0006](adr/0006-relationships-are-plain-components.md) | Relationships are plain components in v0.1 |
 | [0007](adr/0007-monorepo-and-licensing.md) | Monorepo now, split at publish; MIT licence |
+| [0008](adr/0008-subclass-resolution-on-read.md) | Resolve `model` to a subclass via `discriminate_class_for_record` |
 
 ## RFCs — the v0.1 build order
 
@@ -30,8 +31,8 @@ Each RFC is one commit. Each commit compiles and passes tests.
 
 | # | Feature | Depends on |
 |---|---|---|
-| [0001](rfc/0001-application-entity.md) | ApplicationEntity + entities table | — |
-| [0002](rfc/0002-component-registry.md) | Component registry | — |
+| [0001](rfc/0001-application-entity.md) | ApplicationEntity + entities table | — ✅ |
+| [0002](rfc/0002-component-registry.md) | Component registry | — ✅ |
 | [0003](rfc/0003-application-component.md) | ApplicationComponent | 0001 |
 | [0004](rfc/0004-component-dsl.md) | The `component` DSL | 0002, 0003 |
 | [0005](rfc/0005-method-delegation.md) | Method delegation | 0004 |

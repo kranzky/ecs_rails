@@ -54,16 +54,26 @@ end
 
 ## Notes
 
-`component.entity` returning the correct subclass is the subtle bit, and as of
-RFC-0001 landing it **does not work yet** — see architecture.md open question 5.
-`ApplicationEntity.find(id)` returns an `ApplicationEntity`, not a `User`.
+`component.entity` returning the correct subclass is the subtle bit, and it is
+the bulk of the work here — not an afterthought.
 
-This RFC is therefore blocked on deciding that question, and resolving it is the
-bulk of the work here, not an afterthought. The `belongs_to` targets the abstract
-`ApplicationEntity`; the loaded row's `model` column must determine which
-subclass to instantiate. This is the mirror image of how `entities.model` is
-written in RFC-0001, and it must round-trip.
+[ADR-0008](../adr/0008-subclass-resolution-on-read.md) settles the mechanism:
+override `discriminate_class_for_record` on `Rorecs::Entity` to
+`classify.constantize` the `model` column. This is Rails' own STI resolution
+hook, applied to a column that is *not* `inheritance_column` — taking the one
+piece of machinery we want and none of the rest.
 
-The likely mechanism is overriding `discriminate_class_for_record` — Rails'
-own STI hook — because `model` holds plurals (`"users"`) rather than class names.
-Be honest in the ADR about what that means for the "No STI" claim.
+**The round-trip is the risk.** `User.model_name.plural.classify.constantize`
+must return `User`. That holds for ordinary names but is not universal:
+
+- **Irregular inflections** — a class whose plural does not invert cleanly.
+- **Namespaced classes** — `Blog::Post` → `"blog/posts"` → `?`
+
+Test both explicitly. If the round-trip cannot be made to hold in general, say
+so loudly rather than working around it — ADR-0008 records that storing the
+class name in a separate column is the fallback, and that fighting the
+inflector is the wrong answer.
+
+The `belongs_to` targets the abstract `ApplicationEntity`; the loaded row's
+`model` column determines which subclass to instantiate. This is the mirror
+image of how `entities.model` is written in RFC-0001.

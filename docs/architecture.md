@@ -20,6 +20,8 @@ is ordinary ActiveRecord.
 - Has no mutable domain fields. `entities` holds `id`, `model`, `created_at` only.
 - Is described by a `model` discriminator string (e.g. `"users"`), which names
   the entity subclass that created it. See [ADR-0002](adr/0002-single-entities-table.md).
+  It resolves back to that subclass on read, so `ApplicationEntity.find(id)`
+  returns a `User`. See [ADR-0008](adr/0008-subclass-resolution-on-read.md).
 - Carries no state of its own. All state lives in components.
 
 ### A Component
@@ -217,20 +219,10 @@ Tracked, not yet decided. Each will become an ADR when it's forced.
 4. **Is `entities.model` ever backfilled or migrated** when an entity class is
    renamed? Currently undefined.
 
-5. **Does `model` resolve back to a subclass on read?** Currently **no**, and
-   this is the sharpest gap in the design. `ApplicationEntity.find(id)` returns
-   an `ApplicationEntity`, not a `User` — and because ActiveRecord instantiates
-   via `allocate`, it bypasses the abstract-class guard, handing you an instance
-   of a class whose `.new` raises `NotImplementedError`.
-
-   [ADR-0002](adr/0002-single-entities-table.md) justifies the discriminator on
-   the grounds that it "keeps the entity subclass a real, answerable question",
-   but nothing on the read path currently answers it. **[RFC-0003](rfc/0003-application-component.md)
-   forces this**: it requires `component.entity` to return the real subclass.
-   Resolving `model` → class on instantiate is what `inheritance_column` does;
-   the values are plurals (`"users"`) not class names, so
-   `discriminate_class_for_record` needs overriding. Note the irony to be
-   honest about: the clean fix is Rails' own STI machinery.
+5. ~~**Does `model` resolve back to a subclass on read?**~~ **Decided** —
+   see [ADR-0008](adr/0008-subclass-resolution-on-read.md). `Rorecs::Entity`
+   overrides `discriminate_class_for_record` to `classify.constantize` the
+   `model` column, so `ApplicationEntity.find(id)` returns a `User`.
 
 6. **What does subclassing a concrete entity mean?** `Admin < User` currently
    works and filters on `'admins'` — making `Admin` a *sibling* of `User`, not a
