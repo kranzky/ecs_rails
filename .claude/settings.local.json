@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(ruby -v)",
+      "Bash(bundle -v)",
+      "Bash(rails -v)",
+      "Bash(gem -v)",
+      "Bash(psql --version)",
+      "Bash(pg_isready)"
+    ]
+  }
+}
