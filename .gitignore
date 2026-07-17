@@ -1,0 +1,39 @@
+# Ruby / Bundler
+*.gem
+*.rbc
+/.bundle/
+/vendor/bundle
+/lib/bundler/man/
+.ruby-gemset
+
+# Gem build artefacts
+/pkg/
+/tmp/
+/doc/
+/.yardoc
+/_yardoc/
+/coverage/
+/spec/reports/
+/spec/examples.txt
+
+# The gem's Gemfile.lock is not committed — it is a library, not an app.
+/gem/Gemfile.lock
+
+# Rails (demo app)
+/demo/log/*
+/demo/tmp/*
+/demo/storage/*
+!/demo/log/.keep
+!/demo/tmp/.keep
+/demo/public/assets
+/demo/.env
+/demo/config/master.key
+/demo/config/credentials/*.key
+/demo/node_modules/
+
+# Editors / OS
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
