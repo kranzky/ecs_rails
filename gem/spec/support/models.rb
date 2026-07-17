@@ -46,8 +46,23 @@ end
 
 # --- entities ----------------------------------------------------------------
 
+# The first real use of the gem's API (RFC-0004). Read it as a host app would
+# write it: an entity is a list of the components it is composed from, and
+# nothing else.
+#
+# `except: [:title]` is the escape hatch from ADR-0004: Name and Group both
+# expose #title, and delegating both would be a DelegationConflict. RFC-0005
+# raises it; RFC-0004 only records the option, so this line is inert today and
+# load-bearing the moment delegation lands.
 class User < ApplicationEntity
+  component Name
+  component Email
+  component Group, except: [:title]
 end
 
+# A second entity sharing a component type with the first. "Shared components"
+# means shared component *types*, never shared rows (ADR-0005).
 class Post < ApplicationEntity
+  component Name
+  component Avatar
 end

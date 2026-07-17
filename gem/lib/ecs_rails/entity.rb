@@ -70,6 +70,11 @@ module EcsRails
 
     include ImmutableIdentity
 
+    # The `component` DSL (RFC-0004). Extended rather than defined here: RFC-0001
+    # is about identity, and composition is a separate concern with its own file.
+    # Singleton methods are inherited, so every entity subclass answers it.
+    extend DSL
+
     # Immutable identity (architecture.md §1). Beyond the guard above, this is
     # what excludes id and model from any UPDATE statement.
     attr_readonly :id, :model

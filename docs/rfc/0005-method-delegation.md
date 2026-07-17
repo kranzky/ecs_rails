@@ -50,14 +50,17 @@ it "delegates attribute writers" do
 end
 
 it "raises on a conflict at declaration time" do
-  expect {
-    Class.new(ApplicationEntity) { component Name; component Group }
-  }.to raise_error(EcsRails::DelegationConflict, /#title.*Name.*Group/)
+  stub_const("Clash", Class.new(ApplicationEntity))
+  Clash.component Name
+  expect { Clash.component Group }
+    .to raise_error(EcsRails::DelegationConflict, /#title.*Name.*Group/)
 end
 
 it "lets except: resolve a conflict" do
-  klass = Class.new(ApplicationEntity) { component Name; component Group, except: [:title] }
-  expect(klass.new.title).to eq "from Name"
+  stub_const("Resolved", Class.new(ApplicationEntity))
+  Resolved.component Name
+  Resolved.component Group, except: [:title]
+  expect(Resolved.new.title).to eq "from Name"
 end
 
 it "prefers a method defined on the entity itself" do
@@ -76,6 +79,22 @@ end
 - Delegating private methods.
 
 ## Notes
+
+**Anonymous classes are unusable here.** RFC-0004's registry keying makes
+`Class.new(ApplicationEntity) { component Name }` raise `ArgumentError` — the
+class has no name at the moment the block runs. Every example above therefore
+uses `stub_const` plus a separate `.component` call. This is a tax paid entirely
+in test code; the real API is unaffected.
+
+**Generate into `generated_component_methods`**, the module RFC-0004 already
+includes into the entity class after AR's `GeneratedAssociationMethods`. It is
+the same seam RFC-0006 uses. Do not create a second one.
+
+**`except:`/`only:` are currently inert and unvalidated.** RFC-0004 checks their
+shape but not that the named methods exist — `except: [:titel]` registers
+happily and silently does nothing. Validating the names is this RFC's job, since
+this is where the method set is finally computed. Decide whether an unknown name
+raises or is ignored, and say which.
 
 Computing "methods the component itself declares" is the fiddly part.
 `Email.instance_methods(false)` misses methods from modules the component
