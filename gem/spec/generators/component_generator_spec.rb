@@ -2,12 +2,12 @@
 
 require_relative "generator_helper"
 
-# RFC-0008: `rails g rorecs:component NAME [attributes]`.
+# RFC-0008: `rails g ecs_rails:component NAME [attributes]`.
 #
 # The invariants under test are architecture.md §2 and ADR-0005: every component
 # table gets a non-null entity_id with a UNIQUE index and an ON DELETE CASCADE
 # FK, and every attribute gets an explicit default (RFC-0006).
-RSpec.describe Rorecs::Generators::ComponentGenerator, type: :generator do
+RSpec.describe EcsRails::Generators::ComponentGenerator, type: :generator do
   describe "the migration" do
     subject(:contents) { migration("create_emails") }
 

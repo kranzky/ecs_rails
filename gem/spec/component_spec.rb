@@ -43,7 +43,7 @@ end
 class Superuser < User
 end
 
-RSpec.describe Rorecs::Component do
+RSpec.describe EcsRails::Component do
   describe "the abstract base" do
     it "is abstract" do
       expect(described_class.abstract_class?).to be true
@@ -328,7 +328,7 @@ RSpec.describe Rorecs::Component do
     # rather than model_name.plural. See the ADR-0008 amendment.
     #
     # These first two examples are statements about ActiveSupport, not about
-    # RoRECS: .plural underscores the whole constant path, destroying the
+    # ECS Rails: .plural underscores the whole constant path, destroying the
     # namespace separator before the inflector is ever consulted. They are kept
     # because they are the entire argument for not using .plural — if they ever
     # stop being true, the amendment can be revisited.

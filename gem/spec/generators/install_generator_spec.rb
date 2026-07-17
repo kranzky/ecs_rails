@@ -2,18 +2,18 @@
 
 require_relative "generator_helper"
 
-# RFC-0008: `rails g rorecs:install`.
+# RFC-0008: `rails g ecs_rails:install`.
 #
 # The emitted migration must match the shape of spec/support/schema.rb's
 # `entities` table, which is itself docs/architecture.md §2.
-RSpec.describe Rorecs::Generators::InstallGenerator, type: :generator do
+RSpec.describe EcsRails::Generators::InstallGenerator, type: :generator do
   describe "the migration" do
-    subject(:contents) { migration("rorecs_create_entities") }
+    subject(:contents) { migration("ecs_rails_create_entities") }
 
     before { run_generator }
 
     it "is generated" do
-      expect(migration_paths("rorecs_create_entities").size).to eq(1)
+      expect(migration_paths("ecs_rails_create_entities").size).to eq(1)
     end
 
     it "enables pgcrypto" do
@@ -48,7 +48,7 @@ RSpec.describe Rorecs::Generators::InstallGenerator, type: :generator do
 
     it "targets the running ActiveRecord version" do
       expect(contents).to match(
-        /class RorecsCreateEntities < ActiveRecord::Migration\[\d+\.\d+\]/
+        /class EcsRailsCreateEntities < ActiveRecord::Migration\[\d+\.\d+\]/
       )
     end
   end
@@ -56,9 +56,9 @@ RSpec.describe Rorecs::Generators::InstallGenerator, type: :generator do
   describe "the base models" do
     before { run_generator }
 
-    it "creates ApplicationEntity subclassing Rorecs::Entity" do
+    it "creates ApplicationEntity subclassing EcsRails::Entity" do
       expect(file("app/models/application_entity.rb"))
-        .to match(/class ApplicationEntity < Rorecs::Entity/)
+        .to match(/class ApplicationEntity < EcsRails::Entity/)
     end
 
     it "marks ApplicationEntity abstract" do
@@ -66,9 +66,9 @@ RSpec.describe Rorecs::Generators::InstallGenerator, type: :generator do
         .to match(/self\.abstract_class = true/)
     end
 
-    it "creates ApplicationComponent subclassing Rorecs::Component" do
+    it "creates ApplicationComponent subclassing EcsRails::Component" do
       expect(file("app/models/application_component.rb"))
-        .to match(/class ApplicationComponent < Rorecs::Component/)
+        .to match(/class ApplicationComponent < EcsRails::Component/)
     end
 
     it "marks ApplicationComponent abstract" do

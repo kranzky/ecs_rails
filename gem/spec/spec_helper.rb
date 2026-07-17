@@ -2,11 +2,11 @@
 
 require "bundler/setup"
 require "active_record"
-require "rorecs"
+require "ecs_rails"
 
 # Connect to the test database. Override with DATABASE_URL if needed.
 ActiveRecord::Base.establish_connection(
-  ENV.fetch("DATABASE_URL", "postgresql:///rorecs_test")
+  ENV.fetch("DATABASE_URL", "postgresql:///ecs_rails_test")
 )
 
 # Keep the test output readable — we assert on queries, not on logs.

@@ -20,8 +20,8 @@ require "fileutils"
 require "stringio"
 require "tmpdir"
 
-require_relative "../../lib/generators/rorecs/install/install_generator"
-require_relative "../../lib/generators/rorecs/component/component_generator"
+require_relative "../../lib/generators/ecs_rails/install/install_generator"
+require_relative "../../lib/generators/ecs_rails/component/component_generator"
 
 # Shared behaviour for generator examples. Include with `include GeneratorHelper`
 # or rely on the `type: :generator` metadata hook configured below.
@@ -33,7 +33,7 @@ module GeneratorHelper
   # ignores /tmp at the root only, so a destination inside the gem would show up
   # as untracked junk on any run that failed before cleanup.
   def destination_root
-    @destination_root ||= Dir.mktmpdir("rorecs-generator-")
+    @destination_root ||= Dir.mktmpdir("ecs_rails-generator-")
   end
 
   # Runs the generator under test (described_class) exactly as Rails would.

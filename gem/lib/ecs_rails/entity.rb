@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Rorecs
+module EcsRails
   # An immutable identity row. Carries no domain state.
   #
   # Implements RFC-0001. See docs/architecture.md §1 for the invariants and
@@ -9,7 +9,7 @@ module Rorecs
   # Host apps subclass this once, as ApplicationEntity, then subclass that per
   # entity type:
   #
-  #   class ApplicationEntity < Rorecs::Entity
+  #   class ApplicationEntity < EcsRails::Entity
   #     self.abstract_class = true
   #   end
   #
@@ -130,7 +130,7 @@ module Rorecs
 
         model.classify.constantize
       rescue NameError => e
-        raise NameError, "Rorecs: entity row has model #{model.inspect}, " \
+        raise NameError, "EcsRails: entity row has model #{model.inspect}, " \
                          "which does not resolve to a class (#{e.message}). " \
                          "See ADR-0008.", e.backtrace
       end

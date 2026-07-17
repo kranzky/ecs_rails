@@ -14,9 +14,9 @@ require "rails/generators/active_record/migration"
 # generator should have.
 require "active_support/core_ext/string/filters"
 
-module Rorecs
+module EcsRails
   module Generators
-    # `rails g rorecs:component NAME [field:type ...]`
+    # `rails g ecs_rails:component NAME [field:type ...]`
     #
     # Implements RFC-0008. The whole point of this generator is that the
     # entity_id + UNIQUE index + ON DELETE CASCADE invariant (ADR-0005) becomes

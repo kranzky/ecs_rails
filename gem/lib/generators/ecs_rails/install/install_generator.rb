@@ -9,9 +9,9 @@ require "active_record"
 require "rails/generators/named_base"
 require "rails/generators/active_record/migration"
 
-module Rorecs
+module EcsRails
   module Generators
-    # `rails g rorecs:install`
+    # `rails g ecs_rails:install`
     #
     # Implements RFC-0008. Emits the `entities` migration and the two abstract
     # base classes a host app subclasses from. The migration mirrors
@@ -30,7 +30,7 @@ module Rorecs
       def create_migration_file
         migration_template(
           "migration.rb.tt",
-          File.join(db_migrate_path, "rorecs_create_entities.rb")
+          File.join(db_migrate_path, "ecs_rails_create_entities.rb")
         )
       end
 

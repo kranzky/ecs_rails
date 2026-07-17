@@ -32,7 +32,7 @@ to hold `"User"`. Rails then does everything natively, with no custom code.
 
 ## Decision
 
-Option A. `Rorecs::Entity` resolves `model` → subclass via
+Option A. `EcsRails::Entity` resolves `model` → subclass via
 `discriminate_class_for_record`, and derives the discriminator from
 `model_name.collection`.
 
@@ -60,9 +60,9 @@ Option A takes the one piece of machinery we want and none of the rest.
 
 ## Consequences
 
-- **Be honest: the clean fix for "No STI" is STI's own hook.** RoRECS uses the
+- **Be honest: the clean fix for "No STI" is STI's own hook.** ECS Rails uses the
   same resolution mechanism Rails uses for STI, on a column that is not
-  `inheritance_column`. What RoRECS still avoids is STI's *pathology* — the wide
+  `inheritance_column`. What ECS Rails still avoids is STI's *pathology* — the wide
   sparse table, the state-bearing hierarchy — not its class-resolution
   machinery. [ADR-0002](0002-single-entities-table.md) already made this
   concession; this ADR extends it. The README and any marketing must not claim
@@ -109,7 +109,7 @@ entity read takes the second branch and the hook never fires. Option A as
 written required the gate that only Option B opens. Verified empirically, not
 reasoned about.
 
-**Resolution:** `Rorecs::Entity` also overrides the private
+**Resolution:** `EcsRails::Entity` also overrides the private
 `instantiate_instance_of` to route through `discriminate_class_for_record`. Both
 AR callers funnel through it — the fast path above, and `instantiate`, which
 eager loading uses — so every read path resolves, `inheritance_column` is left

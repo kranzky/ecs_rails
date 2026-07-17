@@ -5,7 +5,7 @@ require "spec_helper"
 # Throwaway stand-ins for a host app's classes.
 #
 # The registry is deliberately type-agnostic: RFC-0002 says nothing about
-# validating that a component really is a Rorecs::Component (that is RFC-0004's
+# validating that a component really is a EcsRails::Component (that is RFC-0004's
 # InvalidComponent). So these are plain named classes — using real AR models
 # here would couple this spec to the schema for no gain.
 #
@@ -21,8 +21,8 @@ module RegistrySpec
   class Likes; end
 end
 
-RSpec.describe Rorecs::Registry do
-  subject(:registry) { Rorecs.registry }
+RSpec.describe EcsRails::Registry do
+  subject(:registry) { EcsRails.registry }
 
   # The registry is a process-wide singleton, so every example must start clean.
   before { registry.clear! }
@@ -54,14 +54,14 @@ RSpec.describe Rorecs::Registry do
       register(RegistrySpec::User, RegistrySpec::Email)
 
       expect { register(RegistrySpec::User, RegistrySpec::Email) }
-        .to raise_error(Rorecs::DuplicateComponent, /User.*Email/)
+        .to raise_error(EcsRails::DuplicateComponent, /User.*Email/)
     end
 
     it "leaves the first declaration intact when a duplicate is rejected" do
       register(RegistrySpec::User, RegistrySpec::Email, only: [:address])
       begin
         register(RegistrySpec::User, RegistrySpec::Email, except: [:address])
-      rescue Rorecs::DuplicateComponent
+      rescue EcsRails::DuplicateComponent
         # expected
       end
 
@@ -230,7 +230,7 @@ RSpec.describe Rorecs::Registry do
       reloaded = reload!
 
       expect { register(reloaded, RegistrySpec::Email) }
-        .to raise_error(Rorecs::DuplicateComponent)
+        .to raise_error(EcsRails::DuplicateComponent)
     end
   end
 

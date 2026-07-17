@@ -3,16 +3,16 @@
 require "active_record"
 require "active_support"
 
-require "rorecs/version"
-require "rorecs/errors"
-require "rorecs/registry"
-require "rorecs/entity"
-require "rorecs/component"
+require "ecs_rails/version"
+require "ecs_rails/errors"
+require "ecs_rails/registry"
+require "ecs_rails/entity"
+require "ecs_rails/component"
 
-# RoRECS — an Entity-Component-System reimagining of ActiveRecord.
+# ECS Rails — an Entity-Component-System reimagining of ActiveRecord.
 #
 # See docs/architecture.md for the invariants this library guarantees.
-module Rorecs
+module EcsRails
   class << self
     # The process-wide component registry. See RFC-0002.
     def registry
@@ -21,4 +21,4 @@ module Rorecs
   end
 end
 
-require "rorecs/railtie" if defined?(Rails::Railtie)
+require "ecs_rails/railtie" if defined?(Rails::Railtie)

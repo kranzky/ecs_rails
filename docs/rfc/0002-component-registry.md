@@ -1,6 +1,6 @@
 # RFC-0002: Component registry
 
-**Status:** Ready
+**Status:** Implemented
 **Depends on:** nothing
 
 ## Goal
@@ -11,7 +11,7 @@ without loading the whole app graph.
 
 ## Rules
 
-- `Rorecs.registry` returns a singleton `Rorecs::Registry`.
+- `EcsRails.registry` returns a singleton `EcsRails::Registry`.
 - `registry.register(entity_class:, component_class:, options:)` records one
   declaration. Called by the `component` DSL (RFC-0004).
 - `registry.components_for(entity_class)` returns the declarations for that
@@ -19,7 +19,7 @@ without loading the whole app graph.
 - `registry.entities_for(component_class)` returns every entity class declaring
   it. This is what makes "which entities use `Likes`?" answerable.
 - Declaring the same component twice on one entity raises
-  `Rorecs::DuplicateComponent`. Registration is **not** idempotent — a duplicate
+  `EcsRails::DuplicateComponent`. Registration is **not** idempotent — a duplicate
   is an error, never a silent no-op. (ADR-0004 sets the precedent that
   declaration-time conflicts never pick a silent winner, and "idempotent" has no
   answer when the same pair arrives with different `options:`.)
@@ -45,34 +45,34 @@ without loading the whole app graph.
 
 ```ruby
 it "records declarations in order" do
-  expect(Rorecs.registry.components_for(User).map(&:component_class))
+  expect(EcsRails.registry.components_for(User).map(&:component_class))
     .to eq [Name, Email]
 end
 
 it "answers the reverse question" do
-  expect(Rorecs.registry.entities_for(Likes)).to contain_exactly(Post, Comment)
+  expect(EcsRails.registry.entities_for(Likes)).to contain_exactly(Post, Comment)
 end
 
 it "rejects a duplicate declaration" do
-  Rorecs.registry.register(entity_class: User, component_class: Email)
-  expect { Rorecs.registry.register(entity_class: User, component_class: Email) }
-    .to raise_error(Rorecs::DuplicateComponent)
+  EcsRails.registry.register(entity_class: User, component_class: Email)
+  expect { EcsRails.registry.register(entity_class: User, component_class: Email) }
+    .to raise_error(EcsRails::DuplicateComponent)
 end
 
 it "rejects an anonymous class" do
-  expect { Rorecs.registry.register(entity_class: Class.new, component_class: Email) }
+  expect { EcsRails.registry.register(entity_class: Class.new, component_class: Email) }
     .to raise_error(ArgumentError, /anonymous/)
 end
 
 it "resolves to the reloaded constant, not the orphaned one" do
   original = Object.const_get(:Email)
-  Rorecs.registry.register(entity_class: User, component_class: original)
+  EcsRails.registry.register(entity_class: User, component_class: original)
 
   # What Rails actually does: remove the constant, autoload a NEW object.
   Object.send(:remove_const, :Email)
   Object.const_set(:Email, Class.new(ApplicationComponent))
 
-  resolved = Rorecs.registry.components_for(User).first.component_class
+  resolved = EcsRails.registry.components_for(User).first.component_class
   expect(resolved).to equal Object.const_get(:Email)  # identity, not ==
   expect(resolved).not_to equal original              # or the test is vacuous
 end

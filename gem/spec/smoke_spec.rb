@@ -18,6 +18,6 @@ RSpec.describe "test harness" do
   end
 
   it "loaded the gem" do
-    expect(Rorecs::VERSION).to eq "0.1.0"
+    expect(EcsRails::VERSION).to eq "0.1.0"
   end
 end

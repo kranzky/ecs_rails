@@ -1,6 +1,6 @@
-# RoRECS Architecture
+# ECS Rails Architecture
 
-This document defines the **invariants** of RoRECS. It is the specification that
+This document defines the **invariants** of ECS Rails. It is the specification that
 every RFC and every implementation task refers back to. If an implementation
 conflicts with this document, the implementation is wrong — or this document
 must be changed first, via an ADR.
@@ -196,7 +196,7 @@ components actually pleasant?** Everything not needed to answer that is out.
 
 ## 7. Non-goals
 
-- **Replacing ActiveRecord.** RoRECS reorganises persistence around components.
+- **Replacing ActiveRecord.** ECS Rails reorganises persistence around components.
   Components remain ordinary AR models and the whole Rails ecosystem must keep
   working on them.
 - **Query optimisation.** v0.1 will issue more queries than a hand-tuned
@@ -224,7 +224,7 @@ Tracked, not yet decided. Each will become an ADR when it's forced.
    renamed? Currently undefined.
 
 5. ~~**Does `model` resolve back to a subclass on read?**~~ **Decided** —
-   see [ADR-0008](adr/0008-subclass-resolution-on-read.md). `Rorecs::Entity`
+   see [ADR-0008](adr/0008-subclass-resolution-on-read.md). `EcsRails::Entity`
    overrides `discriminate_class_for_record` to `classify.constantize` the
    `model` column, so `ApplicationEntity.find(id)` returns a `User`.
 
@@ -239,7 +239,7 @@ Tracked, not yet decided. Each will become an ADR when it's forced.
    `gen_random_uuid()` is built in. Harmless but redundant. Raised by RFC-0008.
 
 8. **How much private ActiveRecord API are we willing to depend on?**
-   `Rorecs::Entity` overrides the private `instantiate_instance_of` — see the
+   `EcsRails::Entity` overrides the private `instantiate_instance_of` — see the
    [ADR-0008 amendment](adr/0008-subclass-resolution-on-read.md#amendment).
    It is pinned by tests, so a Rails upgrade breaks loudly rather than silently.
    But it is a real coupling to internals, and it is worth deciding whether this

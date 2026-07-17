@@ -11,10 +11,10 @@ does `user.title` do?
 ## Decision
 
 The `component` DSL detects the clash when the entity class loads and raises
-`Rorecs::DelegationConflict`, naming both components and the method.
+`EcsRails::DelegationConflict`, naming both components and the method.
 
 ```
-Rorecs::DelegationConflict:
+EcsRails::DelegationConflict:
   #title is defined by both Name and Group on User.
   Disambiguate with `component Group, except: [:title]`
   or call user.group.title directly.

@@ -8,9 +8,9 @@
 #
 # Generate one with:
 #
-#   rails g rorecs:component Email address:string verified:boolean
+#   rails g ecs_rails:component Email address:string verified:boolean
 #
 # See docs/architecture.md §1.
-class ApplicationComponent < Rorecs::Component
+class ApplicationComponent < EcsRails::Component
   self.abstract_class = true
 end

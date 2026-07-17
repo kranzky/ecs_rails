@@ -10,7 +10,7 @@ knows nothing about entity subclasses.
 
 ## Rules
 
-- `Rorecs::Component` subclasses `ActiveRecord::Base`, `abstract_class = true`.
+- `EcsRails::Component` subclasses `ActiveRecord::Base`, `abstract_class = true`.
 - Host apps subclass it as `ApplicationComponent`.
 - Every component `belongs_to :entity, class_name: "ApplicationEntity"`.
 - `entity_id` is required and unique per table (DB-enforced; RFC-0008).
@@ -58,7 +58,7 @@ end
 the bulk of the work here — not an afterthought.
 
 [ADR-0008](../adr/0008-subclass-resolution-on-read.md) settles the mechanism:
-override `discriminate_class_for_record` on `Rorecs::Entity` to
+override `discriminate_class_for_record` on `EcsRails::Entity` to
 `classify.constantize` the `model` column. This is Rails' own STI resolution
 hook, applied to a column that is *not* `inheritance_column` — taking the one
 piece of machinery we want and none of the rest.

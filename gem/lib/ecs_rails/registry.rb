@@ -5,10 +5,10 @@
 require "active_support/core_ext/string/inflections"
 require "active_support/core_ext/string/filters"
 
-module Rorecs
+module EcsRails
   # Records which components each entity declares. See RFC-0002.
   #
-  # The registry is a process-wide singleton (`Rorecs.registry`) populated by the
+  # The registry is a process-wide singleton (`EcsRails.registry`) populated by the
   # `component` DSL (RFC-0004) at class-load time, and read by generators,
   # delegation and — later — systems.
   #

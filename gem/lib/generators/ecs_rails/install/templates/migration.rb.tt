@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-# Creates the single `entities` table every RoRECS entity shares.
+# Creates the single `entities` table every ECS Rails entity shares.
 # See docs/architecture.md §2 and docs/adr/0002-single-entities-table.md.
-class RorecsCreateEntities < ActiveRecord::Migration[<%= migration_version %>]
+class EcsRailsCreateEntities < ActiveRecord::Migration[<%= migration_version %>]
   def change
     # gen_random_uuid() lives in pgcrypto on PostgreSQL < 13; enabling it is
     # harmless on 13+, where the function is built in.

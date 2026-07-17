@@ -34,7 +34,7 @@ subclass a real, answerable question.
 ## Consequences
 
 - **This is STI-flavoured, and the proposal's headline is "No STI".** Be honest
-  about it: what RoRECS eliminates is STI *for behaviour and state* — the wide
+  about it: what ECS Rails eliminates is STI *for behaviour and state* — the wide
   sparse table, the subclass hierarchy, the `type`-column conditionals. Identity
   still has a discriminator. The `entities` table stays narrow (3 columns)
   precisely because it holds no domain state, which is the actual STI pathology.

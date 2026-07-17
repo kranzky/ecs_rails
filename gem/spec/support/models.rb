@@ -7,11 +7,11 @@
 # would read. If something here looks awkward, that is a signal about the gem's
 # API, not about the test setup — note it and raise it.
 
-class ApplicationEntity < Rorecs::Entity
+class ApplicationEntity < EcsRails::Entity
   self.abstract_class = true
 end
 
-class ApplicationComponent < Rorecs::Component
+class ApplicationComponent < EcsRails::Component
   self.abstract_class = true
 end
 

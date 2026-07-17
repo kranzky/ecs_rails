@@ -10,6 +10,6 @@
 #   end
 #
 # See docs/architecture.md §1.
-class ApplicationEntity < Rorecs::Entity
+class ApplicationEntity < EcsRails::Entity
   self.abstract_class = true
 end

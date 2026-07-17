@@ -10,7 +10,7 @@ require "spec_helper"
 class Admin < User
 end
 
-RSpec.describe Rorecs::Entity do
+RSpec.describe EcsRails::Entity do
   describe "the abstract base" do
     it "is abstract" do
       expect(described_class.abstract_class?).to be true

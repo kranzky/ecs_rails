@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-module Rorecs
+module EcsRails
   # Base class for every error the gem raises.
   class Error < StandardError; end
 
-  # Raised when `component` is given something that is not a Rorecs::Component.
+  # Raised when `component` is given something that is not a EcsRails::Component.
   # See RFC-0004.
   class InvalidComponent < Error; end
 

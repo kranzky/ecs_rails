@@ -1,6 +1,6 @@
 # RFC-0001: ApplicationEntity and the entities table
 
-**Status:** Ready
+**Status:** Implemented
 **Depends on:** nothing
 
 ## Goal
@@ -9,14 +9,19 @@ An entity is an immutable identity row. Nothing more.
 
 ## Rules
 
-- `Rorecs::Entity` subclasses `ActiveRecord::Base`, `self.abstract_class = true`,
+- `EcsRails::Entity` subclasses `ActiveRecord::Base`, `self.abstract_class = true`,
   `self.table_name = "entities"`.
 - Host apps subclass it as `ApplicationEntity`.
 - The `entities` table has exactly `id` (UUID PK), `model` (string, indexed),
   `created_at`. No `updated_at` — entities never change.
-- `model` is set on create from the subclass's `model_name.plural`.
-- **The abstract base declares one `default_scope`** that resolves the plural per
-  queried class. Do *not* add a scope per subclass via an `inherited` hook:
+- `model` is set on create from the subclass's `model_name.collection` — **not**
+  `.plural`, which is lossy and non-injective for namespaced classes. See the
+  [ADR-0008 amendment](../adr/0008-subclass-resolution-on-read.md#amendment).
+  For every non-namespaced class the two are identical (`"users"` either way).
+- **The abstract base declares one `default_scope`** that resolves the
+  discriminator per queried class, using the **same derivation** as the stamp —
+  they must agree, or entities become unfindable by the scope meant to select
+  them. Do *not* add a scope per subclass via an `inherited` hook:
   `default_scopes` accumulates, so `Admin < User` would filter
   `model = 'users' AND model = 'admins'` and be permanently empty.
 - `ApplicationEntity` itself (the abstract base) applies no filter — it can

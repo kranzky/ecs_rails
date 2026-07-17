@@ -1,10 +1,13 @@
-# RoRECS
+# ECS Rails
 
 An Entity–Component–System reimagining of ActiveRecord that stays idiomatic to
 Ruby on Rails.
 
-> **Status: pre-alpha.** Nothing works yet. The design is settled
-> ([docs/](../docs/)); the implementation is being built RFC by RFC.
+> **Status: pre-alpha, not published.** Half of v0.1 is landed — entities,
+> components, and the registry work; the `component` DSL, delegation, and lazy
+> components do not exist yet, so the example below is the *target* API, not
+> what ships today. Being built RFC by RFC against a settled design
+> ([docs/](../docs/)).
 
 ## The idea
 
@@ -54,12 +57,27 @@ a `Comment`, without STI and without polymorphic associations.
 Requires Ruby >= 3.2 and a running PostgreSQL.
 
 ```sh
-createdb rorecs_test
+createdb ecs_rails_test
 bundle install
 bundle exec rspec
 ```
 
 Set `DATABASE_URL` to point the suite at a different database.
+
+## Names
+
+Three, deliberately different — see
+[ADR-0007](../docs/adr/0007-monorepo-and-licensing.md#three-different-names).
+
+| | |
+|---|---|
+| GitHub repo | [`rails-ecs`](https://github.com/kranzky/rails-ecs) |
+| RubyGems gem | `ecs-rails` |
+| Ruby module | `EcsRails` |
+| `require` | `ecs_rails` |
+
+The suffix (`ecs-rails`, like `rspec-rails`) means "for Rails". A `rails-`
+prefix is reserved by convention for Rails Core Team gems.
 
 ## Licence
 

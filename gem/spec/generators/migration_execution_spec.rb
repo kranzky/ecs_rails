@@ -4,7 +4,7 @@ require_relative "generator_helper"
 
 # A migration that reads correctly but raises is a failure. These examples
 # generate into a tmp dir and then actually EXECUTE the emitted SQL against
-# rorecs_test, asserting on the real catalog rather than on the file's text.
+# ecs_rails_test, asserting on the real catalog rather than on the file's text.
 #
 # Isolation: everything happens in a scratch schema created inside the
 # transaction spec_helper.rb already wraps every example in, so the whole lot —
@@ -15,7 +15,7 @@ RSpec.describe "generated migrations actually run", type: :generator do
   # A method rather than a constant: a constant assigned inside this block would
   # land on Object and leak into every other spec file.
   def scratch_schema
-    "rorecs_gen_check"
+    "ecs_rails_gen_check"
   end
 
   def connection
@@ -41,10 +41,10 @@ RSpec.describe "generated migrations actually run", type: :generator do
     connection.execute("CREATE SCHEMA #{scratch_schema}")
     connection.execute("SET LOCAL search_path TO #{scratch_schema}, public")
 
-    generate(Rorecs::Generators::InstallGenerator, [])
-    generate(Rorecs::Generators::ComponentGenerator, %w[Email address:string verified:boolean])
+    generate(EcsRails::Generators::InstallGenerator, [])
+    generate(EcsRails::Generators::ComponentGenerator, %w[Email address:string verified:boolean])
 
-    run_migration("rorecs_create_entities", "RorecsCreateEntities")
+    run_migration("ecs_rails_create_entities", "EcsRailsCreateEntities")
     run_migration("create_emails", "CreateEmails")
   end
 

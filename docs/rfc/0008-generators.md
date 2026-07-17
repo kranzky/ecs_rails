@@ -1,13 +1,13 @@
 # RFC-0008: Install and component generators
 
-**Status:** Ready
+**Status:** Implemented
 **Depends on:** RFC-0001, RFC-0003
 
 ## Goal
 
 ```
-rails g rorecs:install
-rails g rorecs:component Email address:string verified:boolean
+rails g ecs_rails:install
+rails g ecs_rails:component Email address:string verified:boolean
 ```
 
 Getting started must take one command, and the `entity_id` + unique index
@@ -15,7 +15,7 @@ invariant must be impossible to forget.
 
 ## Rules
 
-### `rorecs:install`
+### `ecs_rails:install`
 
 - Emits a migration enabling `pgcrypto` and creating `entities`
   (`id` UUID PK default `gen_random_uuid()`, `model` string not-null indexed,
@@ -23,7 +23,7 @@ invariant must be impossible to forget.
 - Creates `app/models/application_entity.rb` and
   `app/models/application_component.rb`.
 
-### `rorecs:component NAME [attributes]`
+### `ecs_rails:component NAME [attributes]`
 
 - Emits a migration creating the component table with:
   - UUID PK,
@@ -33,9 +33,9 @@ invariant must be impossible to forget.
   - timestamps.
 - Creates `app/models/<name>.rb` subclassing `ApplicationComponent`.
 - Creates an **RSpec** spec file. This is deliberate and not negotiable via
-  `hook_for :test_framework` — RoRECS assumes RSpec. A minitest host app gets a
+  `hook_for :test_framework` — ECS Rails assumes RSpec. A minitest host app gets a
   stray `spec/` directory; that is a known, accepted limitation.
-- The install migration is named `RorecsCreateEntities`, not `CreateEntities`,
+- The install migration is named `EcsRailsCreateEntities`, not `CreateEntities`,
   to avoid colliding with a host app's own migration.
 
 ### Per-type defaults

@@ -1,25 +1,27 @@
 {
   "id": "025",
-  "name": "RoRECS",
-  "slug": "rorecs",
+  "name": "ECS Rails",
+  "slug": "ecs-rails",
   "tagline": "An Entity-Component-System reimagining of ActiveRecord that stays idiomatic to Ruby on Rails",
   "status": "building",
   "category": "labs",
   "target": "Rails developers who want composable, component-based domain models without inheritance or polymorphic-association sprawl",
   "stack": ["Ruby", "Ruby on Rails", "PostgreSQL"],
-  "links": {},
+  "links": {
+    "github": "https://github.com/kranzky/rails-ecs"
+  },
   "mrrHistory": [],
   "log": [
     {
       "date": "2026-07-17",
-      "summary": "Added RoRECS to the portfolio as a placeholder under Developer Tools. An open-source Ruby gem that reimagines ActiveRecord around an Entity-Component-System architecture while remaining idiomatic to Rails. Each entity is a lightweight identity record composed from reusable, lazily persisted components that encapsulate both data and behaviour; components are queried and processed independently through Systems, enabling composable domain models, eliminating much of the need for inheritance and polymorphic associations, and letting background processing operate directly on relevant data. Ships as a production-ready gem plus a companion bulletin-board application demonstrating how complex Rails apps can be built from reusable components while retaining Rails conventions, DX, and ecosystem.",
+      "summary": "Added ECS Rails to the portfolio as a placeholder under Developer Tools. An open-source Ruby gem that reimagines ActiveRecord around an Entity-Component-System architecture while remaining idiomatic to Rails. Each entity is a lightweight identity record composed from reusable, lazily persisted components that encapsulate both data and behaviour; components are queried and processed independently through Systems, enabling composable domain models, eliminating much of the need for inheritance and polymorphic associations, and letting background processing operate directly on relevant data. Ships as a production-ready gem plus a companion bulletin-board application demonstrating how complex Rails apps can be built from reusable components while retaining Rails conventions, DX, and ecosystem.",
       "humanMinutes": 0,
       "aiMinutes": 0,
       "costs": []
     },
     {
       "date": "2026-07-17",
-      "summary": "Turned proposal.html into a specification and shipped the first two RFCs. Interviewed to settle the design, then wrote docs/architecture.md (the binding invariants), seven ADRs, eight RFCs sizing the v0.1 build, and a design backlog. Scaffolded the rorecs gem (MIT, Ruby 3.4.5 via rbenv, RSpec against real PostgreSQL) and a lean Rails 8.1 bulletin-board demo consuming it via a path: dependency, so the PROCESS.md gem-to-demo feedback loop has no bundle step in it. Delegated RFC-0001 (ApplicationEntity, entity identity, model discriminator) and RFC-0002 (reload-safe component registry) to parallel sub-agents; 55 examples green. The agents found four defects in the spec itself, all now corrected: attr_readonly does not raise in Rails 8 without a hand-rolled guard; a per-subclass default_scope would accumulate and silently break sub-subclasses; RFC-0002 said registration was both idempotent and raising; and the registry's name-keying makes anonymous entity classes unregisterable, which invalidated RFC-0002's and RFC-0004's own example tests. Two new open questions logged, one of which blocks RFC-0003: entities.model does not resolve back to a subclass on read, so ApplicationEntity.find returns an ApplicationEntity rather than a User — undercutting ADR-0002's core justification.",
+      "summary": "Turned proposal.html into a specification and shipped the first two RFCs. Interviewed to settle the design, then wrote docs/architecture.md (the binding invariants), seven ADRs, eight RFCs sizing the v0.1 build, and a design backlog. Scaffolded the ecs_rails gem (MIT, Ruby 3.4.5 via rbenv, RSpec against real PostgreSQL) and a lean Rails 8.1 bulletin-board demo consuming it via a path: dependency, so the PROCESS.md gem-to-demo feedback loop has no bundle step in it. Delegated RFC-0001 (ApplicationEntity, entity identity, model discriminator) and RFC-0002 (reload-safe component registry) to parallel sub-agents; 55 examples green. The agents found four defects in the spec itself, all now corrected: attr_readonly does not raise in Rails 8 without a hand-rolled guard; a per-subclass default_scope would accumulate and silently break sub-subclasses; RFC-0002 said registration was both idempotent and raising; and the registry's name-keying makes anonymous entity classes unregisterable, which invalidated RFC-0002's and RFC-0004's own example tests. Two new open questions logged, one of which blocks RFC-0003: entities.model does not resolve back to a subclass on read, so ApplicationEntity.find returns an ApplicationEntity rather than a User — undercutting ADR-0002's core justification.",
       "humanMinutes": 20,
       "aiMinutes": 95,
       "costs": []

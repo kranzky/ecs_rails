@@ -1,4 +1,4 @@
-# RoRECS Documentation
+# ECS Rails Documentation
 
 An Entity–Component–System reimagining of ActiveRecord that stays idiomatic to
 Rails.
@@ -46,7 +46,7 @@ both depend on 0004 and are independent of each other.
 ## Layout
 
 ```
-gem/    the rorecs gem (MIT, extracted to its own repo at publish)
+gem/    the ecs_rails gem (MIT, extracted to its own repo at publish)
 demo/   the bulletin board app (private, uses gem via path:)
 docs/   this directory
 ```

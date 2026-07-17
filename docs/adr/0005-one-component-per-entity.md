@@ -27,7 +27,7 @@ area, for a case the proposal already models a better way.
 - Collections are modelled as **separate entities**, exactly as the proposal
   does with `Membership`: a `Membership` entity composed of `User`, `Group`, and
   `Role` components, rather than a `Group` holding many memberships.
-- This is the single biggest modelling constraint RoRECS imposes, and the demo's
+- This is the single biggest modelling constraint ECS Rails imposes, and the demo's
   main job is to find out whether it's liberating or infuriating. Expect this
   ADR to be the one most likely revisited.
 - "Shared Components" in the proposal means shared component *types*, not shared

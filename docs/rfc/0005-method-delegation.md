@@ -19,13 +19,13 @@ Component methods are callable on the entity.
   ([ADR-0004](../adr/0004-delegation-conflicts-raise.md)).
 - The delegated set is the component's public instance methods **and** its
   attribute accessors (readers and writers), minus everything defined by
-  `Rorecs::Component` and its ancestors. Only methods the component itself
+  `EcsRails::Component` and its ancestors. Only methods the component itself
   declares are delegated.
 - `entity_id`, `entity`, `id`, and `created_at`/`updated_at` are never
   delegated.
 - `only:` restricts the set; `except:` subtracts from it.
 - If two components on one entity would delegate the same name, raise
-  `Rorecs::DelegationConflict` at declaration time, naming both components, the
+  `EcsRails::DelegationConflict` at declaration time, naming both components, the
   method, and the `except:` fix.
 - A method defined directly on the entity class **wins silently** — no conflict.
   The generated module is included, so Ruby's own lookup handles this.
@@ -52,7 +52,7 @@ end
 it "raises on a conflict at declaration time" do
   expect {
     Class.new(ApplicationEntity) { component Name; component Group }
-  }.to raise_error(Rorecs::DelegationConflict, /#title.*Name.*Group/)
+  }.to raise_error(EcsRails::DelegationConflict, /#title.*Name.*Group/)
 end
 
 it "lets except: resolve a conflict" do
@@ -80,5 +80,5 @@ end
 Computing "methods the component itself declares" is the fiddly part.
 `Email.instance_methods(false)` misses methods from modules the component
 includes and misses AR-generated attribute methods. Expect to need
-`Email.instance_methods - Rorecs::Component.instance_methods` combined with
+`Email.instance_methods - EcsRails::Component.instance_methods` combined with
 `Email.attribute_names`, and to have a test pinning the exact resulting set.

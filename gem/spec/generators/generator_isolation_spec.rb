@@ -5,7 +5,7 @@ require "open3"
 require "tmpdir"
 
 # Every other spec in this directory runs after spec_helper.rb has required
-# active_record and rorecs. That masks load-order bugs in the generator files
+# active_record and ecs_rails. That masks load-order bugs in the generator files
 # themselves: a generator can reference a constant it never required and still
 # pass, because something else happened to load it first.
 #
@@ -16,14 +16,14 @@ require "tmpdir"
 RSpec.describe "generator load isolation" do
   # Each generator, and the constant a bare `invoke_all` must be able to reach.
   {
-    "install" => "Rorecs::Generators::InstallGenerator",
-    "component" => "Rorecs::Generators::ComponentGenerator"
+    "install" => "EcsRails::Generators::InstallGenerator",
+    "component" => "EcsRails::Generators::ComponentGenerator"
   }.each do |name, const|
     it "loads #{name}_generator.rb without a pre-loaded ActiveRecord" do
       script = <<~RUBY
         $LOAD_PATH.unshift(#{File.expand_path("../../lib", __dir__).inspect})
         require "rails/generators"
-        require "generators/rorecs/#{name}/#{name}_generator"
+        require "generators/ecs_rails/#{name}/#{name}_generator"
         # Touch the constants the generator's migration machinery depends on.
         #{const}
         ActiveRecord::Migration
@@ -43,12 +43,12 @@ RSpec.describe "generator load isolation" do
 
   # The end-to-end proof: a clean process that generates real files.
   it "generates the entities migration from a clean process" do
-    Dir.mktmpdir("rorecs-isolation-") do |root|
+    Dir.mktmpdir("ecs_rails-isolation-") do |root|
       script = <<~RUBY
         $LOAD_PATH.unshift(#{File.expand_path("../../lib", __dir__).inspect})
         require "rails/generators"
-        require "generators/rorecs/install/install_generator"
-        Rorecs::Generators::InstallGenerator.new(
+        require "generators/ecs_rails/install/install_generator"
+        EcsRails::Generators::InstallGenerator.new(
           [], {}, destination_root: #{root.inspect}
         ).invoke_all
       RUBY
@@ -58,7 +58,7 @@ RSpec.describe "generator load isolation" do
       aggregate_failures do
         expect(stderr).to eq("")
         expect(status).to be_success
-        expect(Dir.glob(File.join(root, "db/migrate/*_rorecs_create_entities.rb")).size).to eq(1)
+        expect(Dir.glob(File.join(root, "db/migrate/*_ecs_rails_create_entities.rb")).size).to eq(1)
       end
     end
   end
@@ -67,12 +67,12 @@ RSpec.describe "generator load isolation" do
   # .parse needs String#remove. Passing attributes here is the whole point — a
   # clean-process run with no attributes would not exercise the parser at all.
   it "generates a component migration WITH attributes from a clean process" do
-    Dir.mktmpdir("rorecs-isolation-") do |root|
+    Dir.mktmpdir("ecs_rails-isolation-") do |root|
       script = <<~RUBY
         $LOAD_PATH.unshift(#{File.expand_path("../../lib", __dir__).inspect})
         require "rails/generators"
-        require "generators/rorecs/component/component_generator"
-        Rorecs::Generators::ComponentGenerator.new(
+        require "generators/ecs_rails/component/component_generator"
+        EcsRails::Generators::ComponentGenerator.new(
           %w[Email address:string verified:boolean], {}, destination_root: #{root.inspect}
         ).invoke_all
       RUBY

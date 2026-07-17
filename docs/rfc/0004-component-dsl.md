@@ -18,7 +18,7 @@ Declare which components an entity is composed from.
 ## Rules
 
 - `component(klass, only: nil, except: nil)` is a class method on
-  `Rorecs::Entity`.
+  `EcsRails::Entity`.
 - It registers the declaration (RFC-0002) and defines a reader named after the
   component's `model_name.singular` — `component Email` → `#email`.
 - The reader returns the component instance, materialising it lazily (RFC-0006).
@@ -29,8 +29,8 @@ Declare which components an entity is composed from.
   `except: [:title]`.
 - `only:` and `except:` are mutually exclusive; passing both raises
   `ArgumentError`.
-- Declaring a non-`Rorecs::Component` raises `Rorecs::InvalidComponent`.
-- Declaring the same component twice raises `Rorecs::DuplicateComponent`
+- Declaring a non-`EcsRails::Component` raises `EcsRails::InvalidComponent`.
+- Declaring the same component twice raises `EcsRails::DuplicateComponent`
   (RFC-0002).
 - Subclasses inherit their parent's declarations.
 - **Entity classes must be named.** The registry keys by class name, so
@@ -49,7 +49,7 @@ end
 
 it "rejects a non-component" do
   stub_const("Thing", Class.new(ApplicationEntity))
-  expect { Thing.component String }.to raise_error(Rorecs::InvalidComponent)
+  expect { Thing.component String }.to raise_error(EcsRails::InvalidComponent)
 end
 
 it "rejects only: and except: together" do
@@ -63,7 +63,7 @@ it "keeps the reader even when methods are excluded" do
 end
 
 it "inherits declarations from the superclass" do
-  expect(Rorecs.registry.components_for(Moderator)).to include(...)
+  expect(EcsRails.registry.components_for(Moderator)).to include(...)
 end
 ```
 

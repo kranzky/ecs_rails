@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Rorecs
+module EcsRails
   # An ordinary ActiveRecord model that belongs to exactly one entity.
   #
   # Implements RFC-0003. See docs/architecture.md §1 for the invariants.
@@ -8,7 +8,7 @@ module Rorecs
   # Host apps subclass this once, as ApplicationComponent, then subclass that
   # per component type:
   #
-  #   class ApplicationComponent < Rorecs::Component
+  #   class ApplicationComponent < EcsRails::Component
   #     self.abstract_class = true
   #   end
   #
@@ -31,7 +31,7 @@ module Rorecs
     # Every component belongs to exactly one entity (architecture.md §1).
     #
     # The association targets the abstract ApplicationEntity, which has no table
-    # of its own — but Rorecs::Entity sets table_name to "entities", so the
+    # of its own — but EcsRails::Entity sets table_name to "entities", so the
     # generated query is an ordinary select against that table. The loaded row's
     # `model` column then decides which subclass to instantiate, via
     # Entity.discriminate_class_for_record. That is what makes `email.entity`

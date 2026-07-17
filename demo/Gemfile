@@ -6,7 +6,7 @@ gem "rails", "~> 8.1.3"
 # The whole point of this app: exercise the gem being developed alongside it.
 # Kept as a path: dependency so gem changes are visible here immediately.
 # See ADR-0007 — this becomes a version constraint once the gem is extracted.
-gem "rorecs", path: "../gem"
+gem "ecs-rails", path: "../gem"
 
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
 gem "propshaft"
