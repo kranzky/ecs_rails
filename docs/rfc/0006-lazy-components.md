@@ -78,6 +78,17 @@ end
 
 ## Notes
 
+**The seam already exists.** RFC-0004 includes `generated_component_methods`
+into the entity class *after* AR's `GeneratedAssociationMethods`, so it sits
+closer to the class and wins. Define the reader there and call `super` to reach
+the `has_one` reader underneath. Nothing else moves, and RFC-0005 delegates into
+the same module.
+
+**Delete RFC-0004's placeholder.** It pins `expect(User.create!.email).to
+be_nil`, which is the *inverse* of this RFC's first rule. RFC-0004 knowingly
+violates architecture.md §3 in the interim; landing this RFC is what closes that
+gap, and removing that example is how you prove it.
+
 The dirty check must be "differs from default", not ActiveModel's "differs from
 the last saved value" — for a new record those coincide, but after
 `destroy`-then-reset they do not. Pin this with a test.

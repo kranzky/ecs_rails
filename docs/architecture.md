@@ -238,7 +238,17 @@ Tracked, not yet decided. Each will become an ADR when it's forced.
    `enable_extension "pgcrypto"`, which is legacy on PG 13+ where
    `gen_random_uuid()` is built in. Harmless but redundant. Raised by RFC-0008.
 
-8. **How much private ActiveRecord API are we willing to depend on?**
+8. **Do component destroy callbacks need to run on `entity.destroy`?**
+   Currently **no**, and this is a real gap. §3 makes the cascade the database's
+   (`ON DELETE CASCADE`), and RFC-0004 deliberately declines `dependent:
+   :destroy` so that the two layers do not mask each other — `entity.destroy`
+   issues no SQL against component tables at all. The cost is that a component's
+   `before_destroy`/`after_destroy` never fire when its entity goes. If a
+   component ever needs to clean up outside the database (a file, a remote
+   object), that silently will not happen. Wants an ADR, not a `has_one` option
+   smuggled in.
+
+9. **How much private ActiveRecord API are we willing to depend on?**
    `EcsRails::Entity` overrides the private `instantiate_instance_of` — see the
    [ADR-0008 amendment](adr/0008-subclass-resolution-on-read.md#amendment).
    It is pinned by tests, so a Rails upgrade breaks loudly rather than silently.

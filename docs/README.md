@@ -34,7 +34,7 @@ Each RFC is one commit. Each commit compiles and passes tests.
 | [0001](rfc/0001-application-entity.md) | ApplicationEntity + entities table | — ✅ |
 | [0002](rfc/0002-component-registry.md) | Component registry | — ✅ |
 | [0003](rfc/0003-application-component.md) | ApplicationComponent | 0001 ✅ |
-| [0004](rfc/0004-component-dsl.md) | The `component` DSL | 0002, 0003 |
+| [0004](rfc/0004-component-dsl.md) | The `component` DSL | 0002, 0003 ✅ |
 | [0005](rfc/0005-method-delegation.md) | Method delegation | 0004 |
 | [0006](rfc/0006-lazy-components.md) | Lazy components | 0004 |
 | [0007](rfc/0007-validation-error-merging.md) | Validation error merging | 0006 |
