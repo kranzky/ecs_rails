@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rails ECS - Design Proposal</title>
+
+<style>
+body {
+    font-family: system-ui, sans-serif;
+    max-width: 1000px;
+    margin: auto;
+    padding: 3rem;
+    line-height: 1.6;
+    color: #333;
+}
+
+h1,h2,h3 {
+    margin-top:2em;
+}
+
+pre {
+    background:#f5f5f5;
+    padding:1em;
+    overflow:auto;
+}
+
+table {
+    border-collapse:collapse;
+    width:100%;
+}
+
+th,td {
+    border:1px solid #ccc;
+    padding:.5em;
+}
+
+.diagram {
+    border:1px solid #ddd;
+    background:#fafafa;
+    padding:1em;
+    font-family:monospace;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>Rails ECS</h1>
+
+<p>
+Rails ECS extends ActiveRecord with an Entity–Component–System persistence
+architecture inspired by Flecs while remaining idiomatic Rails.
+</p>
+
+<h2>Goals</h2>
+
+<ul>
+<li>Keep ordinary Rails conventions.</li>
+<li>Replace one-table-per-model with one-table-per-component.</li>
+<li>Reuse behaviour through Components.</li>
+<li>Allow Systems to process Components directly.</li>
+<li>Load only the data actually needed.</li>
+<li>Components remain ordinary ActiveRecord models.</li>
+</ul>
+
+<h2>Architecture</h2>
+
+<div class="diagram">
+Entity
+ ├── Email
+ ├── Name
+ ├── Avatar
+ ├── Moderator
+ └── GroupMembership
+</div>
+
+<p>
+Entities contain only identity.
+Components contain all mutable state.
+Systems perform processing.
+</p>
+
+<h2>Entity Table</h2>
+
+<table>
+
+<tr>
+<th>id</th>
+<th>model</th>
+<th>created_at</th>
+</tr>
+
+<tr>
+<td>UUID</td>
+<td>users</td>
+<td>...</td>
+</tr>
+
+</table>
+
+<p>
+Entities are immutable after creation.
+</p>
+
+<h2>Declaring Models</h2>
+
+<pre>
+class User &lt; ApplicationEntity
+  component Name
+  component Email
+  component Avatar
+end
+</pre>
+
+<p>
+The model itself contains almost no data.
+It simply declares which components exist.
+</p>
+
+<h2>Declaring Components</h2>
+
+<pre>
+class Email &lt; ApplicationComponent
+
+  validates :address,
+            presence: true
+
+  def send_welcome_email
+     ...
+  end
+
+end
+</pre>
+
+<p>
+Each component owns its own table.
+</p>
+
+<h2>Delegation</h2>
+
+<pre>
+user.email.address
+
+user.send_welcome_email
+</pre>
+
+<p>
+Component methods are automatically delegated from the entity.
+</p>
+
+<h2>Lazy Components</h2>
+
+<p>
+Components are virtual until persisted.
+If every attribute equals its default value,
+no database row exists.
+</p>
+
+<pre>
+user.email.address
+</pre>
+
+<p>
+creates an in-memory Email instance if required.
+Saving only occurs if values differ from defaults.
+</p>
+
+<h2>Systems</h2>
+
+<p>
+Systems process components without loading entities.
+</p>
+
+<pre>
+class WelcomeEmailSystem
+
+  def run
+
+    Email.pending.find_each do |email|
+      email.send_welcome_email
+    end
+
+  end
+
+end
+</pre>
+
+<h2>Example Bulletin Board</h2>
+
+<h3>Users</h3>
+
+<pre>
+User
+
+  Name
+  Email
+  Password
+  Avatar
+  Bio
+</pre>
+
+<h3>Moderators</h3>
+
+<pre>
+Moderator
+
+  Name
+  Email
+  Password
+  Avatar
+
+  Moderator
+</pre>
+
+<h3>Administrators</h3>
+
+<pre>
+Administrator
+
+  Name
+  Email
+  Password
+
+  Moderator
+  Administrator
+</pre>
+
+<p>
+Administrator and Moderator become marker components.
+No STI required.
+</p>
+
+<h3>Posts</h3>
+
+<pre>
+Post
+
+  Title
+  Body
+  Author
+  PublishState
+  Likes
+  Group
+</pre>
+
+<h3>Comments</h3>
+
+<pre>
+Comment
+
+  Body
+  Author
+  Parent
+  Likes
+</pre>
+
+<h3>Groups</h3>
+
+<pre>
+Group
+
+  Name
+  Description
+</pre>
+
+<h3>Memberships</h3>
+
+<pre>
+Membership
+
+  User
+  Group
+  Role
+</pre>
+
+<p>
+Membership is simply another entity composed from components.
+</p>
+
+<h2>Shared Components</h2>
+
+<table>
+
+<tr>
+
+<th>Component</th>
+<th>Used By</th>
+
+</tr>
+
+<tr>
+
+<td>Name</td>
+<td>User, Group</td>
+
+</tr>
+
+<tr>
+
+<td>Likes</td>
+<td>Post, Comment</td>
+
+</tr>
+
+<tr>
+
+<td>Author</td>
+<td>Post, Comment</td>
+
+</tr>
+
+<tr>
+
+<td>PublishState</td>
+<td>Post, Group</td>
+
+</tr>
+
+</table>
+
+<p>
+Behaviour is reused naturally without inheritance.
+</p>
+
+<h2>Example Systems</h2>
+
+<h3>Notification System</h3>
+
+<p>
+Iterates Email components.
+</p>
+
+<h3>Like Counter</h3>
+
+<p>
+Iterates Likes components.
+</p>
+
+<h3>Group Statistics</h3>
+
+<p>
+Iterates Membership components.
+</p>
+
+<h3>Search Indexer</h3>
+
+<p>
+Iterates Title and Body components.
+</p>
+
+<h3>Spam Detection</h3>
+
+<p>
+Processes Body components from Posts and Comments together.
+</p>
+
+<h2>Queries</h2>
+
+<pre>
+Email.all
+
+Likes.where(count: 0)
+
+Body.find_each
+
+Post.with(PublishState)
+
+User.without(Avatar)
+</pre>
+
+<p>
+Queries naturally target the component table.
+</p>
+
+<h2>Benefits</h2>
+
+<ul>
+
+<li>No STI.</li>
+
+<li>No polymorphic associations.</li>
+
+<li>Behaviour is reusable.</li>
+
+<li>Data is reusable.</li>
+
+<li>Systems operate independently.</li>
+
+<li>Components remain small.</li>
+
+<li>Only required data is loaded.</li>
+
+</ul>
+
+<h2>Implementation Sketch</h2>
+
+<ul>
+
+<li>ApplicationEntity subclasses ActiveRecord.</li>
+
+<li>ApplicationComponent subclasses ActiveRecord.</li>
+
+<li>component DSL declares associations.</li>
+
+<li>Generated delegation methods forward calls.</li>
+
+<li>Missing components materialise lazily.</li>
+
+<li>Component registry records metadata.</li>
+
+<li>Systems are plain Ruby objects.</li>
+
+</ul>
+
+<h2>Conclusion</h2>
+
+<p>
+Rails ECS combines familiar Rails conventions with ECS composition.
+Rather than replacing ActiveRecord, it reorganises persistence around
+small reusable components, allowing behaviour, storage and processing
+to evolve independently while remaining idiomatic Ruby.
+</p>
+
+</body>
+</html>

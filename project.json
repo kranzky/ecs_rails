@@ -1,0 +1,21 @@
+{
+  "id": "025",
+  "name": "RoRECS",
+  "slug": "rorecs",
+  "tagline": "An Entity-Component-System reimagining of ActiveRecord that stays idiomatic to Ruby on Rails",
+  "status": "ideation",
+  "category": "labs",
+  "target": "Rails developers who want composable, component-based domain models without inheritance or polymorphic-association sprawl",
+  "stack": ["Ruby", "Ruby on Rails", "PostgreSQL"],
+  "links": {},
+  "mrrHistory": [],
+  "log": [
+    {
+      "date": "2026-07-17",
+      "summary": "Added RoRECS to the portfolio as a placeholder under Developer Tools. An open-source Ruby gem that reimagines ActiveRecord around an Entity-Component-System architecture while remaining idiomatic to Rails. Each entity is a lightweight identity record composed from reusable, lazily persisted components that encapsulate both data and behaviour; components are queried and processed independently through Systems, enabling composable domain models, eliminating much of the need for inheritance and polymorphic associations, and letting background processing operate directly on relevant data. Ships as a production-ready gem plus a companion bulletin-board application demonstrating how complex Rails apps can be built from reusable components while retaining Rails conventions, DX, and ecosystem.",
+      "humanMinutes": 0,
+      "aiMinutes": 0,
+      "costs": []
+    }
+  ]
+}
