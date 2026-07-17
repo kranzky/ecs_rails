@@ -22,11 +22,18 @@ module RegistrySpec
 end
 
 RSpec.describe EcsRails::Registry do
-  subject(:registry) { EcsRails.registry }
-
-  # The registry is a process-wide singleton, so every example must start clean.
-  before { registry.clear! }
-  after { registry.clear! }
+  # A fresh instance, deliberately NOT EcsRails.registry.
+  #
+  # The singleton holds the declarations that spec/support/models.rb made at
+  # load time, and clear!-ing it would destroy them for every example that runs
+  # afterwards, in this file or any other. Nothing reads the registry at runtime
+  # *today* — the DSL generates methods onto the class — so that would be an
+  # invisible landmine rather than a failure, right up until RFC-0008's
+  # generators (which do read it) made the suite order-dependent.
+  #
+  # Testing the instance instead of the global keeps this file hermetic and
+  # loses nothing: EcsRails.registry is only a memoised Registry.new.
+  subject(:registry) { described_class.new }
 
   def register(entity, component, options = {})
     registry.register(entity_class: entity, component_class: component, options: options)
