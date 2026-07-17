@@ -9,7 +9,8 @@
       "Bash(rails -v)",
       "Bash(gem -v)",
       "Bash(psql --version)",
-      "Bash(pg_isready)"
+      "Bash(pg_isready)",
+      "Bash(cd /Users/kranzky/.rbenv/versions/3.4.5/lib/ruby/gems/3.4.0/gems/activerecord-8.1.3 && grep -rn \"discriminate_class_for_record\\\\|def instantiate\\\\b\\\\|def instantiate_instance_of\\\\|def _load_from_sql\" lib/ | head -20)"
     ]
   }
 }

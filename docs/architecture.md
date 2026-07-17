@@ -66,6 +66,10 @@ entities                    emails                     names
 - Component tables are named by the Rails plural of the component class.
 - `entities.model` is indexed; `User.all` compiles to
   `SELECT * FROM entities WHERE model = 'users'`.
+- `model` is derived from `model_name.collection`, so a namespaced entity's
+  discriminator contains a slash: `Blog::Post` → `"blog/posts"`. Identical to
+  the plural for every non-namespaced class. See
+  [ADR-0008](adr/0008-subclass-resolution-on-read.md) for why not `.plural`.
 
 ---
 
@@ -229,3 +233,14 @@ Tracked, not yet decided. Each will become an ADR when it's forced.
    kind of it. `User.all` does not return admins; under STI it would. Neither
    reading is written down. Either decide it in an ADR or forbid subclassing a
    concrete entity outright.
+
+7. **Is the PostgreSQL floor 13+?** The install generator emits
+   `enable_extension "pgcrypto"`, which is legacy on PG 13+ where
+   `gen_random_uuid()` is built in. Harmless but redundant. Raised by RFC-0008.
+
+8. **How much private ActiveRecord API are we willing to depend on?**
+   `Rorecs::Entity` overrides the private `instantiate_instance_of` — see the
+   [ADR-0008 amendment](adr/0008-subclass-resolution-on-read.md#amendment).
+   It is pinned by tests, so a Rails upgrade breaks loudly rather than silently.
+   But it is a real coupling to internals, and it is worth deciding whether this
+   is a one-off or a pattern we will accept again.

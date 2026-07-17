@@ -1,7 +1,7 @@
 # RFC-0003: ApplicationComponent
 
-**Status:** Ready
-**Depends on:** RFC-0001
+**Status:** Implemented
+**Depends on:** RFC-0001, ADR-0008
 
 ## Goal
 
