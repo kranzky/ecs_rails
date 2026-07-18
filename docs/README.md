@@ -37,7 +37,7 @@ Each RFC is one commit. Each commit compiles and passes tests.
 | [0004](rfc/0004-component-dsl.md) | The `component` DSL | 0002, 0003 ✅ |
 | [0006](rfc/0006-lazy-components.md) | Lazy components | 0004 ✅ |
 | [0005](rfc/0005-method-delegation.md) | Method delegation | 0004, **0006** ✅ |
-| [0007](rfc/0007-validation-error-merging.md) | Validation error merging | 0006 |
+| [0007](rfc/0007-validation-error-merging.md) | Validation error merging | 0006 ✅ |
 | [0008](rfc/0008-generators.md) | Install + component generators | 0001, 0003 ✅ |
 
 RFC-0001 and 0002 are independent and can be built in parallel.
