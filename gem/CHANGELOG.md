@@ -8,6 +8,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Validation error merging (RFC-0007). `entity.valid?` reflects its touched
+  components' validity; component errors merge under `entity.errors[:"email.address"]`
+  and read naturally in a form. A non-dirty virtual component is not validated.
 - Method delegation (RFC-0005). Component methods and attribute accessors are
   callable on the entity — `user.send_welcome_email`, `user.address = "x"`.
   Name clashes between two components raise `DelegationConflict` at load time;

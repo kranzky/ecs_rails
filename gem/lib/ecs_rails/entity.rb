@@ -75,6 +75,13 @@ module EcsRails
     # component by the DSL, into generated_component_methods.
     include Lazy::Entity
 
+    # Validation error merging (RFC-0007): the `validate` callback that reflects
+    # a dirty component's validity onto the entity, and the human_attribute_name
+    # override that keeps `errors[:"email.address"]` machine-readable while
+    # `full_messages` reads "Email address is invalid". Included after
+    # Lazy::Entity because it walks Lazy's memo (@ecs_components).
+    include Validations::Entity
+
     # The `component` DSL (RFC-0004). Extended rather than defined here: RFC-0001
     # is about identity, and composition is a separate concern with its own file.
     # Singleton methods are inherited, so every entity subclass answers it.
