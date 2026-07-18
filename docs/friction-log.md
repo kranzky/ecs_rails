@@ -205,3 +205,37 @@ the `Authorship` naming rule from ADR-0006 applies: name the association for the
 target so `membership.user` / `membership.group` still read naturally. A
 papercut in translating the proposal, not a gem problem — worth a note in the
 eventual relationship-DSL RFC, which could let `relates_to :user, User` hide it.
+
+---
+
+## Controllers & views
+
+### 🟠 No component query DSL, and `.with` is already taken — 2026-07-18
+
+The first thing a controller needs is "all published posts". The proposal writes
+this as `Post.with(PublishState)`. Two problems:
+
+1. **There is no query DSL** — `.with` / `.without` are backlog, not built. So
+   the query is hand-rolled across the entity/component split:
+
+   ```ruby
+   ids = PublishState.where(state: "published").pluck(:entity_id)
+   Post.where(id: ids)
+   ```
+
+   Two queries and a manual `pluck`. Workable, and encapsulating it in a
+   `Post.published` scope-like class method hides it — but it is exactly the
+   boilerplate the proposal's `.with` was meant to remove, and every list view
+   needs it.
+
+2. **`Post.with` already exists and means something else.** `ActiveRecord::Relation#with`
+   is Common Table Expressions (Rails 7.1+). `Post.respond_to?(:with)` is `true`
+   today. So the proposal's headline query syntax **collides with ActiveRecord**
+   — a component query DSL cannot reuse `.with` without shadowing CTE support.
+   The eventual RFC needs a different verb (`having_component`, `with_component`,
+   `composed_of`… tbd) or a scoped namespace (`Post.components.with(...)`).
+
+This is the single strongest pull toward building the query DSL, and it's the
+proposal's hardest feature (a cross-table planner). Logged as the top backlog
+item; building the vertical slice with the hand-rolled workaround for now so the
+friction is concrete before designing the DSL.
