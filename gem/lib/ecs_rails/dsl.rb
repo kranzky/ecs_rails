@@ -66,6 +66,7 @@ module EcsRails
       # of those names is already delegated by a sibling component.
       delegated = delegated_method_names(component_class, options)
       detect_delegation_conflict!(component_class, delegated)
+      detect_reader_collision!(component_class, delegated)
 
       # Registered first, so that the registry's own duplicate check (RFC-0002)
       # is what stops a doubled `component` line — before any method is defined.
@@ -349,6 +350,44 @@ module EcsRails
 
       raise DelegationConflict,
             delegation_conflict_message(component_class, owners[clash], clash)
+    end
+
+    # A component reader (`post.author`) is structural — it is how you reach the
+    # component at all — so its name is reserved. A delegated method that would
+    # take the same name must not silently overwrite the reader: it did, and
+    # because the generated method then called the reader, `post.author` recursed
+    # into itself (SystemStackError). This is genuine ambiguity of exactly the
+    # kind ADR-0004 raises on: does `post.author` mean the Author *component*, or
+    # the User that `belongs_to :author` inside it points at? Surface it at
+    # declaration time and make the developer choose.
+    #
+    # Fires when a delegated name equals any component reader on the entity — the
+    # new component's own reader (the `Author` with `belongs_to :author` case) or
+    # a sibling's. The reverse — a sibling's delegated method colliding with the
+    # new reader — is the same names from the other side, and
+    # #detect_delegation_conflict! on the earlier declaration already covers it.
+    def detect_reader_collision!(component_class, delegated)
+      readers = component_declarations.map { |d| reader_name_for(d.component_class) }
+      readers << reader_name_for(component_class)
+
+      clash = delegated.find { |name| readers.include?(name) }
+      return unless clash
+
+      raise DelegationConflict, reader_collision_message(component_class, clash)
+    end
+
+    def reader_name_for(component_class)
+      component_class.model_name.singular.to_sym
+    end
+
+    # Names the collision and the two ways out: rename the offending method
+    # (usually a relationship component's `belongs_to`), or exclude it.
+    def reader_collision_message(component_class, method)
+      "##{method} on #{name} is both a component reader and a method delegated " \
+        "from #{component_class.name}. A reader name is reserved. Rename the " \
+        "method — for a relationship component, name the association for its " \
+        "target (e.g. `belongs_to :user`) rather than the component — or exclude " \
+        "it with `component #{component_class.name}, except: [:#{method.to_s.chomp("=")}]`."
     end
 
     # The message ADR-0004 specifies: the method, both components, the entity,

@@ -94,3 +94,13 @@ class Post < ApplicationEntity
   component Name
   component Avatar
 end
+
+# A relationship component (ADR-0006) whose association name collides with its
+# own reader: reader for `component Sponsor` is `sponsor`, and `belongs_to
+# :sponsor` also defines `sponsor`. Declaring it used to overwrite the reader
+# and recurse infinitely (SystemStackError); it now raises a reader collision at
+# declaration time. Surfaced building the demo. Not declared on any entity here
+# — the specs declare it on stub_const entities to assert the raise.
+class Sponsor < ApplicationComponent
+  belongs_to :sponsor, class_name: "User", foreign_key: :sponsor_id, optional: true
+end

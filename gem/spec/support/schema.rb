@@ -47,7 +47,16 @@ ActiveRecord::Schema.define do
     t.timestamps
   end
 
-  %i[emails names groups avatars].each do |table|
+  # A relationship component (ADR-0006): holds a UUID pointing at another entity.
+  # Its `belongs_to` name collides with its own reader — see the "reader
+  # collision" specs in delegation_spec.rb. Surfaced by the demo.
+  create_table :sponsors, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid :entity_id, null: false
+    t.uuid :sponsor_id, default: nil
+    t.timestamps
+  end
+
+  %i[emails names groups avatars sponsors].each do |table|
     add_index table, :entity_id, unique: true
     add_foreign_key table, :entities, column: :entity_id, on_delete: :cascade
   end
