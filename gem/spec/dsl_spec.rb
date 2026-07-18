@@ -25,14 +25,11 @@ RSpec.describe "the component DSL" do
   # The registry is a process-wide singleton, so every example must start clean —
   # the same convention registry_spec.rb uses.
   #
-  # NOTE this is destructive to the declarations that spec/support/models.rb made
-  # for User and Post at load time, and nothing puts them back. It is harmless
-  # today because the generated methods live on the class, not in the registry,
-  # so only registry *assertions* are affected — and this file makes none about
-  # User or Post. It will stop being harmless the moment something reads the
-  # registry at runtime (RFC-0008's generators will). See the report.
+  # Start each example with an empty registry so this file's throwaway classes
+  # are the only declarations. This clears the models.rb baseline for User and
+  # Post too, but spec_helper's global after-hook restores it, so the clear
+  # cannot leak into another file.
   before { registry.clear! }
-  after { registry.clear! }
 
   # A named, concrete entity class to declare components on. Entity classes need
   # no table of their own — every entity shares `entities` (ADR-0002) — so this

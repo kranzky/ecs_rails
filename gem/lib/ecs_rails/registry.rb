@@ -120,6 +120,21 @@ module EcsRails
       self
     end
 
+    # An opaque snapshot of the current declarations, for save/restore around a
+    # block that mutates the registry — chiefly tests that `clear!` the
+    # process-wide singleton and would otherwise wipe declarations that
+    # host/app classes made at load time. `Declaration` is frozen and holds only
+    # strings, so a shallow dup of the arrays is a safe, cheap copy.
+    def snapshot
+      @declarations.transform_values(&:dup)
+    end
+
+    # Replaces the declarations with a previously taken #snapshot.
+    def restore(snapshot)
+      @declarations = snapshot.transform_values(&:dup)
+      self
+    end
+
     private
 
     # The one place a Class is turned into a String — and the only thing the

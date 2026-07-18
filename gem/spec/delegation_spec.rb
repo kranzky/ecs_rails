@@ -16,13 +16,11 @@ require "spec_helper"
 # by class name (RFC-0002 / RFC-0004), so an anonymous entity cannot declare
 # components at all. This is the tax the RFC's Notes call out.
 RSpec.describe "method delegation" do
-  # The registry is a process-wide singleton, so every example starts clean —
-  # the same convention dsl_spec.rb and registry_spec.rb use. Generated methods
-  # live on the entity *class*, not in the registry, so User's delegation keeps
-  # working across a clear; only registry assertions are affected, and the
-  # per-example registrations below never leak into another file.
+  # Start each example with an empty registry so the throwaway classes below are
+  # the only declarations. spec_helper's global after-hook restores the
+  # models.rb baseline once we're done, so this clear cannot leak to another
+  # file — that seal is central now, not this file's responsibility.
   before { EcsRails.registry.clear! }
-  after { EcsRails.registry.clear! }
 
   # Statements issued while the block runs. Same helper as the sibling specs;
   # used to prove the money path issues exactly one INSERT.

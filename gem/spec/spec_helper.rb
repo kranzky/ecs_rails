@@ -15,11 +15,21 @@ ActiveRecord::Base.logger = nil
 require_relative "support/schema"
 require_relative "support/models"
 
+# The declarations support/models.rb made at load time. EcsRails.registry is a
+# process-wide singleton, and some specs `clear!` it to test in isolation — which
+# would wipe these for every example that ran afterwards, in any file, making the
+# suite order-dependent. This was a real, recurring landmine (registry_spec, and
+# twice during RFC implementation). Restoring this baseline after every example
+# seals it centrally, so no spec can leak a cleared registry to the next.
+ECS_RAILS_REGISTRY_BASELINE = EcsRails.registry.snapshot.freeze
+
 RSpec.configure do |config|
   config.expect_with(:rspec) { |c| c.syntax = :expect }
   config.disable_monkey_patching!
   config.order = :random
   Kernel.srand config.seed
+
+  config.after { EcsRails.registry.restore(ECS_RAILS_REGISTRY_BASELINE) }
 
   # Every example runs in a transaction that is rolled back afterwards.
   #
