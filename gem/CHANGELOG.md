@@ -8,6 +8,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Method delegation (RFC-0005). Component methods and attribute accessors are
+  callable on the entity — `user.send_welcome_email`, `user.address = "x"`.
+  Name clashes between two components raise `DelegationConflict` at load time;
+  `except:`/`only:` are the escape hatch.
 - Lazy / virtual components (RFC-0006). `entity.email` always returns an
   `Email`, never `nil` — a missing row yields an in-memory component with every
   attribute at its database default. `entity.save` cascades to the components
