@@ -139,8 +139,10 @@ RSpec.describe "method delegation" do
       Solo.component Email
       generated = Solo.generated_component_methods.instance_methods(false).sort
 
-      # #email is the reader (RFC-0006); everything else is Email's delegation.
-      expect(generated).to eq %i[address address= email send_welcome_email verified verified= who_am_i]
+      # #email is the reader (RFC-0006); #email? is the presence predicate
+      # (RFC-0009); everything else is Email's delegation.
+      expect(generated)
+        .to eq %i[address address= email email? send_welcome_email verified verified= who_am_i]
     end
 
     it "delegates exactly Name's own methods and state accessors" do
@@ -148,8 +150,9 @@ RSpec.describe "method delegation" do
       Solo.component Name
       generated = Solo.generated_component_methods.instance_methods(false).sort
 
+      # #name is the reader; #name? is the presence predicate (RFC-0009).
       expect(generated)
-        .to eq %i[combine first first= full_name initials last last= name title title=]
+        .to eq %i[combine first first= full_name initials last last= name name? title title=]
     end
   end
 

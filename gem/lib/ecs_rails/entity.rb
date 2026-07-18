@@ -75,6 +75,13 @@ module EcsRails
     # component by the DSL, into generated_component_methods.
     include Lazy::Entity
 
+    # Component presence (RFC-0009): add / has? / remove. Included after
+    # Lazy::Entity because it works through Lazy's memo (@ecs_components) and its
+    # reader — `add` persists the memoised instance, `remove` relies on
+    # Lazy::Component's after_destroy to reset it. The `<reader>?` predicate is
+    # generated per component by the DSL.
+    include Presence::Entity
+
     # Validation error merging (RFC-0007): the `validate` callback that reflects
     # a dirty component's validity onto the entity, and the human_attribute_name
     # override that keeps `errors[:"email.address"]` machine-readable while

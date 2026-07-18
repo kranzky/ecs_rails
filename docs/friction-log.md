@@ -66,6 +66,24 @@ presence/membership API is a real fork. Gathering the rest of the sharp-case
 friction first, then taking the options to the user. Tracked as the top item for
 the next RFC.
 
+**Resolved (2026-07-18) — [ADR-0009](adr/0009-component-presence.md) /
+[RFC-0009](rfc/0009-component-presence.md).** Presence is now a first-class,
+explicit operation:
+
+```ruby
+user.add(Moderator)      # persist the row (idempotent, immediate)
+user.moderator?          # => true
+user.has?(Moderator)     # => true
+user.remove(Moderator)   # destroy it
+```
+
+Verified in the demo: `user.moderator?` / `user.administrator?` toggle correctly,
+markers persist and clear, and `add` validates (so you cannot `add` an empty
+required component). The proposal's "No STI" claim now actually works — a user is
+a moderator exactly when the row exists, no `type` column, no subclass hierarchy.
+The demo *added* a feature the proposal implied but never specified, which is the
+loop working as intended.
+
 ### 🟠 Attribute auto-delegation collides constantly — 2026-07-18
 
 Modelling `Post` from the proposal (Title, Body, Author, PublishState, Likes)
@@ -101,6 +119,14 @@ opt-in rather than automatic? Behaviour-only delegation by default would make
 it to the user with the marker decision.
 
 Resolved for now by excepting `:text` on both Title and Body.
+
+**Decision (2026-07-18): keep attribute delegation automatic.** `user.address`
+is a headline DX feature and worth the collision cost. Collisions already raise
+loudly at boot (ADR-0004), never silently — so the failure mode is acceptable,
+and being forced to name a top-level accessor deliberately (`except:` on both)
+is arguably healthy. This becomes a **documentation** matter, not a gem change:
+the docs will teach `except:`-on-both as the standard pattern for two components
+that share an attribute name. No RFC.
 
 ### 🔴→🟢 Relationship component recursed infinitely; fixed, and the fix is nicer — 2026-07-18
 

@@ -72,6 +72,20 @@ end
 class Avatar < ApplicationComponent
 end
 
+# A marker component (ADR-0009 / RFC-0009): zero state, presence is the whole
+# meaning. Has no attributes at all, so it is never `ecs_dirty?` and the lazy
+# save cascade would never write it — `user.moderator; user.save!` persists
+# nothing. Presence has to be set explicitly: `user.add(Moderator)`. This is the
+# exact shape of the demo's Moderator/Administrator.
+class Moderator < ApplicationComponent
+end
+
+# A concrete, stateful component deliberately declared on *no* entity here, so
+# `user.add(PublishState)` / `has?` raise EcsRails::InvalidComponent — the
+# "component the entity does not declare" path in RFC-0009.
+class PublishState < ApplicationComponent
+end
+
 # --- entities ----------------------------------------------------------------
 
 # The first real use of the gem's API (RFC-0004). Read it as a host app would
@@ -86,6 +100,9 @@ class User < ApplicationEntity
   component Name
   component Email
   component Group, except: [:title]
+  # A marker (RFC-0009). Presence is set with `user.add(Moderator)`, asked with
+  # `user.moderator?`, and cleared with `user.remove(Moderator)`.
+  component Moderator
 end
 
 # A second entity sharing a component type with the first. "Shared components"

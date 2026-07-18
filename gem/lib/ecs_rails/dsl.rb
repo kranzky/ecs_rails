@@ -84,6 +84,10 @@ module EcsRails
       # RFC-0005: the delegating methods, into the same module as the reader.
       define_component_delegation(component_class, delegated)
 
+      # RFC-0009: the `<reader>?` presence predicate. Generated last so it can
+      # see, and defer to, any delegated method that already owns its name.
+      define_component_predicate(component_class)
+
       declaration
     end
 
@@ -200,6 +204,34 @@ module EcsRails
           public_send(reader).public_send(method_name, *args, **kwargs, &block)
         end
       end
+    end
+
+    # RFC-0009: the presence predicate `entity.<reader>?`, generated per
+    # component into the same module as the reader and delegation. It is exactly
+    # `has?(ThatComponent)` — `user.moderator?`, `user.email?` — the per-component
+    # sugar over EcsRails::Presence::Entity#has?.
+    #
+    # Generated for every component, not just markers (ADR-0009): "does a row
+    # exist?" is a question every component answers.
+    #
+    # Collision: the predicate name is `<reader>?`, and a component *could*, in
+    # principle, delegate a method of that exact name (a `<reader>?` in its own
+    # delegable set). That is the reader-collision situation the same way the
+    # reader itself is (ADR-0009), but far rarer, and a delegated method is the
+    # developer's explicit choice — so rather than raise, we simply do not
+    # clobber it: if the module already defines this name (from this component's
+    # delegation, generated just above, or a sibling's), the delegated method
+    # wins and no predicate is generated. The common case has no such method and
+    # the predicate is defined normally.
+    def define_component_predicate(component_class)
+      predicate = :"#{component_class.model_name.singular}?"
+      mod = generated_component_methods
+      return if mod.instance_methods(false).include?(predicate)
+
+      # Closed over the class so a reloaded constant still resolves through
+      # #has?'s declared-set check, same as the reader closes over its name.
+      component = component_class
+      mod.define_method(predicate) { has?(component) }
     end
 
     # RFC-0005: the set of method names delegated for one component, after

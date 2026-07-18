@@ -24,6 +24,7 @@ Rails.
 | [0006](adr/0006-relationships-are-plain-components.md) | Relationships are plain components in v0.1 |
 | [0007](adr/0007-monorepo-and-licensing.md) | Monorepo now, split at publish; MIT licence |
 | [0008](adr/0008-subclass-resolution-on-read.md) | Resolve `model` to a subclass via `discriminate_class_for_record` |
+| [0009](adr/0009-component-presence.md) | Component presence is explicit; markers work through it |
 
 ## RFCs — the v0.1 build order
 
@@ -39,6 +40,7 @@ Each RFC is one commit. Each commit compiles and passes tests.
 | [0005](rfc/0005-method-delegation.md) | Method delegation | 0004, **0006** ✅ |
 | [0007](rfc/0007-validation-error-merging.md) | Validation error merging | 0006 ✅ |
 | [0008](rfc/0008-generators.md) | Install + component generators | 0001, 0003 ✅ |
+| [0009](rfc/0009-component-presence.md) | Component presence (add/has?/remove) | 0004, 0006 ✅ |
 
 RFC-0001 and 0002 are independent and can be built in parallel.
 

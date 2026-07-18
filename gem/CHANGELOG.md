@@ -8,6 +8,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Component presence (RFC-0009). `entity.add(Component)` / `entity.has?(Component)` /
+  `entity.remove(Component)` and a generated `entity.<component>?` predicate, so
+  marker components (Moderator, Administrator) — which carry no state and so are
+  never persisted by the lazy save cascade — work.
 - Validation error merging (RFC-0007). `entity.valid?` reflects its touched
   components' validity; component errors merge under `entity.errors[:"email.address"]`
   and read naturally in a form. A non-dirty virtual component is not validated.
