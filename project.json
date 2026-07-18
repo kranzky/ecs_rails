@@ -50,6 +50,13 @@
       "humanMinutes": 15,
       "aiMinutes": 130,
       "costs": []
+    },
+    {
+      "date": "2026-07-18",
+      "summary": "Demo phase (models + sharp cases), driven iteratively with a friction log as the deliverable \u2014 the v0.1 kill/keep question of whether modelling with components is pleasant. Modelled the whole bulletin board (Users, Posts, Comments, Groups, Memberships) against the finished gem. The verdict: the core claims hold cleanly \u2014 shared component types with shared behaviour (Likes on Post+Comment, Name on User+Group), relationship components, and the join-entity pattern for many-to-many all just work. The demo drove two real gem improvements. First, a \ud83d\udd34 infinite-recursion bug: the gem's OWN ADR-0006 example (class Author; belongs_to :author) stack-overflowed, because the component reader `author` and the delegated belongs_to `author` collided and the delegation silently overwrote the reader with a method that called itself; fixed to raise a reader collision at declaration (ADR-0004 stance), and the fix pointed at a nicer model (name the component Authorship, the association author, so post.author returns the User). Second, a \ud83d\udd34 blocker for the proposal's 'No STI' headline: marker components (Moderator/Administrator) have no state, so the lazy cascade never persists them and user.moderator; user.save! silently did nothing. Added a first-class presence API (ADR-0009/RFC-0009): entity.add/has?/remove plus a generated entity.<component>? predicate. Markers now work \u2014 a user is a moderator exactly when the row exists. Also decided to keep attribute auto-delegation automatic (collisions raise loudly, so except:-on-both is the documented pattern) rather than make it opt-in. Gem at 424 examples green. Two ADRs amended by their own demo: ADR-0006 (relationship naming) and ADR-0009 (predicate collisions defer, not raise). Next: optionally build controllers/views, or consolidate.",
+      "humanMinutes": 30,
+      "aiMinutes": 240,
+      "costs": []
     }
   ]
 }
