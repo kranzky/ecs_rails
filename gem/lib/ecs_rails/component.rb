@@ -28,6 +28,12 @@ module EcsRails
   class Component < ActiveRecord::Base
     self.abstract_class = true
 
+    # Lazy / virtual components (RFC-0006), from the component's side: what
+    # "dirty" means — the question that decides whether this component is worth
+    # a row — and the after_destroy that resets its entity's reader back to a
+    # virtual instance (architecture.md §3).
+    include Lazy::Component
+
     # Every component belongs to exactly one entity (architecture.md §1).
     #
     # The association targets the abstract ApplicationEntity, which has no table

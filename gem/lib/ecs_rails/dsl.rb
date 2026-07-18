@@ -13,25 +13,23 @@ module EcsRails
   #   end
   #
   #   User.components            # => [Name, Email, Group]
-  #   User.create!.email         # => the Email row, or nil (see #component)
+  #   User.create!.email         # => the Email row, or a virtual one (RFC-0006)
   #
   # Each declaration does three things: it records itself in the registry
   # (RFC-0002), it sets up the has_one that reads the component row, and it
-  # ensures #generated_component_methods exists — the module RFC-0005's delegated
-  # methods and RFC-0006's lazy reader are generated into.
+  # generates the lazy reader (RFC-0006) into #generated_component_methods —
+  # the module RFC-0005's delegated methods also land in.
   module DSL
     # Declares that this entity is composed from `component_class`.
     #
     # Defines a reader named for the component's model_name.singular, so
     # `component Email` gives `#email`.
     #
-    # **The reader returns nil when the entity has no row for the component.**
-    # RFC-0004 says it materialises an instance lazily, but that is RFC-0006's
-    # job, and RFC-0006 is a sibling of RFC-0005 on top of this RFC rather than a
-    # dependency of it — so this cannot rely on it. Until RFC-0006 lands the
-    # reader is ActiveRecord's own has_one reader and the gem does not yet meet
-    # architecture.md §3 ("entity.email always returns an Email instance"). See
-    # the "the reader" section of spec/dsl_spec.rb.
+    # **The reader always returns an instance, never nil** (architecture.md §3).
+    # If the entity has no row for the component, a virtual one is built with
+    # every attribute at its default. That is RFC-0006's doing, layered on top of
+    # this RFC through #generated_component_methods rather than woven into it —
+    # see #define_component_reader.
     #
     # `only:` / `except:` restrict which of the component's methods are delegated
     # onto the entity (RFC-0005). They never affect the reader: `user.group`
@@ -60,6 +58,15 @@ module EcsRails
       options = normalized_delegation_options(only: only, except: except)
       validate_not_inherited!(component_class)
 
+      # RFC-0005 is resolved *before* anything is registered or defined, so that
+      # a bad `only:`/`except:` name or a DelegationConflict leaves the class in
+      # exactly the state it was in. #delegated_method_names validates the option
+      # names against the component's real method set (ArgumentError on a typo);
+      # #detect_delegation_conflict! raises DelegationConflict (ADR-0004) if any
+      # of those names is already delegated by a sibling component.
+      delegated = delegated_method_names(component_class, options)
+      detect_delegation_conflict!(component_class, delegated)
+
       # Registered first, so that the registry's own duplicate check (RFC-0002)
       # is what stops a doubled `component` line — before any method is defined.
       declaration = EcsRails.registry.register(
@@ -71,7 +78,10 @@ module EcsRails
       define_component_association(component_class)
 
       # Must follow the has_one: see #generated_component_methods.
-      generated_component_methods
+      define_component_reader(component_class)
+
+      # RFC-0005: the delegating methods, into the same module as the reader.
+      define_component_delegation(component_class, delegated)
 
       declaration
     end
@@ -142,6 +152,215 @@ module EcsRails
       end
 
       chain
+    end
+
+    # The lazy reader (RFC-0006), generated into the seam this DSL already
+    # builds: generated_component_methods sits closer to the class than
+    # ActiveRecord's GeneratedAssociationMethods, so this wins, and `super`
+    # reaches the has_one reader underneath. Nothing else moves.
+    #
+    # `super()` with explicit parens is required, not style: a method defined by
+    # define_method cannot use bare `super`, because there is no static argument
+    # list for it to forward.
+    #
+    # The reader is generated per component rather than defined once on
+    # Lazy::Entity because there is nothing generic to define — each one closes
+    # over its own name and its own has_one to call through to.
+    def define_component_reader(component_class)
+      name = component_class.model_name.singular.to_sym
+
+      generated_component_methods.define_method(name) do
+        ecs_component(name) { super() }
+      end
+    end
+
+    # RFC-0005: generates one delegating method on the entity, per name in the
+    # delegated set, into the same module the reader lives in.
+    #
+    # The methods live in generated_component_methods (an *included* module), so
+    # a method defined directly on the entity class shadows them by Ruby's own
+    # lookup — which is exactly ADR-0004's "a method on the entity itself wins
+    # silently, no conflict". No special-casing here achieves that.
+    #
+    # Each generated method calls the entity's own component reader (`email`),
+    # so it goes through RFC-0006's memo and reaches the one instance the save
+    # cascade will later persist — the seam that makes `user.address = "x";
+    # user.save!` write a single row. It does *not* rebind self or instance_exec
+    # (ADR-0001): it forwards the call, so `self` inside the component method is
+    # the component, never the entity.
+    #
+    # *args, **kwargs and &block are all forwarded untouched (RFC-0005).
+    def define_component_delegation(component_class, delegated)
+      reader = component_class.model_name.singular.to_sym
+      mod = generated_component_methods
+
+      delegated.each do |method_name|
+        mod.define_method(method_name) do |*args, **kwargs, &block|
+          public_send(reader).public_send(method_name, *args, **kwargs, &block)
+        end
+      end
+    end
+
+    # RFC-0005: the set of method names delegated for one component, after
+    # `only:`/`except:` are applied. Also the place their names are validated —
+    # RFC-0004 stored them but never checked they name anything real.
+    #
+    # `only:` keeps the named members; `except:` drops them. Both are attribute
+    # aware: naming an attribute (`:title`) covers both its reader and its writer
+    # (`:title`, `:title=`), so `except: [:title]` fully resolves a `#title`
+    # conflict rather than leaving `#title=` still clashing. The RFC's own
+    # resolution test — `component Group, except: [:title]` with no error —
+    # requires exactly this; a literal-name filter would still raise on `#title=`.
+    def delegated_method_names(component_class, options)
+      full = delegable_methods(component_class)
+      pairs = attribute_accessor_index(component_class, full)
+
+      if (only = options[:only])
+        validate_delegation_names!(component_class, only, full, pairs, :only)
+        full & expand_delegation_names(only, pairs)
+      elsif (except = options[:except])
+        validate_delegation_names!(component_class, except, full, pairs, :except)
+        full - expand_delegation_names(except, pairs)
+      else
+        full
+      end
+    end
+
+    # The full delegable set for a component, before `only:`/`except:`.
+    #
+    # "Methods the component itself declares" is the fiddly part (RFC-0005 says
+    # so), and neither obvious shape is right on its own:
+    #
+    #   - instance_methods(false) misses methods gained from included modules
+    #     (Name#initials comes from Nameable) and misses attribute accessors.
+    #   - instance_methods minus EcsRails::Component's picks up module methods,
+    #     but once ActiveRecord has lazily generated a component's attribute
+    #     methods it also drags in every dirty-tracking helper — address_was,
+    #     address_changed?, saved_change_to_address?, and a hundred more.
+    #
+    # So behaviour and attributes are computed separately and unioned:
+    #
+    #   behaviour  = public instance methods, minus everything Component and its
+    #                ancestors define, minus the AR-generated attribute module
+    #                (which is where all those helpers live). What remains is the
+    #                methods the component genuinely wrote — send_welcome_email,
+    #                who_am_i, full_name, initials.
+    #   accessors  = a reader and writer for each attribute the component owns.
+    #
+    # generated_attribute_methods is private ActiveRecord API. The gem already
+    # depends on AR internals with tests pinning them (ADR-0008's
+    # instantiate_instance_of; architecture.md open question 9), and this is the
+    # same bargain: pinned by the exact-set tests in delegation_spec, so a Rails
+    # upgrade that moved these methods fails loudly rather than silently widening
+    # what an entity delegates.
+    def delegable_methods(component_class)
+      attr_module = component_class.send(:generated_attribute_methods)
+
+      behaviour = component_class.public_instance_methods(true) -
+                  EcsRails::Component.public_instance_methods(true) -
+                  attr_module.instance_methods(false)
+
+      accessors = component_class.attribute_names.flat_map do |attribute|
+        [attribute.to_sym, :"#{attribute}="]
+      end
+
+      ((behaviour + accessors).uniq - never_delegated(component_class)).sort
+    end
+
+    # Identity, not state: never delegated (RFC-0005). The primary key, the
+    # entity_id foreign key, and the component timestamps — with their writers —
+    # plus the :entity association (already excluded via the Component subtraction
+    # above, restated here so the boundary is explicit rather than incidental).
+    def never_delegated(component_class)
+      attributes = [component_class.primary_key, "entity_id", "created_at", "updated_at"]
+
+      attributes.flat_map { |attribute| [attribute.to_sym, :"#{attribute}="] } +
+        %i[entity entity=]
+    end
+
+    # Maps each delegable attribute to its accessor pair, so `only:`/`except:`
+    # can be attribute aware. Keyed by the reader symbol; the value is whichever
+    # of [reader, writer] actually survived into the delegable set.
+    def attribute_accessor_index(component_class, full)
+      component_class.attribute_names.each_with_object({}) do |attribute, index|
+        reader = attribute.to_sym
+        writer = :"#{attribute}="
+        pair = [reader, writer].select { |name| full.include?(name) }
+        index[reader] = pair unless pair.empty?
+      end
+    end
+
+    # Expands `only:`/`except:` names to the concrete methods they name. An
+    # attribute name — whether given as `:title` or `:title=` — expands to its
+    # whole accessor pair; anything else is taken literally.
+    def expand_delegation_names(names, pairs)
+      names.flat_map do |name|
+        base = name.to_s.chomp("=").to_sym
+        pairs.key?(base) ? pairs[base] : [name]
+      end.uniq
+    end
+
+    # RFC-0005 / RFC-0004: `only:`/`except:` names were stored but never checked.
+    # A name that matches nothing the component delegates is almost certainly a
+    # typo — and a silent no-op here is precisely the action-at-a-distance
+    # ADR-0004 exists to stop (a mistyped `except:` fails to resolve a conflict;
+    # a mistyped `only:` delegates nothing). So an unknown name raises at
+    # declaration time, naming the component and the offending method.
+    def validate_delegation_names!(component_class, names, full, pairs, keyword)
+      names.each do |name|
+        base = name.to_s.chomp("=").to_sym
+        next if full.include?(name) || pairs.key?(base)
+
+        raise ArgumentError,
+              "`#{keyword}: [:#{name}]` names #{component_class.name}##{name}, " \
+              "which #{component_class.name} does not delegate. Delegable methods: " \
+              "#{full.map { |m| "##{m}" }.join(', ')}."
+      end
+    end
+
+    # ADR-0004: two components on one entity delegating the same name is a
+    # DelegationConflict, raised here at declaration time — never a silent
+    # last-wins. Checked against every component already declared on this entity
+    # and its ancestors (the new one is not registered yet), so the message can
+    # name the sibling that got there first.
+    #
+    # Only component-vs-component overlaps count. An overlap with a method the
+    # entity itself defines is not a conflict: that method wins by Ruby's lookup
+    # (the generated module is included), which is ADR-0004's other half.
+    def detect_delegation_conflict!(component_class, delegated)
+      owners = {}
+      component_declarations.each do |declaration|
+        # A component never conflicts with itself: the same component declared
+        # twice on one entity is a DuplicateComponent (ADR-0005), which the
+        # registry raises on #register just after this check. Comparing it here
+        # would report a spurious "#address is defined by both Email and Email".
+        next if declaration.component_class_name == component_class.name
+
+        other = declaration.component_class
+        delegated_method_names(other, declaration.options).each do |name|
+          owners[name] ||= other
+        end
+      end
+
+      # Sort so the reader (`title`) is reported before its writer (`title=`) —
+      # "title" < "title=" — giving the tidier message and except: hint.
+      clash = delegated.select { |name| owners.key?(name) }.min_by(&:to_s)
+      return unless clash
+
+      raise DelegationConflict,
+            delegation_conflict_message(component_class, owners[clash], clash)
+    end
+
+    # The message ADR-0004 specifies: the method, both components, the entity,
+    # and the exact `except:` line that resolves it.
+    def delegation_conflict_message(new_component, existing_component, method)
+      attribute = method.to_s.chomp("=").to_sym
+      reader = new_component.model_name.singular
+
+      "##{method} is defined by both #{existing_component.name} and " \
+        "#{new_component.name} on #{name}. " \
+        "Disambiguate with `component #{new_component.name}, except: [:#{attribute}]` " \
+        "or call #{model_name.singular}.#{reader}.#{attribute} directly."
     end
 
     def define_component_association(component_class)

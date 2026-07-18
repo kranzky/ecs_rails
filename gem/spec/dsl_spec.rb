@@ -119,11 +119,11 @@ RSpec.describe "the component DSL" do
       expect(user.email).to eq email
     end
 
-    # DEFECT A, pinned. Delete this example when RFC-0006 lands; it is the
-    # inverse of RFC-0006's "returns a virtual component when no row exists".
-    it "returns nil when no row exists — until RFC-0006 makes it lazy" do
-      expect(User.create!.email).to be_nil
-    end
+    # DEFECT A is closed: RFC-0006 has landed, and the example that pinned the
+    # interim nil ("returns nil when no row exists — until RFC-0006 makes it
+    # lazy") is deleted rather than adjusted. Its replacement is
+    # spec/lazy_spec.rb's "returns a virtual component when no row exists",
+    # which asserts the inverse. The gem meets architecture.md §3 again.
 
     # RFC-0004: only:/except: restrict delegation (RFC-0005), never the reader.
     it "keeps the reader even when methods are excluded" do

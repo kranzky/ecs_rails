@@ -70,6 +70,11 @@ module EcsRails
 
     include ImmutableIdentity
 
+    # Lazy / virtual components (RFC-0006): the memo behind every component
+    # reader, and the save cascade. The readers themselves are generated per
+    # component by the DSL, into generated_component_methods.
+    include Lazy::Entity
+
     # The `component` DSL (RFC-0004). Extended rather than defined here: RFC-0001
     # is about identity, and composition is a separate concern with its own file.
     # Singleton methods are inherited, so every entity subclass answers it.

@@ -30,14 +30,42 @@ class Email < ApplicationComponent
   end
 end
 
-class Name < ApplicationComponent
-  def full_name
-    [first, last].compact.join(" ")
+# A method mixed in from a module rather than defined in the class body. Pins
+# the fiddly part of RFC-0005: the delegated set is "methods the component
+# itself declares", which must include methods it gains from included modules —
+# Name.instance_methods(false) would miss #initials, so the computation cannot
+# be that. See EcsRails::DSL#delegable_methods.
+module Nameable
+  def initials
+    [first, last].compact.map { |part| part[0] }.join
   end
 end
 
-# Deliberately also defines #title, to exercise the delegation conflict in
-# ADR-0004 / RFC-0005 against Name.
+class Name < ApplicationComponent
+  include Nameable
+
+  def full_name
+    [first, last].compact.join(" ")
+  end
+
+  # A distinguishable return value so the conflict-resolution test can prove
+  # *which* component's #title survived `except:` (RFC-0005). Overrides the
+  # column reader; the writer #title= still comes from the column.
+  def title
+    "from Name"
+  end
+
+  # Takes positional args, a keyword arg and a block, so delegation can be shown
+  # to forward all three (RFC-0005: "forwards *args, **kwargs, and &block").
+  def combine(*parts, separator: "-", &block)
+    joined = parts.join(separator)
+    block ? block.call(joined) : joined
+  end
+end
+
+# Shares a #title accessor with Name (both have a `title` column, see
+# spec/support/schema.rb), to exercise the delegation conflict in
+# ADR-0004 / RFC-0005. User resolves it with `component Group, except: [:title]`.
 class Group < ApplicationComponent
 end
 

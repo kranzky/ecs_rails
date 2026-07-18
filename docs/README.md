@@ -35,13 +35,19 @@ Each RFC is one commit. Each commit compiles and passes tests.
 | [0002](rfc/0002-component-registry.md) | Component registry | — ✅ |
 | [0003](rfc/0003-application-component.md) | ApplicationComponent | 0001 ✅ |
 | [0004](rfc/0004-component-dsl.md) | The `component` DSL | 0002, 0003 ✅ |
-| [0005](rfc/0005-method-delegation.md) | Method delegation | 0004 |
-| [0006](rfc/0006-lazy-components.md) | Lazy components | 0004 |
+| [0006](rfc/0006-lazy-components.md) | Lazy components | 0004 ✅ |
+| [0005](rfc/0005-method-delegation.md) | Method delegation | 0004, **0006** ✅ |
 | [0007](rfc/0007-validation-error-merging.md) | Validation error merging | 0006 |
 | [0008](rfc/0008-generators.md) | Install + component generators | 0001, 0003 ✅ |
 
-RFC-0001 and 0002 are independent and can be built in parallel. 0005 and 0006
-both depend on 0004 and are independent of each other.
+RFC-0001 and 0002 are independent and can be built in parallel.
+
+**0005 depends on 0006, not just on 0004.** An earlier version of this index
+called them independent siblings; that was wrong. Delegation writers
+(`user.address = "x"` → `user.email.address = "x"`) need `user.email` to be an
+instance, and RFC-0004's reader returns `nil` — so delegation would raise
+`NoMethodError` on nil. They also both target the same
+`generated_component_methods` seam. Build 0006 first.
 
 ## Layout
 
