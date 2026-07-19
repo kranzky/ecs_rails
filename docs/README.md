@@ -26,6 +26,7 @@ Rails.
 | [0008](adr/0008-subclass-resolution-on-read.md) | Resolve `model` to a subclass via `discriminate_class_for_record` |
 | [0009](adr/0009-component-presence.md) | Component presence is explicit; markers work through it |
 | [0010](adr/0010-entity-component-directory-layout.md) | Entities in app/entities, components in app/entities/components |
+| [0011](adr/0011-component-query-dsl.md) | Component query DSL — with_component / without_component |
 
 ## RFCs — the v0.1 build order
 
@@ -42,6 +43,7 @@ Each RFC is one commit. Each commit compiles and passes tests.
 | [0007](rfc/0007-validation-error-merging.md) | Validation error merging | 0006 ✅ |
 | [0008](rfc/0008-generators.md) | Install + component generators | 0001, 0003 ✅ |
 | [0009](rfc/0009-component-presence.md) | Component presence (add/has?/remove) | 0004, 0006 ✅ |
+| [0010](rfc/0010-component-query-dsl.md) | Component query DSL (with_component/without_component) | 0001, 0003 ✅ |
 
 RFC-0001 and 0002 are independent and can be built in parallel.
 

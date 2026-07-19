@@ -8,6 +8,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Component query DSL (RFC-0010). `Entity.with_component(Component, **conditions)` /
+  `Entity.without_component(Component)` query entities by which components they
+  have, compiling to correlated `EXISTS` / `NOT EXISTS` subqueries that apply the
+  entity-model scope automatically (a shared component can't leak across entity
+  types). Chainable with ordinary ActiveRecord. Avoids `.with` (AR's CTEs).
 - Component presence (RFC-0009). `entity.add(Component)` / `entity.has?(Component)` /
   `entity.remove(Component)` and a generated `entity.<component>?` predicate, so
   marker components (Moderator, Administrator) — which carry no state and so are

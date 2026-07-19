@@ -11,6 +11,7 @@ require "ecs_rails/lazy"
 require "ecs_rails/presence"
 require "ecs_rails/validations"
 require "ecs_rails/dsl"
+require "ecs_rails/querying"
 require "ecs_rails/entity"
 require "ecs_rails/component"
 

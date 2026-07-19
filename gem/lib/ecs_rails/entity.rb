@@ -94,6 +94,14 @@ module EcsRails
     # Singleton methods are inherited, so every entity subclass answers it.
     extend DSL
 
+    # The component query DSL (RFC-0010): with_component / without_component.
+    # Extended as class methods so every entity subclass answers them, and so
+    # ActiveRecord delegates them to relations (`Post.where(...).with_component`).
+    # They compile to correlated EXISTS / NOT EXISTS subqueries and rely on
+    # running against the class's own default-scoped relation — see
+    # docs/adr/0011-component-query-dsl.md.
+    extend Querying
+
     # Immutable identity (architecture.md §1). Beyond the guard above, this is
     # what excludes id and model from any UPDATE statement.
     attr_readonly :id, :model
