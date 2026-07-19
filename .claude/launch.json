@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "demo",
+      "runtimeExecutable": "/bin/bash",
+      "runtimeArgs": ["-c", "export PATH=\"$HOME/.rbenv/shims:$PATH\"; cd /Users/kranzky/dev/lean-machine/project-025-rorecs/demo && exec bin/rails server -p 3021"],
+      "port": 3021
+    }
+  ]
+}

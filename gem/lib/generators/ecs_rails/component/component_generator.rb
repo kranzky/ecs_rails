@@ -14,6 +14,11 @@ require "rails/generators/active_record/migration"
 # generator should have.
 require "active_support/core_ext/string/filters"
 
+# ADR-0010: the generator reads EcsRails.config to place its model and spec.
+# Require the library explicitly so the generator stands on its own requires
+# (see RFC-0008's isolation note and generator_isolation_spec.rb).
+require "ecs_rails"
+
 module EcsRails
   module Generators
     # `rails g ecs_rails:component NAME [field:type ...]`
@@ -42,13 +47,21 @@ module EcsRails
         )
       end
 
+      # ADR-0010: the model lands under the configured components_path
+      # (entities_path/components), not app/models. class_path is preserved so a
+      # namespaced component (rails g ecs_rails:component Billing/Plan) still
+      # nests correctly.
       def create_model_file
-        template "model.rb.tt", File.join("app/models", class_path, "#{file_name}.rb")
+        template "model.rb.tt",
+                 File.join(EcsRails.config.components_path, class_path, "#{file_name}.rb")
       end
 
+      # ADR-0010: the spec mirrors the layout under spec/entities/components. Its
+      # template declares `type: :model` explicitly, because rspec-rails only
+      # infers that from spec/models/ — which this path no longer matches.
       def create_spec_file
         template "component_spec.rb.tt",
-                 File.join("spec/models", class_path, "#{file_name}_spec.rb")
+                 File.join("spec/entities/components", class_path, "#{file_name}_spec.rb")
       end
 
       private

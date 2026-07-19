@@ -3,7 +3,10 @@
 require "rails_helper"
 
 <% module_namespacing do -%>
-RSpec.describe <%= class_name %> do
+# type: :model is declared explicitly because this spec lives under
+# spec/entities/components, not spec/models — and rspec-rails only infers
+# :model metadata from spec/models/. See ADR-0010.
+RSpec.describe <%= class_name %>, type: :model do
   it "is virtual until dirtied" do
     # A component with no row reports its defaults and does not persist.
     # See RFC-0006.

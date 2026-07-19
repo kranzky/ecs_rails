@@ -1,0 +1,20 @@
+<% content_for :title, "Bulletin Board" %>
+<h1>Bulletin Board</h1>
+<p><%= link_to "New post", new_post_path %></p>
+
+<% if @posts.empty? %>
+  <p>No published posts yet.</p>
+<% else %>
+  <ul class="posts">
+    <% @posts.each do |post| %>
+      <li>
+        <h2><%= link_to post.title.text, post %></h2>
+        <p class="meta">
+          by <%= post.author&.name&.first || "Unknown" %>
+          &middot; <%= post.likes.count || 0 %> likes
+        </p>
+        <p><%= truncate(post.body.text.to_s, length: 120) %></p>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

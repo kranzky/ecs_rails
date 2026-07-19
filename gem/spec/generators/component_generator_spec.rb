@@ -94,27 +94,51 @@ RSpec.describe EcsRails::Generators::ComponentGenerator, type: :generator do
     end
 
     it "still creates the model" do
-      expect(file("app/models/email.rb")).to match(/class Email < ApplicationComponent/)
+      expect(file("app/entities/components/email.rb")).to match(/class Email < ApplicationComponent/)
     end
   end
 
+  # ADR-0010: the model lands under app/entities/components, not app/models.
   describe "the model" do
     before { run_generator %w[Email address:string] }
 
-    it "subclasses ApplicationComponent" do
-      expect(file("app/models/email.rb")).to match(/class Email < ApplicationComponent/)
+    it "is created under app/entities/components" do
+      expect(file("app/entities/components/email.rb")).to match(/class Email < ApplicationComponent/)
     end
   end
 
+  # ADR-0010: the spec mirrors the layout under spec/entities/components and must
+  # declare type: :model explicitly, since rspec-rails only infers that from
+  # spec/models/.
   describe "the spec file" do
     before { run_generator %w[Email address:string] }
 
-    it "is created" do
-      expect(file?("spec/models/email_spec.rb")).to be(true)
+    it "is created under spec/entities/components" do
+      expect(file?("spec/entities/components/email_spec.rb")).to be(true)
     end
 
     it "describes the component" do
-      expect(file("spec/models/email_spec.rb")).to match(/RSpec\.describe Email/)
+      expect(file("spec/entities/components/email_spec.rb")).to match(/RSpec\.describe Email/)
+    end
+
+    it "declares type: :model explicitly" do
+      expect(file("spec/entities/components/email_spec.rb"))
+        .to match(/RSpec\.describe Email, type: :model/)
+    end
+  end
+
+  # ADR-0010's escape hatch: entities_path = "app/models" relocates generated
+  # files. Components then live in app/models/components (components_path is
+  # always entities_path/components).
+  describe "with entities_path overridden to app/models" do
+    before do
+      EcsRails.configure { |c| c.entities_path = "app/models" }
+      run_generator %w[Email address:string]
+    end
+
+    it "writes the model under app/models/components" do
+      expect(file("app/models/components/email.rb"))
+        .to match(/class Email < ApplicationComponent/)
     end
   end
 

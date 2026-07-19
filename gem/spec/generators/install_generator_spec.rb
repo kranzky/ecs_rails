@@ -53,27 +53,79 @@ RSpec.describe EcsRails::Generators::InstallGenerator, type: :generator do
     end
   end
 
+  # ADR-0010: base classes land under the configured layout — entities at
+  # app/entities, components at app/entities/components.
   describe "the base models" do
     before { run_generator }
 
-    it "creates ApplicationEntity subclassing EcsRails::Entity" do
-      expect(file("app/models/application_entity.rb"))
+    it "creates ApplicationEntity under app/entities" do
+      expect(file("app/entities/application_entity.rb"))
         .to match(/class ApplicationEntity < EcsRails::Entity/)
     end
 
     it "marks ApplicationEntity abstract" do
-      expect(file("app/models/application_entity.rb"))
+      expect(file("app/entities/application_entity.rb"))
         .to match(/self\.abstract_class = true/)
     end
 
-    it "creates ApplicationComponent subclassing EcsRails::Component" do
-      expect(file("app/models/application_component.rb"))
+    it "creates ApplicationComponent under app/entities/components" do
+      expect(file("app/entities/components/application_component.rb"))
         .to match(/class ApplicationComponent < EcsRails::Component/)
     end
 
     it "marks ApplicationComponent abstract" do
-      expect(file("app/models/application_component.rb"))
+      expect(file("app/entities/components/application_component.rb"))
         .to match(/self\.abstract_class = true/)
+    end
+  end
+
+  # ADR-0010: install writes config/initializers/ecs_rails.rb, which both records
+  # the layout and collapses the nested components directory for Zeitwerk.
+  describe "the initializer" do
+    subject(:contents) { file("config/initializers/ecs_rails.rb") }
+
+    before { run_generator }
+
+    it "is created" do
+      expect(file?("config/initializers/ecs_rails.rb")).to be(true)
+    end
+
+    it "sets entities_path to the default layout" do
+      expect(contents).to match(/EcsRails\.configure do \|config\|/)
+      expect(contents).to match(/config\.entities_path = "app\/entities"/)
+    end
+
+    it "collapses the components directory for Zeitwerk" do
+      expect(contents).to match(
+        /Rails\.autoloaders\.main\.collapse\(/
+      )
+      expect(contents).to match(
+        /Rails\.root\.join\(EcsRails\.config\.entities_path, "components"\)/
+      )
+    end
+  end
+
+  # ADR-0010's escape hatch: setting entities_path relocates the base classes.
+  # (The initializer reflects the chosen path in its literal entities_path line.)
+  describe "with entities_path overridden to app/models" do
+    before do
+      EcsRails.configure { |c| c.entities_path = "app/models" }
+      run_generator
+    end
+
+    it "creates ApplicationEntity under app/models" do
+      expect(file("app/models/application_entity.rb"))
+        .to match(/class ApplicationEntity < EcsRails::Entity/)
+    end
+
+    it "creates ApplicationComponent under app/models/components" do
+      expect(file("app/models/components/application_component.rb"))
+        .to match(/class ApplicationComponent < EcsRails::Component/)
+    end
+
+    it "echoes the overridden path into the initializer" do
+      expect(file("config/initializers/ecs_rails.rb"))
+        .to match(/config\.entities_path = "app\/models"/)
     end
   end
 end

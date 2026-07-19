@@ -205,3 +205,99 @@ the `Authorship` naming rule from ADR-0006 applies: name the association for the
 target so `membership.user` / `membership.group` still read naturally. A
 papercut in translating the proposal, not a gem problem — worth a note in the
 eventual relationship-DSL RFC, which could let `relates_to :user, User` hide it.
+
+---
+
+## Controllers & views
+
+### 🟠 No component query DSL, and `.with` is already taken — 2026-07-18
+
+The first thing a controller needs is "all published posts". The proposal writes
+this as `Post.with(PublishState)`. Two problems:
+
+1. **There is no query DSL** — `.with` / `.without` are backlog, not built. So
+   the query is hand-rolled across the entity/component split:
+
+   ```ruby
+   ids = PublishState.where(state: "published").pluck(:entity_id)
+   Post.where(id: ids)
+   ```
+
+   Two queries and a manual `pluck`. Workable, and encapsulating it in a
+   `Post.published` scope-like class method hides it — but it is exactly the
+   boilerplate the proposal's `.with` was meant to remove, and every list view
+   needs it.
+
+2. **`Post.with` already exists and means something else.** `ActiveRecord::Relation#with`
+   is Common Table Expressions (Rails 7.1+). `Post.respond_to?(:with)` is `true`
+   today. So the proposal's headline query syntax **collides with ActiveRecord**
+   — a component query DSL cannot reuse `.with` without shadowing CTE support.
+   The eventual RFC needs a different verb (`having_component`, `with_component`,
+   `composed_of`… tbd) or a scoped namespace (`Post.components.with(...)`).
+
+3. **The hand-rolled query is correct only by accident of the entity's
+   default_scope — a real trap.** `PublishState.where(state: "published")` is
+   blind to entity type: it matches published PublishStates on *any* entity that
+   has one, and the proposal shares PublishState with Group. `Post.published`
+   still returns only posts, but purely because the outer `Post.where(id: …)`
+   contributes `model = 'posts'` (ADR-0002). Demonstrated: a published Group's
+   `entity_id` is in the inner result, yet `Post.published` excludes it. Refactor
+   to `ApplicationEntity.where(id:)` or call `Post.unscoped.published` and it
+   silently leaks Groups. So a hand-rolled cross-component query is not just
+   verbose — its correctness reasoning is non-obvious and easy to break.
+
+**Design requirement this hands the query DSL:** `with_component(PublishState,
+state: "published")` (or whatever the verb) must apply the entity-model scope
+*itself*, so the caller never has to know the outer scope is load-bearing. Get
+this wrong and every such query is a latent cross-entity leak.
+
+This is the single strongest pull toward building the query DSL, and it's the
+proposal's hardest feature (a cross-table planner). Logged as the top backlog
+item; building the vertical slice with the hand-rolled workaround for now so the
+friction is concrete before designing the DSL.
+
+### 🟢 app/entities layout — 2026-07-19
+
+Not friction — a proactive layout improvement. Moved entities to `app/entities`
+and components to `app/entities/components`, leaving `app/models` for ordinary
+Rails models. Cost: one `collapse` line in a generated initializer. Verified
+under eager loading; zero runtime change (class names unchanged, so the registry
+and discriminator don't notice). Now the gem default —
+[ADR-0010](adr/0010-entity-component-directory-layout.md). Confirms the gem is
+genuinely layout-agnostic: where a class lives is purely organisational.
+
+### 🟠 N+1 by default in list views — 2026-07-19
+
+The posts index (2 published posts) issued **14 queries**: each post separately
+loads Title, Body, Authorship, the author User, its Name, and Likes. This is
+architecture.md open question 1 (no preloading) made concrete, and it is very
+visible — a component-per-row list view fans out one query per component per
+row. For a real feed this is untenable without preloading
+(`includes_components`), which is backlog. The single strongest case for it
+after the query DSL.
+
+### 🟡 Building an entity from form params is manual — 2026-07-19
+
+A normal Rails controller does `Post.new(post_params)`. With components there is
+no mass-assignment across the split, so `create` assigns component by component:
+
+```ruby
+post.title.text = post_params[:title]
+post.body.text  = post_params[:body]
+post.author     = author
+post.publish_state.state = ...
+```
+
+Delegation helps where an attribute is delegated (`post.author =`), but any
+component reached via `except:` (Title/Body's `text`) is hand-assigned. Workable
+and explicit, but it's boilerplate Rails developers won't expect, and strong
+params (`permit(:title, :body)`) no longer line up 1:1 with the model. A
+`post.assign_components(title: {text: ...}, ...)` helper or nested-attributes
+support is a plausible future convenience. Logged, not urgent.
+
+### 🟢 The full request cycle works — 2026-07-19
+
+Index (cross-component query), show (delegated reads), new/create (params →
+components, validation error merging in the form), and like (component behaviour
+`likes.increment!` through a button) all work end to end against a running
+server. The gem holds up in a real Rails request cycle, not just in the console.

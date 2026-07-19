@@ -1,0 +1,12 @@
+<% content_for :title, @post.title.text %>
+<p><%= link_to "← Back", posts_path %></p>
+<article>
+  <h1><%= @post.title.text %></h1>
+  <p class="meta">
+    by <%= @post.author&.name&.first || "Unknown" %>
+    &middot; <%= @post.publish_state.state %>
+    &middot; <%= @post.likes.count || 0 %> likes
+  </p>
+  <div class="body"><%= simple_format(@post.body.text) %></div>
+  <%= button_to "Like", post_like_path(@post), method: :post %>
+</article>

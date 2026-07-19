@@ -25,6 +25,7 @@ Rails.
 | [0007](adr/0007-monorepo-and-licensing.md) | Monorepo now, split at publish; MIT licence |
 | [0008](adr/0008-subclass-resolution-on-read.md) | Resolve `model` to a subclass via `discriminate_class_for_record` |
 | [0009](adr/0009-component-presence.md) | Component presence is explicit; markers work through it |
+| [0010](adr/0010-entity-component-directory-layout.md) | Entities in app/entities, components in app/entities/components |
 
 ## RFCs — the v0.1 build order
 

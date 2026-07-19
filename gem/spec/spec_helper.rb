@@ -23,6 +23,14 @@ require_relative "support/models"
 # seals it centrally, so no spec can leak a cleared registry to the next.
 ECS_RAILS_REGISTRY_BASELINE = EcsRails.registry.snapshot.freeze
 
+# EcsRails.config (ADR-0010) is a process-wide singleton, exactly like the
+# registry. The generator specs — and the config spec — mutate entities_path to
+# prove the escape hatch and the derived components_path, which would leak the
+# changed layout into every example that ran afterwards and make the suite
+# order-dependent. Restoring the pristine default after every example seals it
+# centrally, the same way the registry baseline above does.
+ECS_RAILS_CONFIG_DEFAULT_ENTITIES_PATH = EcsRails.config.entities_path.dup.freeze
+
 RSpec.configure do |config|
   config.expect_with(:rspec) { |c| c.syntax = :expect }
   config.disable_monkey_patching!
@@ -30,6 +38,7 @@ RSpec.configure do |config|
   Kernel.srand config.seed
 
   config.after { EcsRails.registry.restore(ECS_RAILS_REGISTRY_BASELINE) }
+  config.after { EcsRails.config.entities_path = ECS_RAILS_CONFIG_DEFAULT_ENTITIES_PATH.dup }
 
   # Every example runs in a transaction that is rolled back afterwards.
   #
