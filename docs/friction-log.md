@@ -256,6 +256,24 @@ proposal's hardest feature (a cross-table planner). Logged as the top backlog
 item; building the vertical slice with the hand-rolled workaround for now so the
 friction is concrete before designing the DSL.
 
+**Resolved (2026-07-19) — [ADR-0011](adr/0011-component-query-dsl.md) /
+[RFC-0010](rfc/0010-component-query-dsl.md).** Added `with_component` /
+`without_component`:
+
+```ruby
+def self.published
+  with_component(PublishState, state: "published").order(created_at: :desc)
+end
+```
+
+Both concerns are handled: the verbs avoid AR's `.with`/`.without` (both taken),
+and the entity-model scope is applied automatically — the DSL compiles to a
+correlated `EXISTS` on the entity's own default-scoped relation, so the shared
+PublishState can't leak from Group into `Post.published`. Verified in the demo:
+the index renders the two published posts, excludes the draft, and a published
+Group does not leak in. The hand-rolled subquery and its implicit-scope trap are
+gone.
+
 ### 🟢 app/entities layout — 2026-07-19
 
 Not friction — a proactive layout improvement. Moved entities to `app/entities`
