@@ -239,3 +239,13 @@ This is the single strongest pull toward building the query DSL, and it's the
 proposal's hardest feature (a cross-table planner). Logged as the top backlog
 item; building the vertical slice with the hand-rolled workaround for now so the
 friction is concrete before designing the DSL.
+
+### 🟢 app/entities layout — 2026-07-19
+
+Not friction — a proactive layout improvement. Moved entities to `app/entities`
+and components to `app/entities/components`, leaving `app/models` for ordinary
+Rails models. Cost: one `collapse` line in a generated initializer. Verified
+under eager loading; zero runtime change (class names unchanged, so the registry
+and discriminator don't notice). Now the gem default —
+[ADR-0010](adr/0010-entity-component-directory-layout.md). Confirms the gem is
+genuinely layout-agnostic: where a class lives is purely organisational.
