@@ -235,6 +235,22 @@ this as `Post.with(PublishState)`. Two problems:
    The eventual RFC needs a different verb (`having_component`, `with_component`,
    `composed_of`… tbd) or a scoped namespace (`Post.components.with(...)`).
 
+3. **The hand-rolled query is correct only by accident of the entity's
+   default_scope — a real trap.** `PublishState.where(state: "published")` is
+   blind to entity type: it matches published PublishStates on *any* entity that
+   has one, and the proposal shares PublishState with Group. `Post.published`
+   still returns only posts, but purely because the outer `Post.where(id: …)`
+   contributes `model = 'posts'` (ADR-0002). Demonstrated: a published Group's
+   `entity_id` is in the inner result, yet `Post.published` excludes it. Refactor
+   to `ApplicationEntity.where(id:)` or call `Post.unscoped.published` and it
+   silently leaks Groups. So a hand-rolled cross-component query is not just
+   verbose — its correctness reasoning is non-obvious and easy to break.
+
+**Design requirement this hands the query DSL:** `with_component(PublishState,
+state: "published")` (or whatever the verb) must apply the entity-model scope
+*itself*, so the caller never has to know the outer scope is load-bearing. Get
+this wrong and every such query is a latent cross-entity leak.
+
 This is the single strongest pull toward building the query DSL, and it's the
 proposal's hardest feature (a cross-table planner). Logged as the top backlog
 item; building the vertical slice with the hand-rolled workaround for now so the

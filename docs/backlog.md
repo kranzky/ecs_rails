@@ -10,12 +10,30 @@ justifies it. "It's in the proposal" is not justification.
 
 ## Strong candidates — the demo will likely force these
 
+**The demo forced the first two.** Both are now confirmed needs, not
+speculation — see [friction-log.md](friction-log.md).
+
 | Idea | Why it's deferred | What would trigger it |
 |---|---|---|
-| **Cross-component queries** — `Post.with(PublishState)`, `User.without(Avatar)` | The hardest thing in the proposal: a cross-table query planner. Also the most compelling. | The demo needing "all published posts" and finding raw joins unbearable. |
-| **Preloading** — `User.includes_components(:name, :email)` | v0.1 is N+1 by design (architecture.md open q. 1). | The demo's post index issuing 200 queries. |
+| **Cross-component queries** — the proposal's `Post.with(PublishState)`, `User.without(Avatar)` | The hardest thing in the proposal: a cross-table query planner. **CONFIRMED by the demo.** | ✅ Done — every list view needs it. |
+| **Preloading** — `User.includes_components(:name, :email)` | v0.1 is N+1 by design (architecture.md open q. 1). **CONFIRMED**: the 2-post index issued 14 queries. | ✅ Done — the index fans out one query per component per row. |
 | **Required components** — `component Email, required: true` | Directly in tension with [ADR-0003](adr/0003-virtual-components-skip-validation.md). | Repeatedly hand-writing the same entity-level presence validation. |
 | **Relationship DSL** — Flecs-style pairs, `relates_to :author, User` | [ADR-0006](adr/0006-relationships-are-plain-components.md) — no evidence yet what it should look like. | Author/Parent/Group in the demo all reinventing the same boilerplate. |
+
+### Hard requirements the demo handed the query DSL
+
+When the cross-component query RFC is written, it must:
+
+1. **Not reuse `.with`** — that is ActiveRecord's CTE method (Rails 7.1+), and
+   `Post.respond_to?(:with)` is already `true`. Pick a different verb
+   (`with_component`, `having_component`, …) or a namespace
+   (`Post.components.with(…)`).
+2. **Apply the entity-model scope itself.** A component table is shared across
+   entity types (PublishState on Post *and* Group), so a component query is blind
+   to entity type. The hand-rolled `Post.published` is correct only because the
+   outer `Post.where` contributes `model = 'posts'`; drop that and it leaks
+   Groups. The DSL must scope by the entity's model without the caller knowing,
+   or every query is a latent cross-entity leak.
 
 ## Speculative
 
