@@ -57,6 +57,13 @@
       "humanMinutes": 30,
       "aiMinutes": 240,
       "costs": []
+    },
+    {
+      "date": "2026-07-19",
+      "summary": "Built the component query DSL (with_component / without_component) \u2014 the proposal's hardest feature and the demo's #1 confirmed need. RFC-0010 + ADR-0011, implemented via a sub-agent, 457 gem examples green. Two demo-surfaced constraints drove the design and both are handled. First, verb naming: the proposal's .with and .without are BOTH already ActiveRecord methods (CTEs and the excluding alias), and even .composed_of is taken (aggregations) \u2014 so the whole proposed query syntax collides with Rails; the free, unambiguous with_component/without_component verbs are used instead. Second, cross-entity leakage: component tables are shared across entity types (PublishState on Post and Group), so a naive component query is blind to entity type; the DSL builds from the entity's own default-scoped relation and adds only a correlated EXISTS/NOT EXISTS, so the entity-model scope (model = 'posts') applies automatically and a shared component cannot leak. Proven with Name (shared by User and Post in the gem fixtures) and in the demo with PublishState shared into Group. EXISTS chosen over JOIN (no duplicate rows, clean AND composition, null-safe NOT EXISTS). Conditions are sanitized through AR's where (verified a quote-bearing payload is escaped, not executed). The demo's Post.published was rewritten from the hand-rolled subquery (whose correctness silently rode the default_scope, a trap caught in review) to with_component(PublishState, state: 'published'). This closes the top backlog item; preloading (N+1) remains the next confirmed need.",
+      "humanMinutes": 15,
+      "aiMinutes": 110,
+      "costs": []
     }
   ]
 }

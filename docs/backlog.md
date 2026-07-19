@@ -15,7 +15,7 @@ speculation — see [friction-log.md](friction-log.md).
 
 | Idea | Why it's deferred | What would trigger it |
 |---|---|---|
-| **Cross-component queries** — the proposal's `Post.with(PublishState)`, `User.without(Avatar)` | The hardest thing in the proposal: a cross-table query planner. **CONFIRMED by the demo.** | ✅ Done — every list view needs it. |
+| ~~**Cross-component queries**~~ | ✅ **Shipped** as `with_component`/`without_component` — [ADR-0011](adr/0011-component-query-dsl.md) / [RFC-0010](rfc/0010-component-query-dsl.md). | Done. |
 | **Preloading** — `User.includes_components(:name, :email)` | v0.1 is N+1 by design (architecture.md open q. 1). **CONFIRMED**: the 2-post index issued 14 queries. | ✅ Done — the index fans out one query per component per row. |
 | **Required components** — `component Email, required: true` | Directly in tension with [ADR-0003](adr/0003-virtual-components-skip-validation.md). | Repeatedly hand-writing the same entity-level presence validation. |
 | **Relationship DSL** — Flecs-style pairs, `relates_to :author, User` | [ADR-0006](adr/0006-relationships-are-plain-components.md) — no evidence yet what it should look like. | Author/Parent/Group in the demo all reinventing the same boilerplate. |
