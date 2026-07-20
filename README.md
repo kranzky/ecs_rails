@@ -3,9 +3,10 @@
 An Entity–Component–System reimagining of ActiveRecord that stays idiomatic to
 Ruby on Rails.
 
-> **Pre-alpha, not published.** Half of v0.1 is landed. The design is settled and
-> written down; the implementation is being built one RFC at a time. The API
-> below is the target, not what ships today.
+> **v0.1 — working, not yet published to RubyGems.** The full v0.1 API is
+> implemented and tested (468 examples), with a companion bulletin-board app
+> built entirely on it. Publishing is a deliberate later step. See the
+> [v0.1 retrospective](docs/retrospective-v0.1.md).
 
 ## The idea
 
