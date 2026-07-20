@@ -5,6 +5,8 @@ Rails.
 
 ## Read in this order
 
+0. **[retrospective-v0.1.md](retrospective-v0.1.md)** — what v0.1 is, what the
+   demo found, and where it goes next. The story, in one page.
 1. **[architecture.md](architecture.md)** — the invariants. The specification
    every task refers back to. Start here.
 2. **[adr/](adr/)** — why the design is the way it is. Read before proposing a

@@ -71,6 +71,13 @@
       "humanMinutes": 10,
       "aiMinutes": 95,
       "costs": []
+    },
+    {
+      "date": "2026-07-20",
+      "summary": "Tagged the v0.1 milestone and wrote it up. ECS Rails v0.1 is feature-complete (11 RFCs, 12 ADRs, 468 examples against real PostgreSQL) and demo-validated by a working bulletin board built entirely on the gem; publishing to RubyGems remains a deliberate later step per ADR-0007, so the portfolio status stays 'building'. Deliverables: docs/retrospective-v0.1.md (the hypothesis 'is modelling a real Rails app out of components pleasant?', answered yes, with the process learnings and the roadmap), refreshed root and gem READMEs showing the real working API (lazy components, presence/markers, with_component/without_component, includes_components), and CHANGELOG 0.1.0. The retrospective's honest headline: across the build the design was wrong far more often than the code, and only execution caught it \u2014 two approved ADRs (0003, 0008) falsified by their own dependencies, an infinite recursion in the gem's own ADR-0006 example, and a test harness that silently swallowed rollbacks. The most compelling next item is the relationship DSL (the demo's Authorship/MemberUser/MemberGroup all reinvent belongs_to boilerplate, and it would enable a nested preloader for the last remaining N+1), deferred until the demo showed what it should look like \u2014 which it now has.",
+      "humanMinutes": 10,
+      "aiMinutes": 60,
+      "costs": []
     }
   ]
 }
