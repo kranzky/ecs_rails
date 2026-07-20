@@ -64,6 +64,13 @@
       "humanMinutes": 15,
       "aiMinutes": 110,
       "costs": []
+    },
+    {
+      "date": "2026-07-20",
+      "summary": "Built component preloading (includes_components) \u2014 the last confirmed demo need, closing architecture.md open question 1. RFC-0011 + ADR-0012, 468 gem examples green. A spike up front reframed the whole feature: because components are has_one associations and the lazy reader (RFC-0006) calls super, ActiveRecord's NATIVE preload already works \u2014 User.all.preload(:name) drops 5 queries to 2 and a preloaded no-row component still reads as a virtual. So the feature is not machinery but a thin, discoverable, component-named wrapper: includes_components takes component classes (no args = all declared, walking inheritance), preloads via AR, validates each is declared on the entity with a component-shaped error rather than AR's AssociationNotFoundError, and chains. Half its value is regression tests pinning the native-preload/lazy-reader interaction so it can't silently break. The demo index now preloads its own components plus the nested author-name hop (preload(authorship: { author: :name }), standard AR nesting for a component reached through a relationship). The payoff is that it is bounded, not merely smaller: 2 posts 13->6 queries, 22 posts 93->6. The real HTTP index request went 14->8, constant in post count. The agent also caught two bugs in my RFC's own tests (an all-components example reading u.avatar.url on User, which doesn't declare Avatar; and an error-shape test stubbed with 'if false' that asserted nothing) \u2014 both fixed. v0.1 plus its two demo-driven enhancements (query DSL, preloading) are done; remaining backlog items (relationship DSL, required components, non-equality query conditions, Systems) are enhancements, not blockers.",
+      "humanMinutes": 10,
+      "aiMinutes": 95,
+      "costs": []
     }
   ]
 }
