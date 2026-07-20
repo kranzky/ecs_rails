@@ -8,6 +8,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Component preloading (RFC-0011). `Entity.includes_components(*Components)` batches
+  component loads (all declared, or a named subset) so a list view issues a bounded
+  number of queries instead of one per component per row. A thin wrapper over
+  ActiveRecord's native `preload`, which already works with lazy components.
 - Component query DSL (RFC-0010). `Entity.with_component(Component, **conditions)` /
   `Entity.without_component(Component)` query entities by which components they
   have, compiling to correlated `EXISTS` / `NOT EXISTS` subqueries that apply the

@@ -27,6 +27,7 @@ Rails.
 | [0009](adr/0009-component-presence.md) | Component presence is explicit; markers work through it |
 | [0010](adr/0010-entity-component-directory-layout.md) | Entities in app/entities, components in app/entities/components |
 | [0011](adr/0011-component-query-dsl.md) | Component query DSL — with_component / without_component |
+| [0012](adr/0012-component-preloading.md) | Preloading is ergonomics over native ActiveRecord preload |
 
 ## RFCs — the v0.1 build order
 
@@ -44,6 +45,7 @@ Each RFC is one commit. Each commit compiles and passes tests.
 | [0008](rfc/0008-generators.md) | Install + component generators | 0001, 0003 ✅ |
 | [0009](rfc/0009-component-presence.md) | Component presence (add/has?/remove) | 0004, 0006 ✅ |
 | [0010](rfc/0010-component-query-dsl.md) | Component query DSL (with_component/without_component) | 0001, 0003 ✅ |
+| [0011](rfc/0011-component-preloading.md) | Component preloading (includes_components) | 0004, 0006 ✅ |
 
 RFC-0001 and 0002 are independent and can be built in parallel.
 

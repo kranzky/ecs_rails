@@ -102,6 +102,14 @@ module EcsRails
     # docs/adr/0011-component-query-dsl.md.
     extend Querying
 
+    # Component preloading (RFC-0011): includes_components. Extended as class
+    # methods, like Querying, so every entity subclass answers it and ActiveRecord
+    # delegates it to relations (`User.where(...).includes_components`). It is a
+    # thin wrapper over ActiveRecord's own `preload` — which already batches
+    # component has_one loads and, via RFC-0006's `super`-calling reader, still
+    # yields virtual instances — see docs/adr/0012-component-preloading.md.
+    extend Preloading
+
     # Immutable identity (architecture.md §1). Beyond the guard above, this is
     # what excludes id and model from any UPDATE statement.
     attr_readonly :id, :model
