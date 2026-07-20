@@ -294,6 +294,26 @@ row. For a real feed this is untenable without preloading
 (`includes_components`), which is backlog. The single strongest case for it
 after the query DSL.
 
+**Resolved (2026-07-20) — [ADR-0012](adr/0012-component-preloading.md) /
+[RFC-0011](rfc/0011-component-preloading.md).** The finding that made this cheap:
+components are `has_one` associations, and the lazy reader calls `super`, so
+**ActiveRecord's native `preload` already works** — a preloaded no-row component
+still reads as a virtual. `includes_components` is a thin, component-named
+wrapper (preload all declared components, or a named subset; validated, chainable).
+
+The demo's index now preloads its own components plus the nested author-name hop
+(`preload(authorship: { author: :name })`, standard AR nesting for a component
+reached through a relationship). The payoff is the whole point of preloading —
+it is **bounded, not just smaller**:
+
+| Published posts | N+1 | Preloaded |
+|---|---|---|
+| 2 | 13 | 6 |
+| 22 | 93 | 6 |
+
+The real HTTP index request dropped from 14 queries to 8, constant in the number
+of posts.
+
 ### 🟡 Building an entity from form params is manual — 2026-07-19
 
 A normal Rails controller does `Post.new(post_params)`. With components there is

@@ -2,7 +2,14 @@
 
 class PostsController < ApplicationController
   def index
+    # Preload the components the index renders (RFC-0011), plus the nested
+    # author-name hop: post.author is a User reached through the Authorship
+    # relationship component, so its Name is two hops out and needs standard AR
+    # nesting. Drops the index from N+1 (one query per component per row) to a
+    # bounded handful.
     @posts = Post.published
+                 .includes_components(Title, Body, Likes)
+                 .preload(authorship: { author: :name })
   end
 
   def show

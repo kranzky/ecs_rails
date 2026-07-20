@@ -16,7 +16,7 @@ speculation — see [friction-log.md](friction-log.md).
 | Idea | Status / why deferred | Trigger |
 |---|---|---|
 | ~~**Cross-component queries**~~ | ✅ **Shipped** — `with_component`/`without_component`, [ADR-0011](adr/0011-component-query-dsl.md) / [RFC-0010](rfc/0010-component-query-dsl.md). | fired |
-| **Preloading** — `User.includes_components(:name, :email)` | **Not built.** v0.1 is N+1 by design (architecture.md open q. 1). The next confirmed need. | ✅ **fired** — the 2-post demo index issued 14 queries, one per component per row. |
+| ~~**Preloading**~~ | ✅ **Shipped** — `includes_components`, [ADR-0012](adr/0012-component-preloading.md) / [RFC-0011](rfc/0011-component-preloading.md). Native AR `preload` already worked; this is the ergonomic wrapper. | fired |
 | **Non-equality query conditions** — `with_component(Likes) { where("count > ?", 5) }` | **Not built.** RFC-0010 ships hash equality only; ranges/comparisons need a block or relation arg. | Not yet — the demo only needed equality. |
 | **Required components** — `component Email, required: true` | **Not built.** In tension with [ADR-0003](adr/0003-virtual-components-skip-validation.md). | Repeatedly hand-writing the same entity-level presence validation. |
 | **Relationship DSL** — Flecs-style pairs, `relates_to :author, User` | **Not built.** [ADR-0006](adr/0006-relationships-are-plain-components.md) — building it from imagination not experience. | Authorship/MemberUser/MemberGroup in the demo all reinventing the same `belongs_to` boilerplate. |
