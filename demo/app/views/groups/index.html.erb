@@ -1,0 +1,18 @@
+<% content_for :title, "Groups" %>
+
+<div class="page-head page-head--row">
+  <div>
+    <h1>Groups</h1>
+    <p>Membership is a join <em>entity</em> — two relationships plus a role.</p>
+  </div>
+  <%= link_to "New group", new_group_path, class: "btn btn--primary" %>
+</div>
+
+<div class="grid grid--2">
+  <% @groups.each do |group| %>
+    <%= link_to group, class: "card card-link" do %>
+      <h2 style="font-size:1.15rem;margin:0 0 .3rem"><%= group.name.first %></h2>
+      <p style="color:var(--muted);margin:0"><%= group.description.text %></p>
+    <% end %>
+  <% end %>
+</div>

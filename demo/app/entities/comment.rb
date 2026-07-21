@@ -4,4 +4,5 @@ class Comment < ApplicationEntity
   component Body, except: [:text]
   component Likes
   relates_to :author, User
+  relates_to :post, Post
 end

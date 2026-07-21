@@ -1,12 +1,66 @@
 <% content_for :title, @post.title.text %>
-<p><%= link_to "← Back", posts_path %></p>
-<article>
-  <h1><%= @post.title.text %></h1>
-  <p class="meta">
-    by <%= @post.author&.name&.first || "Unknown" %>
-    &middot; <%= @post.publish_state.state %>
-    &middot; <%= @post.likes.count || 0 %> likes
-  </p>
-  <div class="body"><%= simple_format(@post.body.text) %></div>
-  <%= button_to "Like", post_like_path(@post), method: :post %>
+
+<%= link_to "← Back to posts", posts_path, class: "back" %>
+
+<article class="card">
+  <span class="badge badge--pub">Published</span>
+  <h1 style="margin:.5rem 0 .35rem;font-size:1.9rem"><%= @post.title.text %></h1>
+  <div class="meta">
+    <%= byline @post.author %>
+    <span class="dot"></span>
+    <%= @post.created_at.strftime("%-d %b %Y") %>
+  </div>
+
+  <div class="article__body prose" style="margin-top:1.25rem">
+    <%= simple_format @post.body.text %>
+  </div>
+
+  <hr class="divider">
+  <div class="btn-row">
+    <%= button_to post_like_path(@post), class: "btn btn--like" do %>
+      ♥ Like <span class="count">· <%= likes_count(@post) %></span>
+    <% end %>
+  </div>
 </article>
+
+<section style="margin-top:2rem">
+  <h2 class="section-title">Comments · <%= @comments.size %></h2>
+
+  <div class="card">
+    <% if @comments.empty? %>
+      <p style="color:var(--muted);margin:0 0 1rem">No comments yet. Start the conversation.</p>
+    <% else %>
+      <% @comments.each do |comment| %>
+        <div class="comment">
+          <%= avatar_for comment.author %>
+          <div class="comment__body">
+            <div class="meta">
+              <strong style="color:var(--text)"><%= display_name comment.author %></strong>
+              <span class="dot"></span>
+              <%= time_ago_in_words(comment.created_at) %> ago
+            </div>
+            <p><%= simple_format comment.body.text %></p>
+            <%= button_to comment_like_path(comment), class: "btn btn--sm btn--like btn--ghost" do %>
+              ♥ <span class="count"><%= likes_count(comment) %></span>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
+
+    <hr class="divider">
+    <%= form_with url: post_comments_path(@post), method: :post do |f| %>
+      <div class="field">
+        <%= f.label "comment[author_id]", "Commenting as" %>
+        <%= f.select "comment[author_id]",
+              options_for_select(@authors.map { |u| [display_name(u), u.id] }),
+              {}, class: "select" %>
+      </div>
+      <div class="field">
+        <%= f.label "comment[body]", "Comment" %>
+        <%= f.text_area "comment[body]", class: "textarea", rows: 3, placeholder: "Add your thoughts…" %>
+      </div>
+      <%= f.submit "Post comment", class: "btn btn--primary" %>
+    <% end %>
+  </div>
+</section>

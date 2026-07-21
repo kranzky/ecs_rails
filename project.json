@@ -85,6 +85,13 @@
       "humanMinutes": 15,
       "aiMinutes": 130,
       "costs": []
+    },
+    {
+      "date": "2026-07-21",
+      "summary": "Polished the demo into a full, browsable bulletin board on a hand-written CSS design system (no framework), light/dark aware, exposing every gem feature. Built People (with moderator/admin badges = marker components, and promote/demote buttons wired to add/remove), Groups + Memberships (the join entity, add/remove members with a role), Comments and Likes on posts, and a 'how it works' explainer mapping each screen to the ECS model. Added Comment relates_to :post so comments belong to posts. Queries use the DSL throughout: a post's comments, a group's members, and a user's posts are all with_component on a relationship's backing column, and the index preloads to a bounded query count. Verified every flow end to end in the browser in both light and dark themes \u2014 post/comment/like creation, marker promote/demote (moderator? flips true/false), and an invalid email on the new-person form surfacing the merged component error (errors[:'email.address'] => 'is invalid'). One UI-phase finding logged: querying by a relationship leaks the backing class name (Comment::PostRelationship) and its raw column (post_id), which concretely argues for the relationship-name query sugar deferred from RFC-0012 \u2014 added to the backlog. Gem unchanged at 512 examples. This completes the user's two-part plan (relationship DSL, then UI polish); the demo now both models fully and looks the part.",
+      "humanMinutes": 20,
+      "aiMinutes": 210,
+      "costs": []
     }
   ]
 }

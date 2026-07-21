@@ -17,6 +17,7 @@ speculation — see [friction-log.md](friction-log.md).
 |---|---|---|
 | ~~**Cross-component queries**~~ | ✅ **Shipped** — `with_component`/`without_component`, [ADR-0011](adr/0011-component-query-dsl.md) / [RFC-0010](rfc/0010-component-query-dsl.md). | fired |
 | ~~**Preloading**~~ | ✅ **Shipped** — `includes_components`, [ADR-0012](adr/0012-component-preloading.md) / [RFC-0011](rfc/0011-component-preloading.md). Native AR `preload` already worked; this is the ergonomic wrapper. | fired |
+| **Relationship-name query/preload sugar** — `with_related(:post, post)`, `includes_related(:author)` | **Not built.** Deferred from [RFC-0012](rfc/0012-relationship-dsl.md). | ✅ **fired** — the UI's "comments on this post" has to name the backing `Comment::PostRelationship` and its raw `post_id`, leaking the abstraction. |
 | **Non-equality query conditions** — `with_component(Likes) { where("count > ?", 5) }` | **Not built.** RFC-0010 ships hash equality only; ranges/comparisons need a block or relation arg. | Not yet — the demo only needed equality. |
 | **Required components** — `component Email, required: true` | **Not built.** In tension with [ADR-0003](adr/0003-virtual-components-skip-validation.md). | Repeatedly hand-writing the same entity-level presence validation. |
 | ~~**Relationship DSL**~~ | ✅ **Shipped** — `relates_to`, [ADR-0013](adr/0013-relationship-dsl.md) / [RFC-0012](rfc/0012-relationship-dsl.md). | fired |

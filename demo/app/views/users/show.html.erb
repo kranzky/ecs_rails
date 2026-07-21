@@ -1,0 +1,53 @@
+<% content_for :title, display_name(@user) %>
+
+<%= link_to "← Back to people", users_path, class: "back" %>
+
+<div class="card">
+  <div class="profile">
+    <%= avatar_for @user, klass: "avatar avatar--lg" %>
+    <div class="profile__meta">
+      <h1 class="profile__name"><%= display_name @user %></h1>
+      <div class="meta"><%= @user.email.address %></div>
+      <div class="profile__badges">
+        <% if @user.administrator? %><span class="badge badge--admin">★ Admin</span><% end %>
+        <% if @user.moderator? %><span class="badge badge--mod">Moderator</span><% end %>
+      </div>
+    </div>
+  </div>
+
+  <% if @user.bio.text.present? %>
+    <p class="prose" style="margin:1rem 0 0;color:var(--muted)"><%= @user.bio.text %></p>
+  <% end %>
+
+  <hr class="divider">
+
+  <h3 class="section-title">Roles — presence via add / remove</h3>
+  <div class="btn-row">
+    <% if @user.moderator? %>
+      <%= button_to "Remove moderator", user_moderator_path(@user), method: :delete, class: "btn btn--sm btn--danger", form_class: "inline" %>
+    <% else %>
+      <%= button_to "Make moderator", user_moderator_path(@user), class: "btn btn--sm", form_class: "inline" %>
+    <% end %>
+    <% if @user.administrator? %>
+      <%= button_to "Remove admin", user_administrator_path(@user), method: :delete, class: "btn btn--sm btn--danger", form_class: "inline" %>
+    <% else %>
+      <%= button_to "Make admin", user_administrator_path(@user), class: "btn btn--sm", form_class: "inline" %>
+    <% end %>
+  </div>
+</div>
+
+<section style="margin-top:2rem">
+  <h2 class="section-title">Posts by <%= @user.name.first %> · <%= @posts.size %></h2>
+  <% if @posts.empty? %>
+    <div class="empty">No posts yet.</div>
+  <% else %>
+    <div class="stack stack--tight">
+      <% @posts.each do |post| %>
+        <%= link_to post, class: "card card-link" do %>
+          <strong style="color:var(--text)"><%= post.title.text %></strong>
+          <div class="meta" style="margin-top:.3rem"><span class="count">♥ <%= likes_count(post) %></span></div>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+</section>

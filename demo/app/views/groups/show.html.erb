@@ -1,0 +1,47 @@
+<% content_for :title, @group.name.first %>
+<%= link_to "← Back to groups", groups_path, class: "back" %>
+
+<div class="card">
+  <h1 style="margin:0 0 .3rem"><%= @group.name.first %></h1>
+  <p style="color:var(--muted);margin:0"><%= @group.description.text %></p>
+</div>
+
+<section style="margin-top:2rem">
+  <h2 class="section-title">Members · <%= @memberships.size %></h2>
+  <div class="card">
+    <% if @memberships.empty? %>
+      <p style="color:var(--muted);margin:0 0 1rem">No members yet.</p>
+    <% else %>
+      <% @memberships.each do |m| %>
+        <div class="comment" style="align-items:center">
+          <%= avatar_for m.user %>
+          <div class="comment__body" style="display:flex;align-items:center;gap:.6rem">
+            <strong style="color:var(--text)"><%= display_name m.user %></strong>
+            <span class="badge"><%= m.role.name %></span>
+          </div>
+          <%= button_to "Remove", group_membership_path(@group, m), method: :delete,
+                class: "btn btn--sm btn--ghost btn--danger", form_class: "inline" %>
+        </div>
+      <% end %>
+    <% end %>
+
+    <hr class="divider">
+    <%= form_with url: group_memberships_path(@group), method: :post do |f| %>
+      <div class="grid grid--2">
+        <div class="field" style="margin:0">
+          <%= f.label "membership[user_id]", "Add member" %>
+          <%= f.select "membership[user_id]",
+                options_for_select(@candidates.map { |u| [display_name(u), u.id] }), {}, class: "select" %>
+        </div>
+        <div class="field" style="margin:0">
+          <%= f.label "membership[role]", "Role" %>
+          <%= f.select "membership[role]",
+                options_for_select(%w[member owner moderator], "member"), {}, class: "select" %>
+        </div>
+      </div>
+      <div class="btn-row" style="margin-top:1rem">
+        <%= f.submit "Add to group", class: "btn btn--primary" %>
+      </div>
+    <% end %>
+  </div>
+</section>

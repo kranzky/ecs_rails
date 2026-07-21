@@ -1,28 +1,40 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= content_for(:title) || "Demo" %></title>
+    <title><%= content_for(:title) ? "#{content_for(:title)} · Bulletin" : "Bulletin — built on ECS Rails" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Demo">
-    <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
-
     <%= yield :head %>
-
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
-
-    <link rel="icon" href="/icon.png" type="image/png">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
-
-    <%# Includes all stylesheet files in app/assets/stylesheets %>
-    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%234f46e5'/><text x='50' y='70' font-size='60' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>E</text></svg>">
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   </head>
 
   <body>
-    <%= yield %>
+    <nav class="site-nav">
+      <div class="site-nav__inner">
+        <%= link_to root_path, class: "brand" do %>
+          <span class="brand__mark">E</span> Bulletin
+        <% end %>
+        <div class="site-nav__links">
+          <%= nav_link "Posts", posts_path, active: controller_name == "posts" %>
+          <%= nav_link "People", users_path, active: controller_name == "users" %>
+          <%= nav_link "Groups", groups_path, active: %w[groups memberships].include?(controller_name) %>
+          <%= nav_link "How it works", about_path, active: controller_name == "pages" %>
+        </div>
+      </div>
+    </nav>
+
+    <% if flash.any? %>
+      <div class="flash">
+        <% flash.each do |type, message| %>
+          <div class="flash__msg flash__msg--<%= type == "alert" ? "alert" : "notice" %>">
+            <%= message %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <main><%= yield %></main>
   </body>
 </html>

@@ -1,0 +1,26 @@
+<% content_for :title, "New group" %>
+<%= link_to "← Back to groups", groups_path, class: "back" %>
+<div class="page-head"><h1>New group</h1></div>
+
+<div class="card">
+  <% if @group.errors.any? %>
+    <div class="errors">
+      <strong><%= pluralize(@group.errors.count, "problem") %> stopped this saving:</strong>
+      <ul><% @group.errors.full_messages.each do |m| %><li><%= m %></li><% end %></ul>
+    </div>
+  <% end %>
+  <%= form_with url: groups_path, method: :post do |f| %>
+    <div class="field">
+      <%= f.label "group[name]", "Name" %>
+      <%= f.text_field "group[name]", class: "input", value: @group.name.first %>
+    </div>
+    <div class="field">
+      <%= f.label "group[description]", "Description" %>
+      <%= f.text_area "group[description]", class: "textarea", rows: 3, value: @group.description.text %>
+    </div>
+    <div class="btn-row">
+      <%= f.submit "Create group", class: "btn btn--primary" %>
+      <%= link_to "Cancel", groups_path, class: "btn btn--ghost" %>
+    </div>
+  <% end %>
+</div>

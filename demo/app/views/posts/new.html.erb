@@ -1,23 +1,41 @@
 <% content_for :title, "New post" %>
-<p><%= link_to "← Back", posts_path %></p>
-<h1>New post</h1>
 
-<% if @post.errors.any? %>
-  <div class="errors">
-    <ul>
-      <% @post.errors.full_messages.each do |msg| %>
-        <li><%= msg %></li>
-      <% end %>
-    </ul>
-  </div>
-<% end %>
+<%= link_to "← Back to posts", posts_path, class: "back" %>
 
-<%= form_with url: posts_path, method: :post do |f| %>
-  <p><%= f.label :"post[title]", "Title" %><br>
-     <%= f.text_field :"post[title]" %></p>
-  <p><%= f.label :"post[body]", "Body" %><br>
-     <%= f.text_area :"post[body]", rows: 6 %></p>
-  <p><%= f.check_box :"post[publish]" %>
-     <%= f.label :"post[publish]", "Publish now" %></p>
-  <p><%= f.submit "Create post" %></p>
-<% end %>
+<div class="page-head"><h1>New post</h1></div>
+
+<div class="card">
+  <% if @post.errors.any? %>
+    <div class="errors">
+      <strong><%= pluralize(@post.errors.count, "problem") %> stopped this post saving:</strong>
+      <ul>
+        <% @post.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <%= form_with url: posts_path, method: :post do |f| %>
+    <div class="field">
+      <%= f.label "post[title]", "Title" %>
+      <%= f.text_field "post[title]", class: "input", value: @post.title.text, placeholder: "A clear, catchy title" %>
+    </div>
+    <div class="field">
+      <%= f.label "post[author_id]", "Author" %>
+      <%= f.select "post[author_id]", options_for_select(@authors.map { |u| [display_name(u), u.id] }), {}, class: "select" %>
+    </div>
+    <div class="field">
+      <%= f.label "post[body]", "Body" %>
+      <%= f.text_area "post[body]", class: "textarea", rows: 8, value: @post.body.text, placeholder: "Write something worth reading…" %>
+    </div>
+    <div class="field">
+      <label class="check">
+        <%= f.check_box "post[publish]", checked: true %>
+        Publish immediately <span class="hint" style="margin:0">(otherwise saved as a draft)</span>
+      </label>
+    </div>
+    <div class="btn-row">
+      <%= f.submit "Publish post", class: "btn btn--primary" %>
+      <%= link_to "Cancel", posts_path, class: "btn btn--ghost" %>
+    </div>
+  <% end %>
+</div>

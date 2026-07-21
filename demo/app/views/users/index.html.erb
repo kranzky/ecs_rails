@@ -1,0 +1,28 @@
+<% content_for :title, "People" %>
+
+<div class="page-head page-head--row">
+  <div>
+    <h1>People</h1>
+    <p>Everyone on the board. Badges are marker components.</p>
+  </div>
+  <%= link_to "Add person", new_user_path, class: "btn btn--primary" %>
+</div>
+
+<div class="grid grid--2">
+  <% @users.each do |user| %>
+    <%= link_to user, class: "card card-link" do %>
+      <div class="profile">
+        <%= avatar_for user, klass: "avatar avatar--lg" %>
+        <div class="profile__meta">
+          <h2 class="profile__name" style="font-size:1.15rem"><%= display_name user %></h2>
+          <div class="meta"><%= user.email.address %></div>
+          <div class="profile__badges">
+            <% if user.administrator? %><span class="badge badge--admin">★ Admin</span><% end %>
+            <% if user.moderator? %><span class="badge badge--mod">Moderator</span><% end %>
+            <% unless user.moderator? || user.administrator? %><span class="badge">Member</span><% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+</div>
