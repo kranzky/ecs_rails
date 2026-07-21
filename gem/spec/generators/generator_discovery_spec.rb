@@ -16,4 +16,9 @@ RSpec.describe "generator discovery" do
     expect(Rails::Generators.find_by_namespace("component", "ecs_rails"))
       .to eq(EcsRails::Generators::ComponentGenerator)
   end
+
+  it "resolves ecs_rails:relationship" do
+    expect(Rails::Generators.find_by_namespace("relationship", "ecs_rails"))
+      .to eq(EcsRails::Generators::RelationshipGenerator)
+  end
 end
