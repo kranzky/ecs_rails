@@ -1,0 +1,38 @@
+<% content_for :title, "Add person" %>
+<%= link_to "← Back to people", users_path, class: "back" %>
+<div class="page-head"><h1>Add person</h1></div>
+
+<div class="card">
+  <% if @user.errors.any? %>
+    <div class="errors">
+      <strong><%= pluralize(@user.errors.count, "problem") %> stopped this saving:</strong>
+      <ul><% @user.errors.full_messages.each do |m| %><li><%= m %></li><% end %></ul>
+    </div>
+  <% end %>
+
+  <%= form_with url: users_path, method: :post do |f| %>
+    <div class="grid grid--2">
+      <div class="field">
+        <%= f.label "user[first]", "First name" %>
+        <%= f.text_field "user[first]", class: "input", value: @user.name.first %>
+      </div>
+      <div class="field">
+        <%= f.label "user[last]", "Last name" %>
+        <%= f.text_field "user[last]", class: "input", value: @user.name.last %>
+      </div>
+    </div>
+    <div class="field">
+      <%= f.label "user[email]", "Email" %>
+      <%= f.text_field "user[email]", class: "input", value: @user.email.address, placeholder: "name@example.com" %>
+      <p class="hint">Validated by the Email component — try an invalid one to see errors merge onto the entity.</p>
+    </div>
+    <div class="field">
+      <%= f.label "user[bio]", "Bio" %>
+      <%= f.text_area "user[bio]", class: "textarea", rows: 3, value: @user.bio.text %>
+    </div>
+    <div class="btn-row">
+      <%= f.submit "Add person", class: "btn btn--primary" %>
+      <%= link_to "Cancel", users_path, class: "btn btn--ghost" %>
+    </div>
+  <% end %>
+</div>

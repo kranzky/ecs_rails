@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_21_023014) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_21_053928) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -61,6 +61,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_21_023014) do
     t.datetime "updated_at", null: false
     t.index ["author_id"], name: "index_comment_authors_on_author_id"
     t.index ["entity_id"], name: "index_comment_authors_on_entity_id", unique: true
+  end
+
+  create_table "comment_posts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "entity_id", null: false
+    t.uuid "post_id"
+    t.datetime "updated_at", null: false
+    t.index ["entity_id"], name: "index_comment_posts_on_entity_id", unique: true
+    t.index ["post_id"], name: "index_comment_posts_on_post_id"
   end
 
   create_table "descriptions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -184,6 +193,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_21_023014) do
   add_foreign_key "bodies", "entities", on_delete: :cascade
   add_foreign_key "comment_authors", "entities", column: "author_id", on_delete: :nullify
   add_foreign_key "comment_authors", "entities", on_delete: :cascade
+  add_foreign_key "comment_posts", "entities", column: "post_id", on_delete: :nullify
+  add_foreign_key "comment_posts", "entities", on_delete: :cascade
   add_foreign_key "descriptions", "entities", on_delete: :cascade
   add_foreign_key "emails", "entities", on_delete: :cascade
   add_foreign_key "likes", "entities", on_delete: :cascade

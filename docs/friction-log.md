@@ -359,3 +359,38 @@ Deleted `authorship.rb`, `member_user.rb`, `member_group.rb`. `post.author` stil
 returns the User, the index still serves in a bounded 8 queries (preloading via
 the backing reader `author_relationship`). The last backlog item the demo
 actively argued for is done.
+
+---
+
+## Full UI build
+
+### 🟢 Every feature reaches the UI cleanly — 2026-07-21
+
+Built the full bulletin board (posts, comments, people, groups, memberships, a
+"how it works" page) with a hand-written CSS design system, light/dark aware.
+Every gem feature drives a real screen and was verified end to end in the
+browser:
+
+- **Lazy components** — a person with no bio has no `bios` row, yet the profile
+  renders fine.
+- **Markers** — moderator/admin **badges** on People, with promote/demote
+  buttons wired to `add`/`remove` (verified: promote → `moderator?` true).
+- **Query DSL** — the posts list is `with_component(PublishState, state:
+  "published")`; a group's members are `Membership.with_component(
+  Membership::GroupRelationship, group_id:)`; a user's posts are
+  `with_component(Post::AuthorRelationship, author_id:)`.
+- **Relationships** — `post.author`, `comment.post`, `membership.user/group`.
+- **Preloading** — the index is bounded (8 queries).
+- **Validation** — an invalid email on the new-person form surfaces
+  "Email address is invalid" from `errors[:"email.address"]`.
+
+### 🟡 Querying by a relationship exposes the backing class — 2026-07-21
+
+"Comments on this post" is `Comment.with_component(Comment::PostRelationship,
+post_id: post.id)`. It works, but the controller has to name the *backing*
+component class (`Comment::PostRelationship`) and its raw column (`post_id`) —
+the relationship abstraction leaks. A relationship-name query sugar
+(`Comment.with_related(:post, post)`) would read far better and hide the
+backing. This is the deferred item from [RFC-0012](rfc/0012-relationship-dsl.md)'s
+non-goals, and the UI is the concrete case that argues for it. Logged for the
+backlog; not a blocker.

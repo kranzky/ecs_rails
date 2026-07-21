@@ -1,0 +1,69 @@
+<% content_for :title, "How it works" %>
+
+<div class="page-head">
+  <h1>How it works</h1>
+  <p>This bulletin board is built entirely on <strong>ECS Rails</strong> — every
+     screen you've seen maps to a component-based domain model.</p>
+</div>
+
+<div class="stack">
+  <div class="card">
+    <h3 class="section-title">Entities are composed from components</h3>
+    <p class="prose">A <code>Post</code> isn't a wide table. It's an identity row
+       composed from small components — each its own table:</p>
+    <pre style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:1rem;overflow:auto"><code>class Post &lt; ApplicationEntity
+  component Title
+  component Body
+  component PublishState
+  component Likes
+  relates_to :author, User
+end</code></pre>
+    <p class="prose" style="margin-bottom:0"><code>post.title.text</code>,
+       <code>post.author</code>, <code>post.likes.increment!</code> — the state and
+       behaviour live in the components, delegated onto the entity.</p>
+  </div>
+
+  <div class="grid grid--2">
+    <div class="card">
+      <h3 class="section-title">Markers → badges</h3>
+      <p class="prose" style="margin-bottom:0">The <span class="badge badge--mod">Moderator</span>
+         and <span class="badge badge--admin">★ Admin</span> badges on
+         <%= link_to "People", users_path %> are marker components. A user
+         <em>is</em> a moderator exactly when the row exists —
+         <code>user.add(Moderator)</code>, <code>user.moderator?</code>. No STI.</p>
+    </div>
+    <div class="card">
+      <h3 class="section-title">Lazy by default</h3>
+      <p class="prose" style="margin-bottom:0">A component costs nothing until a
+         value differs from its default — no row, no query. A new person with no
+         bio has no <code>bios</code> row, yet <code>user.bio.text</code> still
+         works.</p>
+    </div>
+    <div class="card">
+      <h3 class="section-title">Query by composition</h3>
+      <p class="prose" style="margin-bottom:0">The posts list is
+         <code>Post.with_component(PublishState, state: "published")</code> — it
+         filters by what an entity is made of, and scopes to the entity type so a
+         shared component can't leak across types.</p>
+    </div>
+    <div class="card">
+      <h3 class="section-title">Relationships & join entities</h3>
+      <p class="prose" style="margin-bottom:0"><code>relates_to :author, User</code>
+         links a post to its author with no boilerplate. A
+         <%= link_to "group", groups_path %> membership is a join <em>entity</em>
+         carrying two relationships and a role.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 class="section-title">Validation merges onto the entity</h3>
+    <p class="prose" style="margin-bottom:0">The <code>Email</code> component
+       validates its address; the error surfaces as
+       <code>user.errors[:"email.address"]</code> and reads naturally in the form.
+       Try <%= link_to "adding a person", new_user_path %> with a bad email.</p>
+  </div>
+
+  <p style="text-align:center;color:var(--faint);margin-top:1rem">
+    Source & design docs on <a href="https://github.com/kranzky/rails-ecs">GitHub</a>.
+  </p>
+</div>
