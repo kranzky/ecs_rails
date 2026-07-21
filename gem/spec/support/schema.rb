@@ -97,6 +97,15 @@ ActiveRecord::Schema.define do
     t.timestamps
   end
 
+  # `comment_authors` backs `Comment.relates_to :author, User` — a SECOND entity
+  # relating `:author` to the same target, so the RFC-0013 no-cross-entity-leak
+  # test is real: `Post.with_related(:author, ada)` must not return a Comment.
+  create_table :comment_authors, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid :entity_id, null: false
+    t.uuid :author_id, default: nil
+    t.timestamps
+  end
+
   # `membership_users` / `membership_teams` back the join-entity `Membership`,
   # which carries two relationships — the many-to-many pattern (ADR-0005).
   create_table :membership_users, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -123,6 +132,7 @@ ActiveRecord::Schema.define do
 
   {
     post_authors: :author_id,
+    comment_authors: :author_id,
     membership_users: :user_id,
     membership_teams: :team_id,
     reloadable_authors: :author_id

@@ -1,5 +1,11 @@
 # frozen_string_literal: true
 
+# #constantize is load-bearing for reload safety: relationship metadata stores
+# the backing and target class *names* (strings) and resolves them on read, so a
+# reloaded constant is picked up — the same discipline as the registry
+# (RFC-0002). Required explicitly rather than relying on ActiveRecord.
+require "active_support/core_ext/string/inflections"
+
 module EcsRails
   # The class-level DSL for cross-entity links: `relates_to`.
   #
@@ -55,7 +61,39 @@ module EcsRails
   # the single source every DSL derivation reads. Nothing else in the gem uses
   # the backing component's model_name, so this is safe and total: reader,
   # has_one, and `includes_components` key all agree on `author_relationship`.
+  #
+  # ## Querying and preloading by name (RFC-0013 / ADR-0014)
+  #
+  # `with_related` / `without_related` / `includes_related` are the
+  # relationship-name equivalents of `with_component` / `without_component` /
+  # `includes_components`. They are thin sugar: each resolves the relationship
+  # name to its backing class and FK via metadata `relates_to` records, then
+  # delegates to the component verb — so `Post.with_related(:author, ada)`
+  # compiles to exactly `Post.with_component(Post::AuthorRelationship, author_id:
+  # ada.id)` and inherits its entity-model scoping and EXISTS correctness
+  # (ADR-0011). The backing `*Relationship` class never appears in app code.
   module Relationships
+    # One recorded relationship, held by NAME so it survives a Rails reload the
+    # same way the registry's Declaration does (RFC-0002): #backing_class and
+    # #target_class resolve via constantize on read, so a metadata entry taken
+    # before a reload still resolves to the post-reload constants.
+    RelationshipMeta = Struct.new(:name, :backing_class_name, :foreign_key, :target_class_name) do
+      def backing_class
+        backing_class_name.constantize
+      end
+
+      def target_class
+        target_class_name.constantize
+      end
+    end
+
+    # Sentinel for with_related's optional target: distinguishes "no target
+    # given" (filter to any backing row) from an explicit value. RFC-0013 only
+    # needs the no-arg form, but a sentinel — rather than a nil default — keeps
+    # "unset" from ever being confused with a legitimate id or entity.
+    ANY_TARGET = Object.new
+    private_constant :ANY_TARGET
+
     # Declares a cross-entity link named `name` at `target_class`.
     #
     # `target_class` must be a concrete EcsRails::Entity; otherwise
@@ -82,10 +120,122 @@ module EcsRails
       # message about the thing the developer typed.
       detect_relationship_collision!(name)
 
-      component(build_relationship_component(name, target_class))
+      backing = build_relationship_component(name, target_class)
+      declaration = component(backing)
+
+      # RFC-0013 / ADR-0014: record the relationship metadata the `*_related`
+      # query verbs resolve against. Recorded here, at declaration, so there is
+      # one source of truth for the backing class + FK rather than a second
+      # place that re-derives the naming convention (ADR-0014). On reload the
+      # entity class body reruns on a fresh class, repopulating this from empty.
+      record_relationship_meta(name, backing, target_class)
+
+      declaration
+    end
+
+    # The recorded metadata for relationship `name` on this entity (RFC-0013),
+    # or nil if there is none. Walks the entity ancestry, so a subclass sees its
+    # parents' relationships — the same way #component_declarations does.
+    def relationship_meta(name)
+      relationship_declarations[name.to_sym]
+    end
+
+    # The declared relationship names for this entity, ancestry included. Used
+    # in the InvalidRelationship message and handy for introspection.
+    def relationship_names
+      relationship_declarations.keys
+    end
+
+    # Entities whose `name` relationship points at `target` (RFC-0013 / ADR-0014).
+    #
+    # `target` may be an entity (its id is used) or a bare id. With no `target`,
+    # filters to entities that merely HAVE the relationship set (a backing row
+    # exists). Sugar for `with_component(backing, foreign_key => id)` — or
+    # `with_component(backing)` with no target — so it inherits that verb's
+    # entity-model scoping and correlated EXISTS (ADR-0011): no cross-entity leak.
+    #
+    # Returns a chainable ActiveRecord::Relation. Available on the class and on a
+    # relation, like the component verbs, because it builds on them (they run on
+    # `all`, the current default-scoped relation).
+    def with_related(name, target = ANY_TARGET)
+      meta = ecs_resolve_relationship!(name)
+
+      return with_component(meta.backing_class) if ANY_TARGET.equal?(target)
+
+      id = target.respond_to?(:id) ? target.id : target
+      with_component(meta.backing_class, meta.foreign_key => id)
+    end
+
+    # Entities with NO backing row for `name` (RFC-0013). Sugar for
+    # `without_component(backing)`; inherits its NULL-safe NOT EXISTS (ADR-0011).
+    def without_related(name)
+      without_component(ecs_resolve_relationship!(name).backing_class)
+    end
+
+    # Preloads each named relationship's backing component AND its target entity
+    # — one hop — so `entity.author` costs no extra query (RFC-0013 / ADR-0014).
+    #
+    # For `:author` that is `preload(author_relationship: :author)`: the backing
+    # reader is `<name>_relationship` (the backing's model_name.singular, pinned
+    # by ADR-0013) and the target association on the backing is the `<name>`
+    # belongs_to. Does NOT preload the target's own components (ADR-0014 non-goal).
+    #
+    # Chainable; returns a relation. Built from `all`, like Preloading, so it
+    # keeps any prior scope and the entity-model default scope.
+    def includes_related(*names)
+      preloads = names.map do |name|
+        meta = ecs_resolve_relationship!(name)
+        { :"#{meta.name}_relationship" => meta.name }
+      end
+
+      all.preload(*preloads)
     end
 
     private
+
+    # Records one relationship's metadata on THIS class, by name and by class
+    # NAMES (strings), never Class objects (reload safety — see RelationshipMeta).
+    def record_relationship_meta(name, backing, target_class)
+      ecs_own_relationships[name] = RelationshipMeta.new(
+        name,               # :author
+        backing.name,       # "Post::AuthorRelationship"
+        :"#{name}_id",      # :author_id
+        target_class.name   # "User"
+      )
+    end
+
+    # This class's OWN relationships (not inherited). A per-class hash, so a fresh
+    # class object after a reload starts empty and `relates_to` repopulates it.
+    # Instance variables are not inherited, which is exactly what lets
+    # #relationship_declarations do the ancestry walk explicitly.
+    def ecs_own_relationships
+      @ecs_relationships ||= {}
+    end
+
+    # Every relationship declared on this entity, ancestors' before its own —
+    # merged across #entity_ancestry the same way #component_declarations walks
+    # it, so a subclass inherits its parents' relationships. Base-first merge
+    # means a nearer class would win a name clash, mirroring method lookup.
+    def relationship_declarations
+      entity_ancestry.each_with_object({}) do |klass, merged|
+        own = klass.instance_variable_get(:@ecs_relationships)
+        merged.merge!(own) if own
+      end
+    end
+
+    # Resolves `name` to its metadata or raises the fail-loud InvalidRelationship
+    # (RFC-0013) — naming the relationship and this entity's declared ones, the
+    # same component-shaped stance as the rest of the DSL.
+    def ecs_resolve_relationship!(name)
+      meta = relationship_meta(name)
+      return meta if meta
+
+      declared = relationship_names
+      known = declared.empty? ? "none" : declared.map { |n| ":#{n}" }.join(", ")
+      raise InvalidRelationship,
+            "#{self.name} has no relationship named :#{name}. " \
+            "#{self.name} relates to: #{known}."
+    end
 
     # Dynamically defines the backing component class and returns it. Named
     # before anything reads its name: the registry keys by name and rejects
