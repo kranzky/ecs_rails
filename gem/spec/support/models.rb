@@ -107,9 +107,32 @@ end
 
 # A second entity sharing a component type with the first. "Shared components"
 # means shared component *types*, never shared rows (ADR-0005).
+#
+# `relates_to :author, User` (RFC-0012 / ADR-0013) is the cross-entity link. It
+# writes no relationship component file: it dynamically defines the backing
+# component `Post::AuthorRelationship` (table `post_authors`) and declares it, so
+# `post.author` / `post.author=` reach the User via delegation and
+# `post.author_relationship` is the backing reader. This is exactly the shape of
+# the demo's old hand-written `Authorship` component.
 class Post < ApplicationEntity
   component Name
   component Avatar
+  relates_to :author, User
+end
+
+# A target entity for a *second* relationship on a join entity. The gem's `Group`
+# fixture is a component, not an entity, so it cannot stand in for a relationship
+# target — hence a dedicated entity here. Entities need no table of their own
+# (they share `entities`, ADR-0002), so this costs one constant.
+class Team < ApplicationEntity
+end
+
+# A join entity (ADR-0005): many-to-many is modelled as an entity carrying two
+# `relates_to` declarations, which is precisely what `relates_to` makes cheap.
+# Backing tables `membership_users` and `membership_teams`.
+class Membership < ApplicationEntity
+  relates_to :user, User
+  relates_to :team, Team
 end
 
 # A relationship component (ADR-0006) whose association name collides with its

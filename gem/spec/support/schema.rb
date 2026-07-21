@@ -78,4 +78,58 @@ ActiveRecord::Schema.define do
     add_index table, :entity_id, unique: true
     add_foreign_key table, :entities, column: :entity_id, on_delete: :cascade
   end
+
+  # --- relationship backing tables (RFC-0012 / ADR-0013) ---------------------
+  #
+  # These are what `relates_to` generates. Each is a component table on the
+  # owner side (entity_id: not-null, unique, ON DELETE CASCADE — a post has at
+  # most one author, and destroying the post destroys the link), plus a target
+  # column whose FK is ON DELETE **NULLIFY**: destroying the target entity (the
+  # User) nullifies the link, it does not cascade to the owner (the Post). That
+  # nullify-not-cascade asymmetry is the load-bearing behaviour ADR-0013
+  # specifies, and it is asserted against the real database in
+  # spec/relationships_spec.rb.
+  #
+  # `post_authors` backs `Post.relates_to :author, User`.
+  create_table :post_authors, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid :entity_id, null: false
+    t.uuid :author_id, default: nil
+    t.timestamps
+  end
+
+  # `membership_users` / `membership_teams` back the join-entity `Membership`,
+  # which carries two relationships — the many-to-many pattern (ADR-0005).
+  create_table :membership_users, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid :entity_id, null: false
+    t.uuid :user_id,   default: nil
+    t.timestamps
+  end
+
+  create_table :membership_teams, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid :entity_id, null: false
+    t.uuid :team_id,   default: nil
+    t.timestamps
+  end
+
+  # Backs the reload-safety scenario in spec/relationships_spec.rb, which
+  # declares `relates_to :author, User` on a throwaway `Reloadable` entity (whose
+  # owner-scoped table name is therefore `reloadable_authors`) and reads through
+  # it after a simulated class reload.
+  create_table :reloadable_authors, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid :entity_id, null: false
+    t.uuid :author_id, default: nil
+    t.timestamps
+  end
+
+  {
+    post_authors: :author_id,
+    membership_users: :user_id,
+    membership_teams: :team_id,
+    reloadable_authors: :author_id
+  }.each do |table, target|
+    add_index table, :entity_id, unique: true
+    add_foreign_key table, :entities, column: :entity_id, on_delete: :cascade
+    add_index table, target
+    add_foreign_key table, :entities, column: target, on_delete: :nullify
+  end
 end

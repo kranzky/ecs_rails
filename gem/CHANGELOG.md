@@ -6,6 +6,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Relationship DSL (RFC-0012). `relates_to :author, User` on an entity declares a
+  cross-entity link with no relationship component file — the DSL defines the
+  backing component dynamically. `post.author` / `post.author =` reach the target;
+  `rails g ecs_rails:relationship Post author:User` emits the migration. Deleting
+  the target nullifies the link; deleting the owner cascades.
+
 ## [0.1.0] — 2026-07-20
 
 Feature-complete, demo-validated. Not yet published to RubyGems. See the

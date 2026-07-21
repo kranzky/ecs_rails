@@ -196,4 +196,62 @@ RSpec.describe "generated migrations actually run", type: :generator do
       expect(connection.select_value("SELECT verified FROM emails")).to be(false)
     end
   end
+
+  # RFC-0012 / ADR-0013: the relationship migration, executed against the real
+  # catalog. The point is the asymmetric FK delete rules — entity_id CASCADE,
+  # target NULLIFY — and that the database actually enforces the nullify.
+  describe "the relationship migration" do
+    before do
+      generate(EcsRails::Generators::RelationshipGenerator, %w[Post author:User])
+      run_migration("create_post_authors", "CreatePostAuthors")
+    end
+
+    def delete_rule_for(column)
+      connection.select_value(<<~SQL)
+        SELECT c.confdeltype
+        FROM pg_constraint c
+        JOIN pg_class t ON t.oid = c.conrelid
+        JOIN pg_namespace n ON n.oid = t.relnamespace
+        JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = ANY (c.conkey)
+        WHERE n.nspname = '#{scratch_schema}' AND t.relname = 'post_authors'
+          AND c.contype = 'f' AND a.attname = '#{column}'
+      SQL
+    end
+
+    it "cascades on the owner side (entity_id)" do
+      expect(delete_rule_for("entity_id")).to eq("c") # confdeltype 'c' = CASCADE
+    end
+
+    it "nullifies on the target side (author_id)" do
+      expect(delete_rule_for("author_id")).to eq("n") # confdeltype 'n' = SET NULL
+    end
+
+    it "enforces the unique entity_id index (one relationship per owner)" do
+      indexes = connection.select_values(
+        "SELECT indexdef FROM pg_indexes WHERE schemaname = '#{scratch_schema}' AND tablename = 'post_authors'"
+      )
+      expect(indexes).to include(match(/CREATE UNIQUE INDEX .*\(entity_id\)/))
+    end
+
+    # The behaviour the whole feature turns on, proven end to end: destroying the
+    # target nullifies the link and leaves the row (and thus the owner) standing.
+    it "nulls the target column when the target entity is deleted" do
+      make_entity = lambda do
+        connection.select_value("INSERT INTO entities (model, created_at) VALUES ('users', now()) RETURNING id")
+      end
+      owner = make_entity.call
+      target = make_entity.call
+      connection.execute(
+        "INSERT INTO post_authors (entity_id, author_id, created_at, updated_at) " \
+        "VALUES ('#{owner}', '#{target}', now(), now())"
+      )
+
+      connection.execute("DELETE FROM entities WHERE id = '#{target}'")
+
+      aggregate_failures do
+        expect(connection.select_value("SELECT count(*) FROM post_authors").to_i).to eq(1)
+        expect(connection.select_value("SELECT author_id FROM post_authors")).to be_nil
+      end
+    end
+  end
 end

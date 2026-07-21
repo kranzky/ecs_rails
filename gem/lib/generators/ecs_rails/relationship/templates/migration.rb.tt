@@ -1,0 +1,32 @@
+# frozen_string_literal: true
+
+# Creates the <%= backing_table_name %> relationship backing table
+# (RFC-0012 / ADR-0013). This is what `relates_to :<%= relation_name %>,
+# <%= target_class_name %>` reads; there is no relationship component file — the
+# DSL defines the backing component dynamically.
+#
+# The owner side (entity_id) and the target side (<%= target_foreign_key %>) are
+# deliberately asymmetric:
+#   - entity_id: not-null, UNIQUE (ADR-0005: at most one per owner), ON DELETE
+#     CASCADE — destroying the owner destroys the link.
+#   - <%= target_foreign_key %>: nullable, ON DELETE NULLIFY — destroying the
+#     TARGET nullifies the link, it does NOT cascade to the owner.
+class Create<%= backing_table_name.camelize %> < ActiveRecord::Migration[<%= migration_version %>]
+  def change
+    create_table :<%= backing_table_name %>, id: :uuid, default: -> { "gen_random_uuid()" } do |t|
+      t.uuid :entity_id, null: false
+      t.uuid :<%= target_foreign_key %>, default: nil
+      t.timestamps
+    end
+
+    # ADR-0005: at most one relationship row per owner entity.
+    add_index :<%= backing_table_name %>, :entity_id, unique: true
+
+    # Destroying the owner destroys the link, at the database level.
+    add_foreign_key :<%= backing_table_name %>, :entities, column: :entity_id, on_delete: :cascade
+
+    # Destroying the TARGET nullifies the link — it does not cascade to the owner.
+    add_index :<%= backing_table_name %>, :<%= target_foreign_key %>
+    add_foreign_key :<%= backing_table_name %>, :entities, column: :<%= target_foreign_key %>, on_delete: :nullify
+  end
+end

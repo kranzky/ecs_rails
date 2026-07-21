@@ -17,7 +17,8 @@ RSpec.describe "generator load isolation" do
   # Each generator, and the constant a bare `invoke_all` must be able to reach.
   {
     "install" => "EcsRails::Generators::InstallGenerator",
-    "component" => "EcsRails::Generators::ComponentGenerator"
+    "component" => "EcsRails::Generators::ComponentGenerator",
+    "relationship" => "EcsRails::Generators::RelationshipGenerator"
   }.each do |name, const|
     it "loads #{name}_generator.rb without a pre-loaded ActiveRecord" do
       script = <<~RUBY
@@ -86,6 +87,33 @@ RSpec.describe "generator load isolation" do
         expect(migration).not_to be_nil
         expect(File.read(migration.to_s, encoding: "UTF-8"))
           .to match(/t\.boolean :verified, default: false, null: false/)
+      end
+    end
+  end
+
+  # The relationship generator parses `name:Target` by hand (not via
+  # GeneratedAttribute), so a clean-process run proves the parse and the nullify
+  # FK survive without a pre-loaded ActiveSupport.
+  it "generates a relationship migration from a clean process" do
+    Dir.mktmpdir("ecs_rails-isolation-") do |root|
+      script = <<~RUBY
+        $LOAD_PATH.unshift(#{File.expand_path("../../lib", __dir__).inspect})
+        require "rails/generators"
+        require "generators/ecs_rails/relationship/relationship_generator"
+        EcsRails::Generators::RelationshipGenerator.new(
+          %w[Post author:User], {}, destination_root: #{root.inspect}
+        ).invoke_all
+      RUBY
+
+      _stdout, stderr, status = Open3.capture3(RbConfig.ruby, "-e", script)
+      migration = Dir.glob(File.join(root, "db/migrate/*_create_post_authors.rb")).first
+
+      aggregate_failures do
+        expect(stderr).to eq("")
+        expect(status).to be_success
+        expect(migration).not_to be_nil
+        expect(File.read(migration.to_s, encoding: "UTF-8"))
+          .to match(/add_foreign_key :post_authors, :entities, column: :author_id, on_delete: :nullify/)
       end
     end
   end
