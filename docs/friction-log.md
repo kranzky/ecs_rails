@@ -339,3 +339,23 @@ Index (cross-component query), show (delegated reads), new/create (params →
 components, validation error merging in the form), and like (component behaviour
 `likes.increment!` through a button) all work end to end against a running
 server. The gem holds up in a real Rails request cycle, not just in the console.
+
+### 🟢→🟢 Relationship boilerplate, eliminated — 2026-07-21
+
+The 🟡 papercut logged earlier (three near-identical relationship components,
+each just a `belongs_to`) is gone. `relates_to` ([ADR-0013](adr/0013-relationship-dsl.md)
+/ [RFC-0012](rfc/0012-relationship-dsl.md)) collapses each to one line on the
+entity, with no component file:
+
+```ruby
+class Membership < ApplicationEntity   # was: MemberUser + MemberGroup + Role + 3 declarations
+  relates_to :user, User
+  relates_to :group, Group
+  component Role
+end
+```
+
+Deleted `authorship.rb`, `member_user.rb`, `member_group.rb`. `post.author` still
+returns the User, the index still serves in a bounded 8 queries (preloading via
+the backing reader `author_relationship`). The last backlog item the demo
+actively argued for is done.

@@ -78,6 +78,13 @@
       "humanMinutes": 10,
       "aiMinutes": 60,
       "costs": []
+    },
+    {
+      "date": "2026-07-21",
+      "summary": "Built the relationship DSL (relates_to) \u2014 the one backlog item the demo actively argued for \u2014 and used it to clean up the demo. RFC-0012 + ADR-0013, superseding ADR-0006's deferral, 512 gem examples green. relates_to :author, User on an entity declares a cross-entity link with NO relationship component file: the DSL dynamically defines a backing component (Post::AuthorRelationship, table post_authors) with the belongs_to and declares it, so the whole stack (registry, lazy reader, delegation, with_component, presence, includes_components) applies for free. post.author / post.author= reach the target via delegation; a generator emits only the migration. The two FKs are deliberately asymmetric: cascade on the owner side (entity_id), nullify on the target side (author_id) \u2014 deleting the User nullifies the link but the Post survives, proven against the real DB. A spike up front confirmed feasibility before design. The agent found a real ADR bug: the backing reader is author_relationship only because relates_to pins the backing class's model_name to the demodulized element; the naive derivation yields post_author_relationship (namespace leaks in, owner name doubles), which would have silently broken the preload key. It also added InvalidRelationship < InvalidComponent (relationship-shaped message, still caught by rescue InvalidComponent). Demo cleanup: deleted authorship.rb/member_user.rb/member_group.rb, rewrote Post/Comment/Membership with relates_to (Membership is now three lines), regenerated the backing migrations, and confirmed the index still serves both published posts with author names in a bounded 8 queries. Next per the user: polish the demo UI to look great, be idiomatic Rails, and expose all features.",
+      "humanMinutes": 15,
+      "aiMinutes": 130,
+      "costs": []
     }
   ]
 }
