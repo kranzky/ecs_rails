@@ -8,9 +8,9 @@ class GroupsController < ApplicationController
   def show
     @group = Group.find(params[:id])
     # Members: Membership join entities whose :group relationship points here,
-    # each resolved to its user + role.
+    # by relationship name (RFC-0013). The member name is a two-hop preload.
     @memberships = Membership
-                   .with_component(Membership::GroupRelationship, group_id: @group.id)
+                   .with_related(:group, @group)
                    .includes_components(Role)
                    .preload(user_relationship: { user: :name })
     @candidates = User.all.includes_components(Name)

@@ -92,6 +92,13 @@
       "humanMinutes": 20,
       "aiMinutes": 210,
       "costs": []
+    },
+    {
+      "date": "2026-07-21",
+      "summary": "Added relationship-name query & preload sugar (with_related / without_related / includes_related) \u2014 the item the full UI surfaced. RFC-0013 + ADR-0014, 534 gem examples green. relationship queries previously had to name the backing component and its raw FK column (Comment.with_component(Comment::PostRelationship, post_id:)), re-exposing exactly what relates_to hides; now Comment.with_related(:post, post) reads by relationship name. It's thin sugar: relates_to records relationship metadata (name -> backing class name, FK, target name) stored by NAME and constantized on read (reload-safe like the registry, ancestry-walked), and with_related(:author, x).to_sql is byte-identical to the with_component form. The agent gave a sharp correction: my 'no cross-entity leak' claim was theatrical \u2014 relationship backing tables are owner-scoped by construction (post_authors vs comment_authors are disjoint), so relationship queries are leak-proof regardless of the entity-model scope, unlike a shared component table; corrected the ADR. Demo cleanup: rewrote the controllers to use with_related, removing every *Relationship backing-class name from app/controllers (two-hop author/member name preloads stay explicit per the RFC non-goal, using only the reader symbol). All pages verified rendering. This closes the last demo-surfaced item; remaining backlog is enhancement (non-equality query conditions, required components, Systems) with no demo yet arguing for it.",
+      "humanMinutes": 10,
+      "aiMinutes": 95,
+      "costs": []
     }
   ]
 }

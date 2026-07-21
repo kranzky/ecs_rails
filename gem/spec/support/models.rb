@@ -120,6 +120,15 @@ class Post < ApplicationEntity
   relates_to :author, User
 end
 
+# A SECOND entity relating `:author` to the same target as Post (RFC-0013). Its
+# owner-scoped backing table is `comment_authors`, distinct from Post's
+# `post_authors`, so `Post.with_related(:author, ada)` returning only posts is a
+# real assertion that relationship-name sugar does not leak across entity types
+# (the ADR-0011 scoping it inherits from `with_component`).
+class Comment < ApplicationEntity
+  relates_to :author, User
+end
+
 # A target entity for a *second* relationship on a join entity. The gem's `Group`
 # fixture is a component, not an entity, so it cannot stand in for a relationship
 # target — hence a dedicated entity here. Entities need no table of their own

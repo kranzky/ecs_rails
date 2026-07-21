@@ -7,7 +7,7 @@ class UsersController < ApplicationController
 
   def show
     @user = User.find(params[:id])
-    @posts = Post.with_component(Post::AuthorRelationship, author_id: @user.id)
+    @posts = Post.with_related(:author, @user)
                  .includes_components(Title, Likes)
                  .order(created_at: :desc)
   end

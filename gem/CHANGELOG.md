@@ -8,6 +8,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Relationship query & preload sugar (RFC-0013). `Entity.with_related(:author, user)` /
+  `without_related(:author)` / `includes_related(:author)` query and preload a
+  relationship by its declared name, so the backing component class never appears in
+  application code. Thin sugar over the component verbs.
 - Relationship DSL (RFC-0012). `relates_to :author, User` on an entity declares a
   cross-entity link with no relationship component file — the DSL defines the
   backing component dynamically. `post.author` / `post.author =` reach the target;

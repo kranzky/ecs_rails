@@ -12,10 +12,10 @@ class PostsController < ApplicationController
 
   def show
     @post = Post.find(params[:id])
-    # Comments on this post: the query DSL filters by the :post relationship's
-    # backing column, then we preload each comment's own components + author.
+    # Comments on this post — by relationship name (RFC-0013), no backing class.
+    # The author name is a two-hop preload (kept explicit, an RFC-0013 non-goal).
     @comments = Comment
-                .with_component(Comment::PostRelationship, post_id: @post.id)
+                .with_related(:post, @post)
                 .includes_components(Body, Likes)
                 .preload(author_relationship: { author: :name })
                 .order(created_at: :asc)
