@@ -2,6 +2,6 @@
 
 class Comment < ApplicationEntity
   component Body, except: [:text]
-  component Authorship
   component Likes
+  relates_to :author, User
 end
