@@ -1,5 +1,8 @@
-PATH
-  remote: ../gem
+GIT
+  remote: https://github.com/kranzky/rails-ecs.git
+  revision: 54884b48ab76299dccade93e139c47cc82a12439
+  branch: main
+  glob: gem/*.gemspec
   specs:
     ecs-rails (0.1.0)
       activerecord (>= 7.1, < 9.0)
