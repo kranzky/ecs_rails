@@ -3,6 +3,8 @@
 class Posts::CommentsController < ApplicationController
   def create
     post = Post.find(params[:post_id])
+    return redirect_to(post, alert: "You can't comment on a draft.") if post.draft?
+
     comment = Comment.new
     comment.body.text = params.dig(:comment, :body)
     comment.post = post

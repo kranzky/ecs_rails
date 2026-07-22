@@ -43,8 +43,11 @@
   <% else %>
     <div class="stack stack--tight">
       <% @posts.each do |post| %>
-        <%= link_to post, class: "card card-link" do %>
-          <strong style="color:var(--text)"><%= post.title.text %></strong>
+        <%= link_to post, class: "card card-link #{'is-draft' if post.draft?}" do %>
+          <div class="btn-row" style="justify-content:space-between;align-items:baseline">
+            <strong style="color:var(--text)"><%= post.title.text %></strong>
+            <% if post.draft? %><span class="badge badge--draft">Draft</span><% end %>
+          </div>
           <div class="meta" style="margin-top:.3rem"><span class="count">♥ <%= likes_count(post) %></span></div>
         <% end %>
       <% end %>
