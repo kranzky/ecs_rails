@@ -61,10 +61,10 @@ fly deploy
 The `release_command` in `fly.toml` runs `bin/rails db:prepare demo:reset`, so
 the database is created, migrated, and seeded on every deploy.
 
-## 5. Custom domain (ecs-ruby.kranzky.com)
+## 5. Custom domain (ecs-rails.kranzky.com)
 
 ```sh
-fly certs add ecs-ruby.kranzky.com --app ecs-rails-demo
+fly certs add ecs-rails.kranzky.com --app ecs-rails-demo
 fly ips list --app ecs-rails-demo         # note the v4 (A) and v6 (AAAA) addresses
 ```
 
@@ -74,7 +74,7 @@ Then add DNS records at your provider:
 - `AAAA` `ecs-ruby` → the IPv6
 
 Fly issues the Let's Encrypt certificate automatically once DNS resolves.
-Verify with `fly certs show ecs-ruby.kranzky.com`.
+Verify with `fly certs show ecs-rails.kranzky.com`.
 
 ## The reset & countdown
 

@@ -8,8 +8,6 @@ Dockerfile*
 /tmp/*
 !/log/.keep
 !/tmp/.keep
-/storage/*
-!/storage/.keep
 /tmp/pids/*
 !/tmp/pids/.keep
 /public/assets
