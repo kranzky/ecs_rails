@@ -8,12 +8,9 @@ gem "rails", "~> 8.1.3"
 # self-contained — no `path: "../gem"` escaping the demo/ directory. Gemfile.lock
 # pins the exact commit, so builds are reproducible.
 #
-# NB: tracks `main`, not the `v0.1.0` tag, because the relationship DSL
-# (relates_to, RFC-0012) and with_related (RFC-0013) landed AFTER v0.1.0 and the
-# demo depends on them. The gem should be re-tagged (0.2.0) before it is
-# published to RubyGems; pin this to that tag then. For the tight local gem↔demo
-# loop, switch back to `path: "../gem"`.
-gem "ecs-rails", github: "kranzky/rails-ecs", glob: "gem/*.gemspec", branch: "main"
+# Pinned to the v0.2.0 tag (relationship DSL + with_related). For the tight
+# local gem↔demo loop, switch back to `path: "../gem"`.
+gem "ecs-rails", github: "kranzky/rails-ecs", glob: "gem/*.gemspec", tag: "v0.2.0"
 
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
 gem "propshaft"
