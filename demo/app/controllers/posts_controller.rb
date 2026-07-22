@@ -73,8 +73,8 @@ class PostsController < ApplicationController
   # Shared by create and update. The publish checkbox always submits (check_box
   # renders a hidden "0"), so its key is always present on a form post.
   def assign(post, attrs)
-    post.title.text = attrs[:title] if attrs.key?(:title)
-    post.body.text = attrs[:body] if attrs.key?(:body)
+    post.title.text = cap(attrs[:title], 120) if attrs.key?(:title)
+    post.body.text = cap(attrs[:body], 5000) if attrs.key?(:body)
     post.author = User.find(attrs[:author_id]) if attrs[:author_id].present?
     post.publish_state.state = attrs[:publish] == "1" ? "published" : "draft" if attrs.key?(:publish)
   end

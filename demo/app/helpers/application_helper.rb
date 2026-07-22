@@ -43,4 +43,18 @@ module ApplicationHelper
   def likes_count(entity)
     entity.likes.count || 0
   end
+
+  # --- demo reset countdown -------------------------------------------------
+
+  def resets_enabled?
+    Demo::ResetScheduler.enabled?
+  end
+
+  def next_reset_at
+    Demo::ResetScheduler.next_reset_at
+  end
+
+  def reset_interval_minutes
+    Demo::ResetScheduler.interval_seconds / 60
+  end
 end

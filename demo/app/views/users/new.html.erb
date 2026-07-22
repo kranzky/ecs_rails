@@ -14,21 +14,21 @@
     <div class="grid grid--2">
       <div class="field">
         <%= f.label "user[first]", "First name" %>
-        <%= f.text_field "user[first]", class: "input", value: @user.name.first %>
+        <%= f.text_field "user[first]", class: "input", maxlength: 50, value: @user.name.first %>
       </div>
       <div class="field">
         <%= f.label "user[last]", "Last name" %>
-        <%= f.text_field "user[last]", class: "input", value: @user.name.last %>
+        <%= f.text_field "user[last]", class: "input", maxlength: 50, value: @user.name.last %>
       </div>
     </div>
     <div class="field">
       <%= f.label "user[email]", "Email" %>
-      <%= f.text_field "user[email]", class: "input", value: @user.email.address, placeholder: "name@example.com" %>
+      <%= f.text_field "user[email]", class: "input", maxlength: 100, value: @user.email.address, placeholder: "name@example.com" %>
       <p class="hint">Validated by the Email component — try an invalid one to see errors merge onto the entity.</p>
     </div>
     <div class="field">
       <%= f.label "user[bio]", "Bio" %>
-      <%= f.text_area "user[bio]", class: "textarea", rows: 3, value: @user.bio.text %>
+      <%= f.text_area "user[bio]", class: "textarea", rows: 3, maxlength: 300, value: @user.bio.text %>
     </div>
     <div class="btn-row">
       <%= f.submit "Add person", class: "btn btn--primary" %>

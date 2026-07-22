@@ -79,7 +79,7 @@
         </div>
         <div class="field">
           <%= f.label "comment[body]", "Comment" %>
-          <%= f.text_area "comment[body]", class: "textarea", rows: 3, placeholder: "Add your thoughts…" %>
+          <%= f.text_area "comment[body]", class: "textarea", rows: 3, maxlength: 2000, placeholder: "Add your thoughts…" %>
         </div>
         <%= f.submit "Post comment", class: "btn btn--primary" %>
       <% end %>

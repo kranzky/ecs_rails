@@ -1,0 +1,23 @@
+.git/
+.gitignore
+.dockerignore
+Dockerfile*
+
+# Ephemeral / generated
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+/storage/*
+!/storage/.keep
+/tmp/pids/*
+!/tmp/pids/.keep
+/public/assets
+
+# Secrets — provided via Fly secrets / RAILS_MASTER_KEY, never baked in
+/config/master.key
+/config/credentials/*.key
+
+# Local dev noise
+.env
+/spec/

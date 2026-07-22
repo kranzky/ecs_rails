@@ -11,7 +11,7 @@
   <%= form_with url: url, method: method do |f| %>
     <div class="field">
       <%= f.label "post[title]", "Title" %>
-      <%= f.text_field "post[title]", class: "input", value: @post.title.text, placeholder: "A clear, catchy title" %>
+      <%= f.text_field "post[title]", class: "input", maxlength: 120, value: @post.title.text, placeholder: "A clear, catchy title" %>
     </div>
     <div class="field">
       <%= f.label "post[author_id]", "Author" %>
@@ -21,7 +21,7 @@
     </div>
     <div class="field">
       <%= f.label "post[body]", "Body" %>
-      <%= f.text_area "post[body]", class: "textarea", rows: 8, value: @post.body.text, placeholder: "Write something worth reading…" %>
+      <%= f.text_area "post[body]", class: "textarea", rows: 8, maxlength: 5000, value: @post.body.text, placeholder: "Write something worth reading…" %>
     </div>
     <div class="field">
       <label class="check">

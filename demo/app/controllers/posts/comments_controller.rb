@@ -6,7 +6,7 @@ class Posts::CommentsController < ApplicationController
     return redirect_to(post, alert: "You can't comment on a draft.") if post.draft?
 
     comment = Comment.new
-    comment.body.text = params.dig(:comment, :body)
+    comment.body.text = cap(params.dig(:comment, :body), 2000)
     comment.post = post
     comment.author = User.find(params[:comment][:author_id]) if params.dig(:comment, :author_id).present?
     comment.likes.count = 0

@@ -37,3 +37,10 @@ plugin :tmp_restart
 # Specify the PID file. Defaults to tmp/pids/server.pid in development.
 # In other environments, only set the PID file if requested.
 pidfile ENV["PIDFILE"] if ENV["PIDFILE"]
+
+# Start the demo database-reset scheduler when the web server boots. Gated on
+# DEMO_RESET_ENABLED (set in fly.toml), so it never runs in dev/test or in
+# one-off rake/console processes. See lib/demo/reset_scheduler.rb.
+on_booted do
+  Demo::ResetScheduler.start
+end

@@ -18,10 +18,10 @@ class UsersController < ApplicationController
 
   def create
     user = User.new
-    user.name.first = user_params[:first]
-    user.name.last = user_params[:last]
-    user.email.address = user_params[:email]
-    user.bio.text = user_params[:bio] if user_params[:bio].present?
+    user.name.first = cap(user_params[:first], 50)
+    user.name.last = cap(user_params[:last], 50)
+    user.email.address = cap(user_params[:email], 100)
+    user.bio.text = cap(user_params[:bio], 300) if user_params[:bio].present?
 
     if user.save
       redirect_to user, notice: "Person added."

@@ -1,0 +1,29 @@
+<% if resets_enabled? %>
+  <div class="reset-banner" data-reset-at="<%= next_reset_at.iso8601 %>">
+    <span class="reset-banner__pulse" aria-hidden="true"></span>
+    <span>
+      Public demo — anyone can post. It wipes clean every <%= reset_interval_minutes %> minutes.
+      Next reset in <strong data-role="reset-countdown" class="count">…</strong>
+    </span>
+  </div>
+  <script>
+    (function () {
+      var banner = document.querySelector('.reset-banner');
+      var out = banner && banner.querySelector('[data-role="reset-countdown"]');
+      if (!out) return;
+      var target = new Date(banner.getAttribute('data-reset-at')).getTime();
+      function tick() {
+        var ms = target - Date.now();
+        if (ms <= 0) {
+          out.textContent = 'resetting…';
+          setTimeout(function () { location.reload(); }, 3000);
+          return;
+        }
+        var s = Math.floor(ms / 1000);
+        out.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+        setTimeout(tick, 1000);
+      }
+      tick();
+    })();
+  </script>
+<% end %>

@@ -22,8 +22,8 @@ class GroupsController < ApplicationController
 
   def create
     group = Group.new
-    group.name.first = group_params[:name]
-    group.description.text = group_params[:description] if group_params[:description].present?
+    group.name.first = cap(group_params[:name], 80)
+    group.description.text = cap(group_params[:description], 300) if group_params[:description].present?
 
     if group.save
       redirect_to group, notice: "Group created."

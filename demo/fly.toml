@@ -1,0 +1,36 @@
+# Fly.io config for the ECS Rails demo. See DEPLOY.md for the one-time setup.
+# Rename `app` to whatever you create with `fly apps create`.
+
+app = "ecs-rails-demo"
+primary_region = "syd"          # closest Fly region to Perth, WA
+console_command = "/rails/bin/rails console"
+
+[build]
+
+[env]
+  RAILS_ENV = "production"
+  # The demo resets its database on this cadence (see Demo::ResetScheduler).
+  # The countdown in the UI is computed from the same interval, so they stay in
+  # sync. Set to "" or remove DEMO_RESET_ENABLED to disable resets.
+  DEMO_RESET_ENABLED = "true"
+  DEMO_RESET_INTERVAL_MINUTES = "60"
+
+# Migrate and (re)seed on every deploy. `db:prepare` creates+migrates; `demo:reset`
+# truncates and reseeds, so a fresh deploy always starts from clean demo data.
+[deploy]
+  release_command = "bin/rails db:prepare demo:reset"
+
+[http_service]
+  internal_port = 80             # Thruster
+  force_https = true
+  auto_stop_machines = "off"     # always-on: snappy for a blog-linked demo, and
+  auto_start_machines = true     #   the reset scheduler needs the app running
+  min_machines_running = 1
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 200
+    soft_limit = 150
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"               # drop to 256mb to save ~$1/mo if it holds up

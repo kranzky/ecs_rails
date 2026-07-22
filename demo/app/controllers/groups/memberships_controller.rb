@@ -10,7 +10,7 @@ class Groups::MembershipsController < ApplicationController
     membership = Membership.new
     membership.user = user
     membership.group = group
-    membership.role.name = params[:membership][:role].presence || "member"
+    membership.role.name = cap(params[:membership][:role], 30).presence || "member"
     membership.save!
 
     redirect_to group, notice: "#{helpers.display_name(user)} joined #{group.name.first}."

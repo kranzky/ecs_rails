@@ -12,11 +12,11 @@
   <%= form_with url: groups_path, method: :post do |f| %>
     <div class="field">
       <%= f.label "group[name]", "Name" %>
-      <%= f.text_field "group[name]", class: "input", value: @group.name.first %>
+      <%= f.text_field "group[name]", class: "input", maxlength: 80, value: @group.name.first %>
     </div>
     <div class="field">
       <%= f.label "group[description]", "Description" %>
-      <%= f.text_area "group[description]", class: "textarea", rows: 3, value: @group.description.text %>
+      <%= f.text_area "group[description]", class: "textarea", rows: 3, maxlength: 300, value: @group.description.text %>
     </div>
     <div class="btn-row">
       <%= f.submit "Create group", class: "btn btn--primary" %>
