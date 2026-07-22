@@ -6,6 +6,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-07-22
+
+Adds cross-entity relationships. Demo-validated by the bulletin-board app.
+
 ### Added
 
 - Relationship query & preload sugar (RFC-0013). `Entity.with_related(:author, user)` /
