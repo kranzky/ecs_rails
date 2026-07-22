@@ -21,7 +21,8 @@ console_command = "/rails/bin/rails console"
   release_command = "bin/rails db:prepare demo:reset"
 
 [http_service]
-  internal_port = 80             # Thruster
+  internal_port = 8080           # Thruster (HTTP_PORT in the Dockerfile) — a
+                                 # non-root user can't bind :80 on Firecracker
   force_https = true
   auto_stop_machines = "off"     # always-on: snappy for a blog-linked demo, and
   auto_start_machines = true     #   the reset scheduler needs the app running

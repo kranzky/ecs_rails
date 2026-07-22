@@ -70,8 +70,8 @@ fly ips list --app ecs-rails-demo         # note the v4 (A) and v6 (AAAA) addres
 
 Then add DNS records at your provider:
 
-- `A`    `ecs-ruby` → the shared IPv4 (or `fly ips allocate-v4` for a dedicated one)
-- `AAAA` `ecs-ruby` → the IPv6
+- `A`    `ecs-rails` → the shared IPv4 (or `fly ips allocate-v4` for a dedicated one)
+- `AAAA` `ecs-rails` → the IPv6
 
 Fly issues the Let's Encrypt certificate automatically once DNS resolves.
 Verify with `fly certs show ecs-rails.kranzky.com`.

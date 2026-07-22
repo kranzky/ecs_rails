@@ -54,6 +54,10 @@ USER 1000:1000
 
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 
-# Thruster (gzip, static asset serving, X-Sendfile) fronts Puma.
-EXPOSE 80
+# Thruster (gzip, static asset serving, X-Sendfile) fronts Puma. It listens on
+# HTTP_PORT and proxies to Puma on 3000. We run as a non-root user (uid 1000),
+# which cannot bind ports below 1024 on Fly's Firecracker, so Thruster listens
+# on 8080 rather than its default 80. fly.toml's internal_port must match.
+ENV HTTP_PORT=8080
+EXPOSE 8080
 CMD ["./bin/thrust", "./bin/rails", "server"]
