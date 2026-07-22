@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
+  # Health check for uptime monitors / Fly (config.silence_healthcheck_path).
+  get "up" => "rails/health#show", as: :rails_health_check
+
   root "posts#index"
 
   resources :posts, only: %i[index show new create edit update] do
