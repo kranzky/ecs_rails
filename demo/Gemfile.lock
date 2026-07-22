@@ -1,10 +1,10 @@
 GIT
   remote: https://github.com/kranzky/rails-ecs.git
-  revision: 54884b48ab76299dccade93e139c47cc82a12439
-  branch: main
+  revision: ec49d4bad04cb6466bd74c01acb339bb97bfca95
+  tag: v0.2.0
   glob: gem/*.gemspec
   specs:
-    ecs-rails (0.1.0)
+    ecs-rails (0.2.0)
       activerecord (>= 7.1, < 9.0)
       activesupport (>= 7.1, < 9.0)
       railties (>= 7.1, < 9.0)
