@@ -1,0 +1,37 @@
+<div class="card">
+  <% if @post.errors.any? %>
+    <div class="errors">
+      <strong><%= pluralize(@post.errors.count, "problem") %> stopped this saving:</strong>
+      <ul>
+        <% @post.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <%= form_with url: url, method: method do |f| %>
+    <div class="field">
+      <%= f.label "post[title]", "Title" %>
+      <%= f.text_field "post[title]", class: "input", value: @post.title.text, placeholder: "A clear, catchy title" %>
+    </div>
+    <div class="field">
+      <%= f.label "post[author_id]", "Author" %>
+      <%= f.select "post[author_id]",
+            options_for_select(@authors.map { |u| [display_name(u), u.id] }, @post.author&.id),
+            {}, class: "select" %>
+    </div>
+    <div class="field">
+      <%= f.label "post[body]", "Body" %>
+      <%= f.text_area "post[body]", class: "textarea", rows: 8, value: @post.body.text, placeholder: "Write something worth reading…" %>
+    </div>
+    <div class="field">
+      <label class="check">
+        <%= f.check_box "post[publish]", checked: @post.published? %>
+        Published <span class="hint" style="margin:0">(uncheck to save as a draft)</span>
+      </label>
+    </div>
+    <div class="btn-row">
+      <%= f.submit submit_label, class: "btn btn--primary" %>
+      <%= link_to "Cancel", cancel_path, class: "btn btn--ghost" %>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,9 @@
+<% content_for :title, "Edit post" %>
+<%= link_to "← Back to post", @post, class: "back" %>
+<div class="page-head">
+  <h1>Edit post</h1>
+  <p>
+    <% if @post.draft? %>This is a <span class="badge badge--draft">Draft</span> — check “Published” to make it live.<% else %>Editing a published post.<% end %>
+  </p>
+</div>
+<%= render "form", url: post_path(@post), method: :patch, submit_label: (@post.draft? ? "Save changes" : "Update post"), cancel_path: post_path(@post) %>

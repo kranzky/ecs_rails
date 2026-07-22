@@ -3,7 +3,8 @@
 Rails.application.routes.draw do
   root "posts#index"
 
-  resources :posts, only: %i[index show new create] do
+  resources :posts, only: %i[index show new create edit update] do
+    member { patch :publish }
     resource  :like,     only: :create, module: :posts
     resources :comments, only: :create, module: :posts
   end

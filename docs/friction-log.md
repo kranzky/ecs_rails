@@ -394,3 +394,20 @@ the relationship abstraction leaks. A relationship-name query sugar
 backing. This is the deferred item from [RFC-0012](rfc/0012-relationship-dsl.md)'s
 non-goals, and the UI is the concrete case that argues for it. Logged for the
 backlog; not a blocker.
+
+### 🟢 Draft/publish lifecycle models cleanly — 2026-07-21
+
+The demo's draft handling was incomplete (a draft claimed "published", couldn't
+be edited/published, could be commented on, had no visual cue). Fixing it was
+ordinary Rails — and the gem carried the state naturally:
+
+- `post.published?` / `post.draft?` read the `PublishState` component;
+  `post.publish!` flips it and saves — component behaviour on the entity.
+- The feed stays `with_component(PublishState, state: "published")`; the profile
+  preloads `PublishState` so `draft?` per row costs no query.
+- A draft is just a `PublishState` whose `state` isn't `"published"` — no STI,
+  no status enum on a wide table. Adding `edit`/`update`/`publish` actions and a
+  draft badge needed no gem change.
+
+No API friction; logged as evidence the component model handles a real
+state-bearing feature without ceremony.

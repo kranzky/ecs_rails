@@ -252,3 +252,12 @@ kbd, code { font-family: var(--mono); font-size: .88em; background: var(--surfac
 .profile__meta { flex: 1; }
 .profile__name { margin: 0; font-size: 1.4rem; }
 .profile__badges { display: flex; gap: .4rem; margin-top: .35rem; flex-wrap: wrap; }
+
+/* drafts */
+.card.is-draft { border-style: dashed; border-color: color-mix(in srgb, var(--warn) 45%, var(--border)); }
+.notice-draft {
+  margin: 1rem 0 0; padding: .7rem .9rem; border-radius: var(--radius-s);
+  background: var(--warn-soft); color: var(--warn); font-size: .9rem;
+  border: 1px solid color-mix(in srgb, var(--warn) 30%, transparent);
+}
+.notice-draft strong { color: var(--warn); }

@@ -2,14 +2,34 @@
 
 <%= link_to "← Back to posts", posts_path, class: "back" %>
 
-<article class="card">
-  <span class="badge badge--pub">Published</span>
+<article class="card <%= "is-draft" if @post.draft? %>">
+  <div class="btn-row" style="justify-content:space-between">
+    <% if @post.draft? %>
+      <span class="badge badge--draft">Draft</span>
+    <% else %>
+      <span class="badge badge--pub">Published</span>
+    <% end %>
+    <span class="btn-row">
+      <%= link_to "Edit", edit_post_path(@post), class: "btn btn--sm btn--ghost" %>
+      <% if @post.draft? %>
+        <%= button_to "Publish now", publish_post_path(@post), method: :patch, class: "btn btn--sm btn--primary", form_class: "inline" %>
+      <% end %>
+    </span>
+  </div>
+
   <h1 style="margin:.5rem 0 .35rem;font-size:1.9rem"><%= @post.title.text %></h1>
   <div class="meta">
     <%= byline @post.author %>
     <span class="dot"></span>
     <%= @post.created_at.strftime("%-d %b %Y") %>
   </div>
+
+  <% if @post.draft? %>
+    <div class="notice-draft">
+      This post is a draft — it isn’t in the feed and can’t be commented on yet.
+      <strong>Publish</strong> it to make it live.
+    </div>
+  <% end %>
 
   <div class="article__body prose" style="margin-top:1.25rem">
     <%= simple_format @post.body.text %>
@@ -23,44 +43,46 @@
   </div>
 </article>
 
-<section style="margin-top:2rem">
-  <h2 class="section-title">Comments · <%= @comments.size %></h2>
+<% unless @post.draft? %>
+  <section style="margin-top:2rem">
+    <h2 class="section-title">Comments · <%= @comments.size %></h2>
 
-  <div class="card">
-    <% if @comments.empty? %>
-      <p style="color:var(--muted);margin:0 0 1rem">No comments yet. Start the conversation.</p>
-    <% else %>
-      <% @comments.each do |comment| %>
-        <div class="comment">
-          <%= avatar_for comment.author %>
-          <div class="comment__body">
-            <div class="meta">
-              <strong style="color:var(--text)"><%= display_name comment.author %></strong>
-              <span class="dot"></span>
-              <%= time_ago_in_words(comment.created_at) %> ago
+    <div class="card">
+      <% if @comments.empty? %>
+        <p style="color:var(--muted);margin:0 0 1rem">No comments yet. Start the conversation.</p>
+      <% else %>
+        <% @comments.each do |comment| %>
+          <div class="comment">
+            <%= avatar_for comment.author %>
+            <div class="comment__body">
+              <div class="meta">
+                <strong style="color:var(--text)"><%= display_name comment.author %></strong>
+                <span class="dot"></span>
+                <%= time_ago_in_words(comment.created_at) %> ago
+              </div>
+              <p><%= simple_format comment.body.text %></p>
+              <%= button_to comment_like_path(comment), class: "btn btn--sm btn--like btn--ghost" do %>
+                ♥ <span class="count"><%= likes_count(comment) %></span>
+              <% end %>
             </div>
-            <p><%= simple_format comment.body.text %></p>
-            <%= button_to comment_like_path(comment), class: "btn btn--sm btn--like btn--ghost" do %>
-              ♥ <span class="count"><%= likes_count(comment) %></span>
-            <% end %>
           </div>
-        </div>
+        <% end %>
       <% end %>
-    <% end %>
 
-    <hr class="divider">
-    <%= form_with url: post_comments_path(@post), method: :post do |f| %>
-      <div class="field">
-        <%= f.label "comment[author_id]", "Commenting as" %>
-        <%= f.select "comment[author_id]",
-              options_for_select(@authors.map { |u| [display_name(u), u.id] }),
-              {}, class: "select" %>
-      </div>
-      <div class="field">
-        <%= f.label "comment[body]", "Comment" %>
-        <%= f.text_area "comment[body]", class: "textarea", rows: 3, placeholder: "Add your thoughts…" %>
-      </div>
-      <%= f.submit "Post comment", class: "btn btn--primary" %>
-    <% end %>
-  </div>
-</section>
+      <hr class="divider">
+      <%= form_with url: post_comments_path(@post), method: :post do |f| %>
+        <div class="field">
+          <%= f.label "comment[author_id]", "Commenting as" %>
+          <%= f.select "comment[author_id]",
+                options_for_select(@authors.map { |u| [display_name(u), u.id] }),
+                {}, class: "select" %>
+        </div>
+        <div class="field">
+          <%= f.label "comment[body]", "Comment" %>
+          <%= f.text_area "comment[body]", class: "textarea", rows: 3, placeholder: "Add your thoughts…" %>
+        </div>
+        <%= f.submit "Post comment", class: "btn btn--primary" %>
+      <% end %>
+    </div>
+  </section>
+<% end %>

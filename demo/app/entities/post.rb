@@ -13,4 +13,18 @@ class Post < ApplicationEntity
   def self.published
     with_component(PublishState, state: "published").order(created_at: :desc)
   end
+
+  def published?
+    publish_state.state == "published"
+  end
+
+  def draft?
+    !published?
+  end
+
+  # Behaviour on the entity: flip the PublishState component and persist.
+  def publish!
+    publish_state.state = "published"
+    save!
+  end
 end

@@ -25,19 +25,17 @@ class PostsController < ApplicationController
 
   def new
     @post = Post.new
+    @post.publish_state.state = "published" # default the checkbox to checked
     @authors = User.all
   end
 
   def create
     post = Post.new
-    post.title.text = post_params[:title]
-    post.body.text = post_params[:body]
-    post.author = User.find(post_params[:author_id]) if post_params[:author_id].present?
-    post.publish_state.state = post_params[:publish] == "1" ? "published" : "draft"
+    assign(post, post_params)
     post.likes.count = 0
 
     if post.save
-      redirect_to post, notice: "Post published."
+      redirect_to post, notice: post.published? ? "Post published." : "Draft saved."
     else
       @post = post
       @authors = User.all
@@ -45,7 +43,41 @@ class PostsController < ApplicationController
     end
   end
 
+  def edit
+    @post = Post.find(params[:id])
+    @authors = User.all
+  end
+
+  def update
+    post = Post.find(params[:id])
+    assign(post, post_params)
+
+    if post.save
+      redirect_to post, notice: post.published? ? "Post published." : "Draft updated."
+    else
+      @post = post
+      @authors = User.all
+      render :edit, status: :unprocessable_entity
+    end
+  end
+
+  # A one-click publish for a draft, from its show page.
+  def publish
+    post = Post.find(params[:id])
+    post.publish!
+    redirect_to post, notice: "Post published."
+  end
+
   private
+
+  # Shared by create and update. The publish checkbox always submits (check_box
+  # renders a hidden "0"), so its key is always present on a form post.
+  def assign(post, attrs)
+    post.title.text = attrs[:title] if attrs.key?(:title)
+    post.body.text = attrs[:body] if attrs.key?(:body)
+    post.author = User.find(attrs[:author_id]) if attrs[:author_id].present?
+    post.publish_state.state = attrs[:publish] == "1" ? "published" : "draft" if attrs.key?(:publish)
+  end
 
   def post_params
     params.require(:post).permit(:title, :body, :author_id, :publish)
