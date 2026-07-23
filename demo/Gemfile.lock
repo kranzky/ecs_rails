@@ -1,5 +1,5 @@
 GIT
-  remote: https://github.com/kranzky/rails-ecs.git
+  remote: https://github.com/kranzky/ecs_rails.git
   revision: ec49d4bad04cb6466bd74c01acb339bb97bfca95
   tag: v0.2.0
   glob: gem/*.gemspec

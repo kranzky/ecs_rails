@@ -6,6 +6,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-07-22
+
+### Changed
+
+- Renamed the gem from `ecs-rails` to **`ecs_rails`** for its first RubyGems
+  release: `ecs-rails` was already taken by an unrelated gem. The underscore form
+  matches the `EcsRails` module and the `ecs_rails` require path exactly, so the
+  `lib/ecs-rails.rb` require shim is removed. No API change — the module, the
+  require, and every class are unchanged.
+
 ## [0.2.0] — 2026-07-22
 
 Adds cross-entity relationships. Demo-validated by the bulletin-board app.

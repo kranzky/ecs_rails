@@ -3,7 +3,7 @@
   "name": "ECS Rails",
   "slug": "ecs-rails",
   "tagline": "An Entity-Component-System reimagining of ActiveRecord that stays idiomatic to Ruby on Rails",
-  "status": "building",
+  "status": "launched",
   "category": "labs",
   "target": "Rails developers who want composable, component-based domain models without inheritance or polymorphic-association sprawl",
   "stack": [
@@ -12,7 +12,8 @@
     "PostgreSQL"
   ],
   "links": {
-    "github": "https://github.com/kranzky/rails-ecs"
+    "github": "https://github.com/kranzky/ecs_rails",
+    "website": "https://ecs-rails.kranzky.com"
   },
   "mrrHistory": [],
   "log": [
@@ -98,6 +99,13 @@
       "summary": "Added relationship-name query & preload sugar (with_related / without_related / includes_related) \u2014 the item the full UI surfaced. RFC-0013 + ADR-0014, 534 gem examples green. relationship queries previously had to name the backing component and its raw FK column (Comment.with_component(Comment::PostRelationship, post_id:)), re-exposing exactly what relates_to hides; now Comment.with_related(:post, post) reads by relationship name. It's thin sugar: relates_to records relationship metadata (name -> backing class name, FK, target name) stored by NAME and constantized on read (reload-safe like the registry, ancestry-walked), and with_related(:author, x).to_sql is byte-identical to the with_component form. The agent gave a sharp correction: my 'no cross-entity leak' claim was theatrical \u2014 relationship backing tables are owner-scoped by construction (post_authors vs comment_authors are disjoint), so relationship queries are leak-proof regardless of the entity-model scope, unlike a shared component table; corrected the ADR. Demo cleanup: rewrote the controllers to use with_related, removing every *Relationship backing-class name from app/controllers (two-hop author/member name preloads stay explicit per the RFC non-goal, using only the reader symbol). All pages verified rendering. This closes the last demo-surfaced item; remaining backlog is enhancement (non-equality query conditions, required components, Systems) with no demo yet arguing for it.",
       "humanMinutes": 10,
       "aiMinutes": 95,
+      "costs": []
+    },
+    {
+      "date": "2026-07-23",
+      "summary": "Launched. The demo bulletin board is live at https://ecs-rails.kranzky.com (Fly.io, HTTPS, hourly self-reset with a live countdown), linked from every page to the GitHub repo and the gem's RubyGems page. Prepared the gem for its first RubyGems release: README doc links rewritten to absolute GitHub URLs (relative ../docs links break on rubygems.org), gemspec metadata polished (source_code_uri, changelog_uri, bug_tracker_uri, rubygems_mfa_required), and the status banner refreshed (534 examples, live demo link). A pre-flight name check caught that ecs-rails (hyphen) is already taken on RubyGems by an unrelated AWS-ECS gem, so renamed the gem to ecs_rails (underscore) \u2014 which is free and strictly better: it matches the EcsRails module and the ecs_rails require path exactly, so the lib/ecs-rails.rb require shim was deleted (no API change; module/require/classes all unchanged). Bumped to 0.2.1, amended ADR-0007's naming section. The gem builds cleanly as ecs_rails-0.2.1.gem; 534 examples green. Remaining manual step (needs the user's RubyGems credentials): gem push ecs_rails-0.2.1.gem after this is merged and tagged v0.2.1, then a small follow-up to repin the demo Gemfile from ecs-rails v0.2.0 to ecs_rails v0.2.1.",
+      "humanMinutes": 10,
+      "aiMinutes": 90,
       "costs": []
     }
   ]

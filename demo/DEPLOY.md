@@ -90,8 +90,7 @@ Verify with `fly certs show ecs-rails.kranzky.com`.
 
 ## Notes
 
-- The demo pins the `ecs-rails` gem to the repo's `main` branch (see the
-  `Gemfile` comment). `v0.1.0` predates the relationship DSL, which the demo
-  needs; re-tag the gem (`0.2.0`) and pin to it before publishing to RubyGems.
+- The demo pins the `ecs_rails` gem to a release tag via the git source (see the
+  `Gemfile` comment), so the Docker build is self-contained.
 - Redeploying wipes user-added content (the release command reseeds) — expected
   for a demo.
