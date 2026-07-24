@@ -1,7 +1,16 @@
 # ADR-0005: Exactly one component instance per entity
 
-**Status:** Accepted
+**Status:** Accepted — generalized by [ADR-0015](0015-plural-components-via-slot.md)
 **Date:** 2026-07-17
+
+> **Generalized 2026-07-24.** As predicted below ("expect this ADR to be the one
+> most likely revisited"), the standard-component-library survey forced the plural
+> case. [ADR-0015](0015-plural-components-via-slot.md) keeps this ADR's guarantee
+> — one unambiguous component instance per addressable unit — but changes the
+> addressable unit from `entity` to `(entity, slot)`, with singular being the
+> `slot = ""` default. The unique index moves from `entity_id` to
+> `(entity_id, slot)`. Nothing below is wrong; the fork objections it raises apply
+> only to *anonymous collections*, which ADR-0015 still rejects.
 
 ## Decision
 

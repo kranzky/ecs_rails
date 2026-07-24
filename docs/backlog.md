@@ -21,6 +21,7 @@ speculation — see [friction-log.md](friction-log.md).
 | **Non-equality query conditions** — `with_component(Likes) { where("count > ?", 5) }` | **Not built.** RFC-0010 ships hash equality only; ranges/comparisons need a block or relation arg. | Not yet — the demo only needed equality. |
 | **Required components** — `component Email, required: true` | **Not built.** In tension with [ADR-0003](adr/0003-virtual-components-skip-validation.md). | Repeatedly hand-writing the same entity-level presence validation. |
 | ~~**Relationship DSL**~~ | ✅ **Shipped** — `relates_to`, [ADR-0013](adr/0013-relationship-dsl.md) / [RFC-0012](rfc/0012-relationship-dsl.md). | fired |
+| **Plural components (labelled)** — `component PostalAddress, prefix: :business` → `business_address` | **Decided, not yet built** — [ADR-0015](adr/0015-plural-components-via-slot.md) / [RFC-0014](rfc/0014-plural-components.md). Generalizes the unique index to `(entity_id, slot)`; a slot-keyed singleton, not an anonymous collection. Prerequisite for shipping `Phone`/`PostalAddress`/`Token` as standard generators. | The standard-component-library survey: the most universal components are naturally multi-role. |
 
 ### Hard requirements the demo handed the query DSL
 
@@ -58,6 +59,7 @@ When the cross-component query RFC is written, it must:
 
 | Idea | Why |
 |---|---|
-| Plural components | [ADR-0005](adr/0005-one-component-per-entity.md) — doubles the gem's surface area. |
+| ~~Plural components~~ → **reconsidered** | Was rejected under [ADR-0005](adr/0005-one-component-per-entity.md). The *anonymous-collection* form (`many: true`) stays rejected — it forks delegation/laziness. The *labelled* form is now planned: [ADR-0015](adr/0015-plural-components-via-slot.md) / [RFC-0014](rfc/0014-plural-components.md). |
+| Anonymous plural components — `component Phone, many: true` returning a collection | [ADR-0015](adr/0015-plural-components-via-slot.md) — forks delegation, laziness and error keys. Unbounded-N is a join entity; fixed roles are labelled slots. |
 | `method_missing` delegation | [ADR-0004](adr/0004-delegation-conflicts-raise.md) — cannot detect conflicts eagerly. |
 | Pure ECS identity (no `model` column) | [ADR-0002](adr/0002-single-entities-table.md) — every query becomes a join. |

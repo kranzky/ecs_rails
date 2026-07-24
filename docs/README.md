@@ -32,6 +32,7 @@ Rails.
 | [0012](adr/0012-component-preloading.md) | Preloading is ergonomics over native ActiveRecord preload |
 | [0013](adr/0013-relationship-dsl.md) | Relationship DSL — relates_to |
 | [0014](adr/0014-relationship-name-query-sugar.md) | Query and preload relationships by name |
+| [0015](adr/0015-plural-components-via-slot.md) | Plural components via a `(entity_id, slot)` unique index |
 
 ## RFCs — the v0.1 build order
 
@@ -52,6 +53,7 @@ Each RFC is one commit. Each commit compiles and passes tests.
 | [0011](rfc/0011-component-preloading.md) | Component preloading (includes_components) | 0004, 0006 ✅ |
 | [0012](rfc/0012-relationship-dsl.md) | Relationship DSL (relates_to) | 0004, 0005, 0008 ✅ |
 | [0013](rfc/0013-relationship-name-query-sugar.md) | Relationship query sugar (with_related/includes_related) | 0010, 0011, 0012 ✅ |
+| [0014](rfc/0014-plural-components.md) | Labelled (plural) components (`prefix:` / slot) | 0004, 0005, 0006, 0009, 0010 · proposed |
 
 RFC-0001 and 0002 are independent and can be built in parallel.
 
