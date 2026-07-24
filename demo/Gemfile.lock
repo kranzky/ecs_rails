@@ -1,14 +1,3 @@
-GIT
-  remote: https://github.com/kranzky/ecs_rails.git
-  revision: ec49d4bad04cb6466bd74c01acb339bb97bfca95
-  tag: v0.2.0
-  glob: gem/*.gemspec
-  specs:
-    ecs-rails (0.2.0)
-      activerecord (>= 7.1, < 9.0)
-      activesupport (>= 7.1, < 9.0)
-      railties (>= 7.1, < 9.0)
-
 GEM
   remote: https://rubygems.org/
   specs:
@@ -104,6 +93,10 @@ GEM
       reline (>= 0.3.8)
     diff-lcs (1.6.2)
     drb (2.2.3)
+    ecs_on_rails (0.2.2)
+      activerecord (>= 7.1, < 9.0)
+      activesupport (>= 7.1, < 9.0)
+      railties (>= 7.1, < 9.0)
     erb (6.0.5)
     erubi (1.13.1)
     globalid (1.4.0)
@@ -292,7 +285,7 @@ DEPENDENCIES
   bootsnap
   bundler-audit
   debug
-  ecs-rails!
+  ecs_on_rails (~> 0.2.2)
   importmap-rails
   pg (~> 1.1)
   propshaft

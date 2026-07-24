@@ -90,7 +90,9 @@ Verify with `fly certs show ecs-rails.kranzky.com`.
 
 ## Notes
 
-- The demo pins the `ecs_rails` gem to a release tag via the git source (see the
-  `Gemfile` comment), so the Docker build is self-contained.
+- The demo depends on the published [`ecs_on_rails`](https://rubygems.org/gems/ecs_on_rails)
+  gem from RubyGems (it used a git source before publication). The require path
+  and module are still `ecs_rails` / `EcsRails` — only the packaging name
+  differs, because every spelling of "ecs rails" is taken on RubyGems.
 - Redeploying wipes user-added content (the release command reseeds) — expected
   for a demo.

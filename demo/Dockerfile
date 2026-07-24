@@ -27,7 +27,9 @@ RUN apt-get update -qq && \
       build-essential git libpq-dev pkg-config && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-# Install gems (the ecs-rails gem is a git source, fetched here).
+# Install gems. ecs_on_rails comes from RubyGems now that it is published; it was
+# a git source before, which is why git is in the build deps above (also Rails 8's
+# stock build dependency) and why the .git cleanup below exists — now a no-op.
 COPY Gemfile Gemfile.lock ./
 RUN bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
