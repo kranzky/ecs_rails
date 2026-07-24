@@ -45,3 +45,6 @@ doc/
 *.swo
 .idea/
 .vscode/
+
+# Reference material kept locally, not part of the project
+/examples/
