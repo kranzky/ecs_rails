@@ -38,16 +38,48 @@ module EcsRails
     # Entities that HAVE a row for `component_class` (RFC-0010). With
     # `conditions`, the row must also match them (hash equality, like `where`).
     #
-    # Returns an ActiveRecord::Relation, chainable with `where`, `order`, `limit`,
-    # and further `with_component` / `without_component` calls (which AND).
+    # Compiles to a correlated `EXISTS` subquery, so an entity matches once —
+    # never duplicated as a join would. Condition values are sanitised by
+    # ActiveRecord and treated as data, never SQL (ADR-0011).
+    #
+    # The component need *not* be declared on this entity: querying a component
+    # the entity never declares is a valid, always-empty query, not an error.
+    #
+    # @example Filtering by a component's attributes
+    #   Post.with_component(PublishState, state: "published")
+    #
+    # @example Chaining — each call ANDs
+    #   Post.with_component(Title).with_component(Body).order(created_at: :desc)
+    #
+    # @param component_class [Class<EcsRails::Component>] a concrete component
+    # @param conditions [Hash] optional attribute equality the row must match
+    # @return [ActiveRecord::Relation] chainable, and still scoped to this
+    #   entity's own `model` discriminator (ADR-0002)
+    # @raise [EcsRails::InvalidComponent] if `component_class` is not a concrete
+    #   component, or is abstract and so owns no table
+    # @see #without_component
+    # @see EcsRails::Relationships#with_related the relationship-name equivalent
     def with_component(component_class, **conditions)
       all.where(ecs_component_exists_sql(component_class, conditions, negate: false))
     end
 
-    # Entities that have NO row for `component_class` (RFC-0010). No conditions
-    # form — "without a *matching* row" is ambiguous and unneeded (see the RFC's
-    # Non-goals). A virtual/lazy component has no row, so it counts as absent,
-    # which is the intuitive reading of "without" (ADR-0009).
+    # Entities that have NO row for `component_class` (RFC-0010).
+    #
+    # Compiles to `NOT EXISTS`, which is the NULL-safe form of "without" — unlike
+    # `NOT IN` or a `LEFT JOIN ... IS NULL`.
+    #
+    # There is deliberately no conditions form: "without a *matching* row" is
+    # ambiguous (see the RFC's Non-goals). A virtual/lazy component has no row, so
+    # it counts as absent — the intuitive reading of "without" (ADR-0009).
+    #
+    # @example
+    #   User.without_component(Avatar)
+    #
+    # @param component_class [Class<EcsRails::Component>] a concrete component
+    # @return [ActiveRecord::Relation] chainable, entity-model scoped
+    # @raise [EcsRails::InvalidComponent] if `component_class` is not a concrete
+    #   component, or is abstract and so owns no table
+    # @see #with_component
     def without_component(component_class)
       all.where(ecs_component_exists_sql(component_class, {}, negate: true))
     end

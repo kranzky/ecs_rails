@@ -40,6 +40,11 @@ module EcsRails
 
       desc "Creates a component: its migration, its model, and its spec."
 
+      # Emits the component's table migration.
+      #
+      # A Thor task: invoked as a generator step, not called directly.
+      #
+      # @return [void]
       def create_migration_file
         migration_template(
           "migration.rb.tt",

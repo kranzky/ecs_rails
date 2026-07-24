@@ -10,11 +10,19 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- `documentation_uri` in the gemspec, so the RubyGems page links to the
-  documentation index (architecture, ADRs, RFCs) rather than leaving the
-  Documentation slot to the auto-generated API listing alone. The generated API
-  reference remains at
-  [rubydoc.info/gems/ecs_on_rails](https://rubydoc.info/gems/ecs_on_rails).
+- **YARD API documentation across the whole public API** — `@param`, `@return`,
+  `@raise`, `@example` and `@see` tags on every public module, class, attribute
+  and method (100% documented, verified by `yard stats`). The existing prose
+  rationale is kept; the tags are additive, so
+  [rubydoc.info/gems/ecs_on_rails](https://rubydoc.info/gems/ecs_on_rails) now
+  renders a real API reference rather than bare comments.
+- A `.yardopts`, shipped in the gem so rubydoc.info honours it. Notably
+  `--embed-mixins`, without which the DSL that `EcsRails::Entity` gains by
+  `extend`ing {EcsRails::DSL}, `Querying`, `Preloading` and `Relationships`
+  would not appear on `Entity` at all — which is where users look for it.
+- `documentation_uri` in the gemspec, pointing at the rubydoc.info API
+  reference. The narrative documentation (architecture, ADRs, RFCs) is reached
+  via the homepage and `source_code_uri`.
 
 ### Fixed
 

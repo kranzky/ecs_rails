@@ -46,6 +46,20 @@ module EcsRails
     #
     # Built from `all` — like Querying — so it chains onto any prior scope and
     # keeps the entity-model default scope (ADR-0002/ADR-0011).
+    #
+    # @example Every declared component
+    #   Post.published.includes_components
+    #
+    # @example A named subset, chained onto a component filter
+    #   Post.with_component(PublishState).includes_components(Title, Body)
+    #
+    # @param component_classes [Array<Class<EcsRails::Component>>] components to
+    #   preload; empty preloads every component the entity declares
+    # @return [ActiveRecord::Relation] chainable, entity-model scoped
+    # @raise [EcsRails::InvalidComponent] if any argument is not a component, or
+    #   is not declared on this entity — unlike {EcsRails::Querying#with_component},
+    #   which accepts any concrete component
+    # @see EcsRails::Relationships#includes_related for relationships
     def includes_components(*component_classes)
       declared = components
       targets = component_classes.empty? ? declared : component_classes

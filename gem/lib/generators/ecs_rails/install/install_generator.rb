@@ -17,6 +17,11 @@ require "rails/generators/active_record/migration"
 require "ecs_rails"
 
 module EcsRails
+  # The Rails generators (RFC-0008): `ecs_rails:install`, `ecs_rails:component`
+  # and `ecs_rails:relationship`.
+  #
+  # They read {EcsRails.config} to place their files (ADR-0010). The gem runtime
+  # never consults that config — only these do.
   module Generators
     # `rails g ecs_rails:install`
     #
@@ -34,6 +39,11 @@ module EcsRails
       desc "Creates the entities migration and the ApplicationEntity / " \
            "ApplicationComponent base classes."
 
+      # Emits the `entities` table migration.
+      #
+      # A Thor task: invoked as a generator step, not called directly.
+      #
+      # @return [void]
       def create_migration_file
         migration_template(
           "migration.rb.tt",

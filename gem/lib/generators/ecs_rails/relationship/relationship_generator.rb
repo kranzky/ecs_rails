@@ -43,6 +43,11 @@ module EcsRails
 
       desc "Creates the migration for a relationship's backing table (no model)."
 
+      # Emits the backing relationship table migration.
+      #
+      # A Thor task: invoked as a generator step, not called directly.
+      #
+      # @return [void]
       def create_migration_file
         parse_relationship!
         migration_template(
