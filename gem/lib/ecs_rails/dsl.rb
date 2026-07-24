@@ -3,7 +3,7 @@
 module EcsRails
   # The class-level DSL that composes an entity out of components.
   #
-  # Implements RFC-0004. Extended into EcsRails::Entity, so every entity class —
+  # Implements RFC-0004. Extended into {EcsRails::Entity}, so every entity class —
   # and every subclass of one — answers `component`.
   #
   #   class User < ApplicationEntity
@@ -53,6 +53,36 @@ module EcsRails
     # an anonymous class on either side.
     #
     # Returns the Registry::Declaration.
+    #
+    # @example Composition, and the reader it generates
+    #   class User < ApplicationEntity
+    #     component Email
+    #   end
+    #
+    #   User.new.email           # => #<Email> — never nil
+    #
+    # @example Resolving a delegation conflict
+    #   component Group, except: [:title]
+    #
+    # @param component_class [Class<EcsRails::Component>] a concrete component
+    # @param only [Array<Symbol>, Symbol, nil] delegate only these methods.
+    #   Attribute aware: `:title` covers `#title` and `#title=`.
+    #   Mutually exclusive with `except:`.
+    # @param except [Array<Symbol>, Symbol, nil] delegate everything but these.
+    #   Attribute aware, as `only:` is. Mutually exclusive with `only:`.
+    # @return [EcsRails::Registry::Declaration] the recorded declaration
+    # @raise [EcsRails::InvalidComponent] if `component_class` is not a concrete
+    #   {EcsRails::Component} subclass, or is abstract and so owns no table
+    # @raise [EcsRails::DuplicateComponent] if this entity, or one it inherits
+    #   from, already declares this component (ADR-0005)
+    # @raise [EcsRails::DelegationConflict] if a delegated name is already
+    #   delegated by a sibling component, or collides with a component reader
+    #   (ADR-0004)
+    # @raise [ArgumentError] if both `only:` and `except:` are given, if either
+    #   names a method the component does not delegate, or if either class is
+    #   anonymous
+    # @see #components
+    # @see EcsRails::Presence::Entity#has? the `<reader>?` predicate this generates
     def component(component_class, only: nil, except: nil)
       validate_component_class!(component_class)
       options = normalized_delegation_options(only: only, except: except)
@@ -92,6 +122,16 @@ module EcsRails
     end
 
     # Every component this entity is composed from, nearest ancestor last.
+    #
+    # Inherited components are included: a subclass is composed from its parents'
+    # components as well as its own.
+    #
+    # @example
+    #   User.components  # => [Name, Email, Group]
+    #
+    # @return [Array<Class<EcsRails::Component>>] the component classes, resolved
+    #   live from the registry (so a reloaded constant is picked up)
+    # @see #component_declarations
     def components
       component_declarations.map(&:component_class)
     end
@@ -109,6 +149,11 @@ module EcsRails
     #
     # So EcsRails.registry.components_for(Admin) is only Admin's own, by design,
     # and this is the method that answers "what is an Admin made of".
+    #
+    # @return [Array<EcsRails::Registry::Declaration>] declarations, ancestors'
+    #   first, in declaration order. Carries the `only:`/`except:` options that
+    #   {#components} discards.
+    # @see #components
     def component_declarations
       entity_ancestry.flat_map { |klass| EcsRails.registry.components_for(klass) }
     end
@@ -134,6 +179,10 @@ module EcsRails
     # of DSL calls that can invert it. That is an ActiveRecord internal, so the
     # ordering is pinned by tests ("the generated methods module" in
     # spec/dsl_spec.rb) and an upgrade that changed it would fail loudly.
+    #
+    # @return [Module] the per-class module holding generated readers, delegated
+    #   methods and presence predicates
+    # @api private
     def generated_component_methods
       @generated_component_methods ||= begin
         mod = const_set(:GeneratedComponentMethods, Module.new)

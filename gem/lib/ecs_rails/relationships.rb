@@ -74,14 +74,29 @@ module EcsRails
   # (ADR-0011). The backing `*Relationship` class never appears in app code.
   module Relationships
     # One recorded relationship, held by NAME so it survives a Rails reload the
-    # same way the registry's Declaration does (RFC-0002): #backing_class and
-    # #target_class resolve via constantize on read, so a metadata entry taken
-    # before a reload still resolves to the post-reload constants.
+    # same way the registry's {EcsRails::Registry::Declaration} does (RFC-0002):
+    # {#backing_class} and {#target_class} resolve via `constantize` on read, so a
+    # metadata entry taken before a reload still resolves to the post-reload
+    # constants.
+    #
+    # @!attribute [rw] name
+    #   @return [Symbol] the relationship name, e.g. `:author`
+    # @!attribute [rw] backing_class_name
+    #   @return [String] the dynamically defined backing component,
+    #     e.g. `"Post::AuthorRelationship"`
+    # @!attribute [rw] foreign_key
+    #   @return [Symbol] the FK on the backing component, e.g. `:author_id`
+    # @!attribute [rw] target_class_name
+    #   @return [String] the entity pointed at, e.g. `"User"`
     RelationshipMeta = Struct.new(:name, :backing_class_name, :foreign_key, :target_class_name) do
+      # @return [Class<EcsRails::Component>] the backing component class
+      # @raise [NameError] if the constant no longer exists
       def backing_class
         backing_class_name.constantize
       end
 
+      # @return [Class<EcsRails::Entity>] the entity this relationship points at
+      # @raise [NameError] if the constant no longer exists
       def target_class
         target_class_name.constantize
       end
@@ -96,14 +111,40 @@ module EcsRails
 
     # Declares a cross-entity link named `name` at `target_class`.
     #
-    # `target_class` must be a concrete EcsRails::Entity; otherwise
-    # InvalidRelationship (a subclass of InvalidComponent — see errors.rb). `name`
-    # must not collide with an existing reader or delegated method on the entity;
-    # otherwise DelegationConflict, naming `name` (RFC-0012). Subclasses inherit
-    # the declaration exactly as they inherit `component` (the backing const lives
-    # on the declaring entity and resolves through ordinary constant lookup).
+    # Writes no relationship component file: it defines the backing component
+    # dynamically and declares it with {EcsRails::DSL#component}, so the whole
+    # stack — registry, lazy reader, delegation, querying, presence, preloading —
+    # applies for free.
     #
-    # Returns the Registry::Declaration for the backing component.
+    # Subclasses inherit the declaration exactly as they inherit `component`.
+    #
+    # @example Declaring and using a relationship
+    #   class Post < ApplicationEntity
+    #     relates_to :author, User
+    #   end
+    #
+    #   post.author = user        # writer, delegated from the backing belongs_to
+    #   post.author               # => #<User>
+    #   post.author_relationship  # => the backing component row
+    #
+    # @example Several relationships on one entity
+    #   class Membership < ApplicationEntity
+    #     relates_to :user, User
+    #     relates_to :team, Team
+    #     component Role
+    #   end
+    #
+    # @param name [Symbol, String] the relationship name. Becomes the delegated
+    #   accessor (`#author`, `#author=`), the `<name>_id` foreign key, and the
+    #   `<name>_relationship` backing reader.
+    # @param target_class [Class<EcsRails::Entity>] a concrete entity to point at
+    # @return [EcsRails::Registry::Declaration] the backing component's declaration
+    # @raise [EcsRails::InvalidRelationship] if `target_class` is not a concrete
+    #   entity — a component, an abstract entity, or a plain class
+    # @raise [EcsRails::DelegationConflict] if `name` collides with an existing
+    #   component reader, delegated method, or another relationship
+    # @see #with_related
+    # @see #includes_related
     def relates_to(name, target_class)
       name = name.to_sym
 
@@ -133,30 +174,49 @@ module EcsRails
       declaration
     end
 
-    # The recorded metadata for relationship `name` on this entity (RFC-0013),
-    # or nil if there is none. Walks the entity ancestry, so a subclass sees its
-    # parents' relationships — the same way #component_declarations does.
+    # The recorded metadata for relationship `name` on this entity (RFC-0013).
+    #
+    # Walks the entity ancestry, so a subclass sees its parents' relationships —
+    # the same way {EcsRails::DSL#component_declarations} does.
+    #
+    # @param name [Symbol, String] the relationship name
+    # @return [RelationshipMeta, nil] the metadata, or nil if undeclared
+    # @see #relationship_names
     def relationship_meta(name)
       relationship_declarations[name.to_sym]
     end
 
-    # The declared relationship names for this entity, ancestry included. Used
-    # in the InvalidRelationship message and handy for introspection.
+    # The declared relationship names for this entity, ancestry included.
+    #
+    # @example
+    #   Membership.relationship_names  # => [:user, :team]
+    #
+    # @return [Array<Symbol>] declared relationship names
+    # @see #relationship_meta
     def relationship_names
       relationship_declarations.keys
     end
 
     # Entities whose `name` relationship points at `target` (RFC-0013 / ADR-0014).
     #
-    # `target` may be an entity (its id is used) or a bare id. With no `target`,
-    # filters to entities that merely HAVE the relationship set (a backing row
-    # exists). Sugar for `with_component(backing, foreign_key => id)` — or
-    # `with_component(backing)` with no target — so it inherits that verb's
-    # entity-model scoping and correlated EXISTS (ADR-0011): no cross-entity leak.
+    # Sugar over {EcsRails::Querying#with_component}, so it inherits that verb's
+    # entity-model scoping and correlated EXISTS (ADR-0011) — no cross-entity
+    # leak. The backing `*Relationship` class never appears in app code.
     #
-    # Returns a chainable ActiveRecord::Relation. Available on the class and on a
-    # relation, like the component verbs, because it builds on them (they run on
-    # `all`, the current default-scoped relation).
+    # @example Posts by a given author
+    #   Post.with_related(:author, ada)
+    #   Post.with_related(:author, ada.id)   # a bare id works too
+    #
+    # @example Posts that have *any* author set
+    #   Post.with_related(:author)
+    #
+    # @param name [Symbol, String] a declared relationship name
+    # @param target [EcsRails::Entity, Integer, String] the target entity or its
+    #   id. Omit to match entities that merely have the relationship set.
+    # @return [ActiveRecord::Relation] chainable, entity-model scoped
+    # @raise [EcsRails::InvalidRelationship] if `name` is not declared
+    # @see #without_related
+    # @see #includes_related
     def with_related(name, target = ANY_TARGET)
       meta = ecs_resolve_relationship!(name)
 
@@ -166,8 +226,18 @@ module EcsRails
       with_component(meta.backing_class, meta.foreign_key => id)
     end
 
-    # Entities with NO backing row for `name` (RFC-0013). Sugar for
-    # `without_component(backing)`; inherits its NULL-safe NOT EXISTS (ADR-0011).
+    # Entities with NO backing row for `name` (RFC-0013).
+    #
+    # Sugar over {EcsRails::Querying#without_component}; inherits its NULL-safe
+    # `NOT EXISTS` (ADR-0011).
+    #
+    # @example Orphaned posts
+    #   Post.without_related(:author)
+    #
+    # @param name [Symbol, String] a declared relationship name
+    # @return [ActiveRecord::Relation] chainable, entity-model scoped
+    # @raise [EcsRails::InvalidRelationship] if `name` is not declared
+    # @see #with_related
     def without_related(name)
       without_component(ecs_resolve_relationship!(name).backing_class)
     end
@@ -175,13 +245,17 @@ module EcsRails
     # Preloads each named relationship's backing component AND its target entity
     # — one hop — so `entity.author` costs no extra query (RFC-0013 / ADR-0014).
     #
-    # For `:author` that is `preload(author_relationship: :author)`: the backing
-    # reader is `<name>_relationship` (the backing's model_name.singular, pinned
-    # by ADR-0013) and the target association on the backing is the `<name>`
-    # belongs_to. Does NOT preload the target's own components (ADR-0014 non-goal).
+    # For `:author` that is `preload(author_relationship: :author)`. Does **not**
+    # preload the target's own components (ADR-0014 non-goal) — chain
+    # {EcsRails::Preloading#includes_components} on the target for that.
     #
-    # Chainable; returns a relation. Built from `all`, like Preloading, so it
-    # keeps any prior scope and the entity-model default scope.
+    # @example
+    #   Post.published.includes_related(:author).each { |p| p.author.name }
+    #
+    # @param names [Array<Symbol, String>] declared relationship names
+    # @return [ActiveRecord::Relation] chainable, entity-model scoped
+    # @raise [EcsRails::InvalidRelationship] if any name is not declared
+    # @see #with_related
     def includes_related(*names)
       preloads = names.map do |name|
         meta = ecs_resolve_relationship!(name)

@@ -12,6 +12,11 @@
 /doc/
 /.yardoc
 /_yardoc/
+
+# YARD build output, wherever it is generated (the gem lives in gem/)
+.yardoc/
+_yardoc/
+doc/
 /coverage/
 /spec/reports/
 /spec/examples.txt

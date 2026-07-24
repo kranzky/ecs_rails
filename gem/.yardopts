@@ -1,0 +1,12 @@
+--markup markdown
+--markup-provider kramdown
+--readme README.md
+--title "ECS Rails - an Entity-Component-System reimagining of ActiveRecord"
+--charset utf-8
+--no-private
+--hide-void-return
+--embed-mixins
+lib/**/*.rb
+-
+CHANGELOG.md
+LICENSE.txt

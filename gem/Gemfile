@@ -11,4 +11,11 @@ group :development, :test do
   gem "rspec", "~> 3.13"
   gem "rubocop", "~> 1.66", require: false
   gem "rubocop-rspec", "~> 3.0", require: false
+  # Docs. kramdown backs `--markup markdown` in .yardopts. NOT redcarpet: it
+  # returns ASCII-8BIT strings, so YARD's layout template raises
+  # Encoding::CompatibilityError on the em-dashes these docs are full of.
+  # Only needed to build/check docs locally (`bundle exec yard doc`,
+  # `bundle exec yard stats --list-undoc`); rubydoc.info has its own toolchain.
+  gem "kramdown", "~> 2.4", require: false
+  gem "yard", "~> 0.9", require: false
 end
