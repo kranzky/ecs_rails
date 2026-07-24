@@ -6,6 +6,26 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.2] — 2026-07-23
+
+### Added
+
+- `documentation_uri` in the gemspec, so the RubyGems page links to the
+  documentation index (architecture, ADRs, RFCs) rather than leaving the
+  Documentation slot to the auto-generated API listing alone. The generated API
+  reference remains at
+  [rubydoc.info/gems/ecs_on_rails](https://rubydoc.info/gems/ecs_on_rails).
+
+### Fixed
+
+- `changelog_uri` in the gemspec pointed at `<repo>/blob/main/CHANGELOG.md`,
+  which 404s: the gem lives in `gem/` of a monorepo and there is no changelog at
+  the repo root, so the Changelog link on the 0.2.1 RubyGems page was broken.
+  Gem metadata is immutable once published, so this needed a release to correct.
+- `source_code_uri` now points at the `gem/` subtree rather than the repo root.
+
+No code change — 0.2.2 is identical to 0.2.1 apart from gemspec metadata.
+
 ## [0.2.1] — 2026-07-23
 
 First RubyGems release.
