@@ -28,9 +28,15 @@ Gem::Specification.new do |spec|
 
   # homepage_uri is covered by spec.homepage above; specifying both (identical)
   # trips a rubygems build warning, so it is left out here.
-  spec.metadata["source_code_uri"]      = spec.homepage
-  spec.metadata["changelog_uri"]        = "#{spec.homepage}/blob/main/CHANGELOG.md"
+  # The gem lives in gem/ of a monorepo, so these must not assume the repo root:
+  # a bare /blob/main/CHANGELOG.md 404s (there is no root changelog).
+  spec.metadata["source_code_uri"]      = "#{spec.homepage}/tree/main/gem"
+  spec.metadata["changelog_uri"]        = "#{spec.homepage}/blob/main/gem/CHANGELOG.md"
   spec.metadata["bug_tracker_uri"]      = "#{spec.homepage}/issues"
+  # The narrative documentation (architecture, ADRs, RFCs) is the real reference
+  # for this gem, so Documentation points there rather than at the auto-generated
+  # API listing, which stays available at rubydoc.info/gems/ecs_on_rails.
+  spec.metadata["documentation_uri"]    = "#{spec.homepage}/blob/main/docs/README.md"
   # Require MFA to push/yank this gem (RubyGems best practice). Needs MFA
   # enabled on the pushing account; remove this line if that is not set up.
   spec.metadata["rubygems_mfa_required"] = "true"
