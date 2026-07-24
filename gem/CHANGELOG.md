@@ -6,15 +6,28 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-## [0.2.1] — 2026-07-22
+## [0.2.1] — 2026-07-23
+
+First RubyGems release.
 
 ### Changed
 
-- Renamed the gem from `ecs-rails` to **`ecs_rails`** for its first RubyGems
-  release: `ecs-rails` was already taken by an unrelated gem. The underscore form
-  matches the `EcsRails` module and the `ecs_rails` require path exactly, so the
-  `lib/ecs-rails.rb` require shim is removed. No API change — the module, the
-  require, and every class are unchanged.
+- The gem is published as **`ecs_on_rails`**. Both `ecs-rails` and `ecs_rails`
+  are unavailable: an unrelated `ecs-rails` gem already exists, and RubyGems
+  treats `-`, `_` and case as equivalent when comparing names, so every spelling
+  of "ecs rails" collides with it.
+- **No API change.** The require path is still `ecs_rails`, the module is still
+  `EcsRails`, and the generators are still `ecs_rails:install`,
+  `ecs_rails:component` and `ecs_rails:relationship`. Only the name you put in
+  your Gemfile differs:
+
+  ```ruby
+  gem "ecs_on_rails"   # Gemfile
+  require "ecs_rails"  # everywhere else
+  ```
+
+  A `lib/ecs_on_rails.rb` shim requires `ecs_rails`, so a bare `gem
+  "ecs_on_rails"` works under `Bundler.require`.
 
 ## [0.2.0] — 2026-07-22
 

@@ -65,7 +65,13 @@ a `Comment` — reuse without STI and without polymorphic associations.
 
 ## Getting started
 
+```ruby
+# Gemfile — note the packaging name differs from the require path (see Names)
+gem "ecs_on_rails"
+```
+
 ```sh
+bundle install
 rails g ecs_rails:install
 rails g ecs_rails:component Email address:string verified:boolean
 ```
@@ -100,19 +106,22 @@ Set `DATABASE_URL` to point the suite at a different database.
 
 ## Names
 
-One name everywhere, in the casing each context wants — see
+`ecs_rails` everywhere except the Gemfile — see
 [ADR-0007](https://github.com/kranzky/ecs_rails/blob/main/docs/adr/0007-monorepo-and-licensing.md#three-different-names).
 
 | | |
 |---|---|
 | GitHub repo | [`ecs_rails`](https://github.com/kranzky/ecs_rails) |
-| RubyGems gem | `ecs_rails` |
+| RubyGems gem | `ecs_on_rails` |
 | Ruby module | `EcsRails` |
 | `require` | `ecs_rails` |
+| Generators | `ecs_rails:install`, `:component`, `:relationship` |
 
-The repo, gem, and require are all `ecs_rails`; the module is its Ruby constant
-form `EcsRails`. A `rails-` prefix is reserved by convention for Rails Core Team
-gems, and the hyphen form `ecs-rails` is an unrelated gem already on RubyGems.
+Only the published gem name differs. RubyGems collapses `-`, `_` and case when
+comparing names, so `ecs-rails`, `ecs_rails` and `ecsrails` are one name — and
+it belongs to an unrelated, still-maintained gem. `ecs_on_rails` keeps the
+`rails` keyword without the `rails-` prefix that convention reserves for Rails
+Core Team gems.
 
 ## Licence
 

@@ -13,14 +13,15 @@ public repository when it is ready to publish to RubyGems.
 carries `gem/LICENSE.txt` and sets `spec.license = "MIT"` in the gemspec, so it
 stays self-contained when extracted.
 
-**Names.** One name across every context, in the casing each one wants:
+**Names.** `ecs_rails` everywhere except the RubyGems name, which is taken:
 
 | | Name |
 |---|---|
 | GitHub repo | `ecs_rails` |
-| RubyGems gem | `ecs_rails` |
+| RubyGems gem | `ecs_on_rails` |
 | Ruby module | `EcsRails` |
 | `require` path | `ecs_rails` |
+| Generators | `ecs_rails:install`, `:component`, `:relationship` |
 
 > **Amended 2026-07-17.** As originally written this ADR said the demo "carries
 > no licence and stays private". That is superseded — see
@@ -35,6 +36,11 @@ stays self-contained when extracted.
 > **Amended 2026-07-23.** The GitHub repo was originally `rails-ecs`; it was
 > renamed to **`ecs_rails`** so the repo, gem, and require path all match. Only
 > the module keeps Ruby's constant casing, `EcsRails`.
+>
+> **Amended 2026-07-23 (RubyGems block).** That alignment did not survive
+> publication: RubyGems rejected `ecs_rails` as "too similar to an existing gem
+> named `ecs-rails`". The gem is published as **`ecs_on_rails`**; everything
+> else stays `ecs_rails`. See the [publication amendment](#publication-amendment).
 
 ## Reason
 
@@ -82,11 +88,13 @@ confidential. No secrets, credentials, or customer data — the demo seeds fake
 data only.
 
 <a id="three-different-names"></a>
-### One name: `ecs_rails`
+### The names: `ecs_rails` everywhere, `ecs_on_rails` on RubyGems
 
-The gem, the GitHub repo, and the require path are all `ecs_rails`; the module
-is its Ruby constant form `EcsRails`. Two nearby names were rejected on the way
-here.
+The repo, the require path and the generators are all `ecs_rails`; the module is
+its Ruby constant form `EcsRails`. Only the published gem name differs —
+`ecs_on_rails` — because every spelling of "ecs rails" is taken (see the
+[publication amendment](#publication-amendment)). Several nearby names were
+rejected on the way here.
 
 The `rails-` **prefix** is out: every `rails-*` gem on RubyGems is published by
 Rails Core Team (`rails-html-sanitizer`, `rails-dom-testing`), so it reads as
@@ -117,3 +125,37 @@ matches the `EcsRails` module and the `ecs_rails` require path exactly, so
 `Bundler.require` loads `lib/ecs_rails.rb` directly and the shim is deleted. The
 loss of the "for Rails" suffix reading is a fair trade for one name that is
 correct everywhere.
+
+<a id="publication-amendment"></a>
+**Publication amendment (2026-07-23).** The underscore rename above did not
+survive `gem push` either. RubyGems rejected it:
+
+> There was a problem saving your gem: Name 'ecs_rails' is too similar to an
+> existing gem named 'ecs-rails'
+
+RubyGems compares a proposed name against existing gems after collapsing `-`,
+`_` and case, so `ecs-rails`, `ecs_rails` and `ecsrails` are all **one name** —
+and that name belongs to an unrelated, still-maintained AWS ECS deployment gem
+(0.0.8, October 2025). It is not abandoned, so the adoption/transfer path is
+closed. **No spelling of "ecs rails" will ever be publishable by us.**
+
+The gem is therefore published as **`ecs_on_rails`** — a play on "Ruby on
+Rails", keeping the `rails` keyword for discoverability without the `rails-`
+prefix problem, since the objection is to the *prefix*, not to containing the
+word.
+
+The rename stops at the gemspec. The module, the require path, the generator
+namespaces and the repo all stay `ecs_rails` / `EcsRails`, because propagating a
+third name through ~390 occurrences would churn the public API to fix a
+packaging accident. The cost is a deliberate mismatch:
+
+```ruby
+gem "ecs_on_rails"   # Gemfile — the packaging name
+require "ecs_rails"  # everything else — the real name
+EcsRails.configure   # the module
+```
+
+`lib/ecs_on_rails.rb` is a one-line shim requiring `ecs_rails`, so a bare
+`gem "ecs_on_rails"` still boots under `Bundler.require`. This is the same shim
+the underscore rename deleted, back for a different reason — one that is not
+going away.

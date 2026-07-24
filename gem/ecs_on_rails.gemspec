@@ -3,7 +3,13 @@
 require_relative "lib/ecs_rails/version"
 
 Gem::Specification.new do |spec|
-  spec.name        = "ecs_rails"
+  # Published as "ecs_on_rails". RubyGems treats "-", "_" and case as
+  # equivalent when comparing names, so "ecs_rails" and "ecs-rails" both collide
+  # with an existing unrelated gem and are permanently unavailable. The module,
+  # the require path and the generators stay "ecs_rails" / EcsRails — see
+  # docs/adr/0007-monorepo-and-licensing.md. lib/ecs_on_rails.rb is the shim
+  # Bundler.require needs, since Bundler requires a gem by its own name.
+  spec.name        = "ecs_on_rails"
   spec.version     = EcsRails::VERSION
   spec.authors     = ["Jason Hutchens"]
   spec.email       = ["jasonhutchens@gmail.com"]

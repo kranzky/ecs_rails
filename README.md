@@ -65,17 +65,23 @@ awkward in the demo, that's the signal the API is wrong. See
 
 ## Names
 
-One name everywhere, in the casing each context wants — see
+`ecs_rails` everywhere except the Gemfile — see
 [ADR-0007](docs/adr/0007-monorepo-and-licensing.md#three-different-names).
 
 | GitHub repo | RubyGems gem | Ruby module | `require` |
 |---|---|---|---|
-| `ecs_rails` | `ecs_rails` | `EcsRails` | `ecs_rails` |
+| `ecs_rails` | `ecs_on_rails` | `EcsRails` | `ecs_rails` |
 
-The repo, gem, and require are all `ecs_rails`; the module is its Ruby constant
-form `EcsRails`. A `rails-` prefix is reserved by convention for Rails Core Team
-gems, and `ecs-rails` — the hyphen form — is an unrelated gem already on
-RubyGems, so `ecs_rails` it is.
+```ruby
+gem "ecs_on_rails"   # Gemfile — the packaging name
+require "ecs_rails"  # everything else
+```
+
+Only the published gem name differs. RubyGems collapses `-`, `_` and case when
+comparing names, so `ecs-rails`, `ecs_rails` and `ecsrails` are one name — and
+it belongs to an unrelated, still-maintained gem. `ecs_on_rails` keeps the
+`rails` keyword without the `rails-` prefix that convention reserves for Rails
+Core Team gems.
 
 ## Start here
 

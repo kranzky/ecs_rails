@@ -107,6 +107,13 @@
       "humanMinutes": 10,
       "aiMinutes": 90,
       "costs": []
+    },
+    {
+      "date": "2026-07-23",
+      "summary": "Renamed the GitHub repo rails-ecs -> ecs_rails and retargeted every reference (17 URLs across 8 files: gemspec homepage/metadata, gem README doc links, demo Gemfile git source and lockfile, project.json, footer), plus the local git remote; rewrote the naming narrative in ADR-0007 and both READMEs from 'the repo deliberately differs' to 'one name everywhere'. Also fixed the demo footer and About links, which pointed at rubygems.org/gems/ecs-rails — the unrelated gem, not ours. Then gem push failed: RubyGems rejected ecs_rails as 'too similar to an existing gem named ecs-rails'. It compares names after collapsing -, _ and case, so ecs-rails, ecs_rails and ecsrails are one name, owned by a still-maintained AWS ECS gem (0.0.8, Oct 2025) — so the adoption path is closed and no spelling of 'ecs rails' is publishable. Checked eight alternatives for normalized availability and published as ecs_on_rails, a play on Ruby on Rails that keeps the rails keyword without the rails- prefix convention reserves for Rails Core. The rename stops at the gemspec by choice: module EcsRails, require path ecs_rails, generator namespaces and repo all unchanged, since propagating a third name through ~390 occurrences would churn the public API to fix a packaging accident. A one-line lib/ecs_on_rails.rb shim keeps Bundler.require working. Builds as ecs_on_rails-0.2.1.gem; 534 examples green.",
+      "humanMinutes": 15,
+      "aiMinutes": 75,
+      "costs": []
     }
   ]
 }
