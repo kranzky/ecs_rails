@@ -1,7 +1,13 @@
 # ADR-0004: Delegation conflicts raise at declaration time
 
-**Status:** Accepted
+**Status:** Accepted — amended by [ADR-0016](0016-prefixed-delegation-by-default.md)
 **Date:** 2026-07-17
+
+> **Amended 2026-07-28.** [ADR-0016](0016-prefixed-delegation-by-default.md) makes
+> delegation component-prefixed by default, so the collisions this ADR guards
+> against become rare (two distinct components can't share a prefixed name). The
+> raise below stays as a backstop; `except:`/`only:` remain the escape hatch but
+> are no longer routine.
 
 ## Context
 

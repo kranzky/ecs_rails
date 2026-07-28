@@ -55,8 +55,13 @@ end
   - **Opt-out: `component PostalAddress, prefix: :business, delegate: false`** —
     no delegated methods at all; reach attributes through the reader
     (`user.business_address.line1`). This is the escape valve for when prefixed
-    names get long (`business_address_postal_code`). The default slot keeps
-    today's unprefixed delegation (`postal_address` → `line1`), unchanged.
+    names get long (`business_address_postal_code`).
+  - **The default (unlabelled) slot is *also* prefixed by default** as of
+    [ADR-0016](../adr/0016-prefixed-delegation-by-default.md) — `component Email`
+    delegates `email_address`, not `address`. Pass **`prefix: false`** to restore
+    bare delegation (`component PublishState, prefix: false` → `post.state`) where
+    the prefix is redundant. This makes the singular and labelled cases one rule:
+    delegated name = `#{reader}_#{attribute}`.
 - **Presence (RFC-0009)** gains an optional label: `add(PostalAddress, prefix:
   :business)`, `has?(PostalAddress, prefix: :business)`, `remove(...)`. The
   per-slot predicate `user.business_address?` is generated like any reader's.
@@ -176,10 +181,15 @@ end
   effect) vs `slot:` (matches the column) vs `as:`. This RFC uses **`prefix:`**
   in the DSL and stores it to the `slot` column — naming the knob for its effect,
   the column for its storage. Confirm before implementing.
-- **Delegated-name shape.** Reader-prefixed (`business_address_line1`, used here)
-  vs label-prefixed (`business_line1`). Reader-prefixed keeps the component type
-  legible in the method name; it is longer, which is exactly what `delegate:
-  false` answers.
+  [ADR-0016](../adr/0016-prefixed-delegation-by-default.md) reinforces `prefix:`:
+  the same keyword now also carries the bare opt-out (`prefix: false`), reading
+  uniformly as "how are these methods prefixed?".
+- ~~**Delegated-name shape.**~~ **Resolved** by
+  [ADR-0016](../adr/0016-prefixed-delegation-by-default.md): reader-prefixed
+  (`business_address_line1`), and applied to the default slot too
+  (`email_address`), with `prefix: false` for the bare opt-out. Reader-prefixed
+  keeps the component type legible in the method name; the length is exactly what
+  `delegate: false` (drop) and `prefix: false` (bare) answer.
 - **Default slot value.** `""` (used here) vs the component's own singular name.
   `""` keeps the default reader at exactly `postal_address` with zero prefix
   logic and removes any chance of a label colliding with the component's own

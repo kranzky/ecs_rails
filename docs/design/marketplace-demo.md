@@ -88,8 +88,8 @@ class Company < ApplicationEntity
 end
 
 class Product < ApplicationEntity
-  component Title,  except: [:text]
-  component Body,   except: [:text]            # description, reused from forum
+  component Title                               # product.title_text (prefixed, ADR-0016)
+  component Body                                # description, reused → product.body_text
   component Money                               # the price (singular)
   component Sku                                 # identifier
   component Stock                               # available quantity
@@ -98,7 +98,7 @@ class Product < ApplicationEntity
 end
 
 class Review < ApplicationEntity
-  component Body, except: [:text]
+  component Body                                # review.body_text (prefixed, ADR-0016)
   component Rating                              # 1..5 stars
   component Likes                               # reused from forum
   relates_to :author,  User

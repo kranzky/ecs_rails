@@ -33,6 +33,7 @@ Rails.
 | [0013](adr/0013-relationship-dsl.md) | Relationship DSL — relates_to |
 | [0014](adr/0014-relationship-name-query-sugar.md) | Query and preload relationships by name |
 | [0015](adr/0015-plural-components-via-slot.md) | Plural components via a `(entity_id, slot)` unique index |
+| [0016](adr/0016-prefixed-delegation-by-default.md) | Delegation is component-prefixed by default (`prefix: false` opts out) |
 
 ## RFCs — the v0.1 build order
 
