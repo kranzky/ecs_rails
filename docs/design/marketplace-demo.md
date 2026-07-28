@@ -32,7 +32,9 @@ possible." Mapped to concrete features:
 | Preloading (RFC-0011/0013) | product grid renders price + seller + review count |
 | **Standard components (the catalogue)** | `Money`, `PostalAddress`, `Phone`, plus small demo ones (`Rating`, `Quantity`) |
 | Behaviour-carrying components (ADR-0001) | `OrderState` state machine transitions itself |
-| Systems (the "S", still POROs) | `Checkout` — validate basket, take payment, place order, issue invoice |
+| Composition over inheritance | one `User` is **customer and employee at once** — no `Customer`/`Employee` subclass; `Employment` layers on the seller capability |
+| Component reuse across entity types | the forum's `Role` component serves both `Membership` (groups) and `Employment` (companies) |
+| Systems (the "S", still POROs) | `Checkout` — validate basket, take payment, place order, issue invoice; `CompanyPolicy` — role-based authorization |
 
 ---
 
@@ -217,6 +219,64 @@ argued with (ADR-0005 predicted exactly this):
 Plural components appear **only** where the roles are *fixed and named*:
 `billing_address` vs `shipping_address`, `mobile_phone` vs `work_phone`. Two
 slots, known at class-definition time — never "N of them."
+
+### Employees, roles, and the user who is also a customer
+
+This is the marketplace's cleanest demonstration of the whole premise, and the
+blog's headline claim made concrete. The person selling on the platform and the
+person buying on it are the **same `User` entity**. Being a *customer* is
+emergent — you are one the moment you have a `Basket` or place an `Order`; there
+is no `Customer` type to be. Being an *employee* is having an `Employment` — a
+join entity linking you to a `Company` with a `Role`. The two coexist on one
+entity with nothing to reconcile: exactly the "a customer who is also a member of
+staff" case that has no branch to sit on in an inheritance tree. No
+`Customer < User`, no `Employee < User`, no diamond.
+
+`Employment` is the seller-side twin of the forum's `Membership` —
+`User × Company × Role`, same proven shape:
+
+```ruby
+class Employment < ApplicationEntity
+  relates_to :user,    User
+  relates_to :company, Company
+  component   Role                 # name: "owner" | "manager" | "staff"
+end
+```
+
+Both directions are unbounded: a company has many employees, and a user may be
+employed by more than one company (and shop from all of them). So
+`company.employees` and `user.employments` are two more `has_many`s — RFC-0015
+again — and the *authorization* lookup is a two-hop `with_related` today,
+mirroring the forum's `group.show` member list:
+
+```ruby
+# may this user act for this company, and in what capacity?
+Employment.with_related(:user, current_user)
+          .with_related(:company, company)
+          .includes_components(Role)
+          .first&.role
+```
+
+**Roles gate capability, not identity.** A proposed default set (adjustable):
+
+| Role | Can |
+|---|---|
+| `owner` | everything, incl. manage employees and the company profile |
+| `manager` | list / edit / delist products, adjust stock, view and fulfil orders |
+| `staff` | view inventory (incl. drafts and stock), fulfil orders — no listing or pricing |
+
+Authorization is an **app-layer System** — a plain `CompanyPolicy` PORO that
+reads `Employment.role`. It is not an ECS feature and needs no gem support. The
+`Role` component stays generic (a `name` string, reused verbatim from the forum
+— itself a tidy demonstration of one component type shared across two different
+join entities); the marketplace meaning of each name lives in the policy, not the
+component, keeping the component ignorant of any entity subclass (architecture
+§1). Customer-side shopping stays ungated; employment is the *extra* capability
+layered on the same user.
+
+Optional audit hook: `Product relates_to :listed_by, User` records which employee
+created a listing, distinct from `relates_to :seller, Company` (who owns it).
+Nice-to-have, not required.
 
 ---
 
