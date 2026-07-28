@@ -30,11 +30,12 @@ possible." Mapped to concrete features:
 | Join entities (ADR-0005) | `BasketItem`, `OrderItem` — the *unbounded* collections |
 | Query DSL (`with_component`/`with_related`, RFC-0010/0013) | "my orders", "a company's products", "listed products" |
 | Preloading (RFC-0011/0013) | product grid renders price + seller + review count |
-| **Standard components (the catalogue)** | `Money`, `PostalAddress`, `Phone`, plus small demo ones (`Rating`, `Quantity`) |
+| **Standard components (the catalogue)** | `Money`, `PostalAddress`, `Phone`, `Geolocation`, plus small demo ones (`Rating`, `Quantity`) |
 | Behaviour-carrying components (ADR-0001) | `OrderState` state machine transitions itself |
 | Composition over inheritance | one `User` is **customer and employee at once** — no `Customer`/`Employee` subclass; `Employment` layers on the seller capability |
 | Component reuse across entity types | the forum's `Role` component serves both `Membership` (groups) and `Employment` (companies) |
-| Systems (the "S", still POROs) | `Checkout` — validate basket, take payment, place order, issue invoice; `CompanyPolicy` — role-based authorization |
+| **Entity-blind systems** | `Geocoder` fills `Geolocation` from `PostalAddress` in one sweep over the component table — users and companies alike, no entity class named |
+| Systems (the "S", still POROs) | `Checkout` — validate basket, take payment, place order, issue invoice; `CompanyPolicy` — role-based authorization; `Geocoder` — geocoding |
 
 ---
 
@@ -289,12 +290,20 @@ Nice-to-have, not required.
 | `Money` | `amount_cents:integer`, `currency:string(3)` | ISO 4217; integer minor units, never a float |
 | `PostalAddress` | `line1, line2, locality, region, postcode, country` | schema.org `PostalAddress` |
 | `Phone` | `e164:string`, `extension:string` | E.164 |
+| `Geolocation` | `lat:decimal`, `lng:decimal`, `geocoded_at:datetime` | WGS 84; filled by the Geocoder system (§4), paired to a `PostalAddress` by slot |
 
 These are the components the blog promises: *"installed rather than written."*
 They are built **in the demo first** (friction-driven, per PROCESS.md), and only
 promoted to gem generators once the demo has a verdict on their shape. A `Money`
 that carries `+`, formatting, and a currency-mismatch guard is the first real
 test of behaviour-carrying components pulling their weight (ADR-0001).
+
+`Geolocation` is deliberately a *separate* component from `PostalAddress` rather
+than columns on it: it is derived, populated asynchronously by a system, and
+pairs with its address by **sharing the same slot** (RFC-0014) — so
+`company.registered_address` has a `company.registered_geolocation` beside it.
+That pairing is what lets one entity-blind system geocode every address in the
+system regardless of who owns it (§4).
 
 ### Small, demo-local
 
@@ -356,7 +365,7 @@ class Checkout
       end
 
       order.money.amount_cents = total
-      PaymentGateway.charge!(order, payment_method)   # external side effect
+      PaymentGateway.charge!(order, payment_method)   # simulated, deterministic
       order.order_state.pay!
       order.save!
 
@@ -376,6 +385,40 @@ Two things this surfaces deliberately:
 2. **The systems gap.** There is no scheduling, idempotency, or retry convention
    for `Checkout`. That is honest and is exactly the friction that would justify
    promoting Systems off the backlog.
+
+### A second system: entity-blind geocoding
+
+If `Checkout` shows a system orchestrating one transaction, the geocoder shows
+the property that makes ECS systems distinctive — and is the demo's clearest
+argument for the whole approach. A component table is **blind to entity type**,
+so a system that queries the *component* processes every entity's instance in a
+single sweep, without ever naming an entity class.
+
+`PostalAddress` sits on both `User` (one, the default slot) and `Company`
+(several — `registered`, `warehouse` — via RFC-0014 slots). Each address has a
+`Geolocation` beside it in the *same* slot. The geocoder fills them all:
+
+```ruby
+class Geocoder
+  def self.run
+    # one query over the shared table — users and companies alike
+    PostalAddress.where(geocoded: false).find_each do |addr|
+      point = lookup(addr)                             # simulated, deterministic
+      loc = addr.entity.geolocation(slot: addr.slot)   # the sibling, same slot
+      loc.lat, loc.lng = point.lat, point.lng
+      loc.save!
+    end
+  end
+end
+```
+
+It never mentions `User` or `Company`. It reads the component, and reaches the
+owner only through `component.entity` (architecture §3) to find the sibling
+`Geolocation` in the matching slot. Whether an address belongs to a user with one
+or a company with five is invisible to it — which is precisely the point, and the
+thing an inheritance-shaped model cannot do without a base class or a visitor.
+Like payment, the lookup is **simulated and deterministic** — no external
+service, no keys.
 
 ---
 
