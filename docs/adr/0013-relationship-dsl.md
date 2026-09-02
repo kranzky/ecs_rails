@@ -1,9 +1,22 @@
 # ADR-0013: Relationship DSL — relates_to
 
-**Status:** Accepted
+**Status:** Accepted — storage superseded by [ADR-0017](0017-shared-relationships-table.md); the `relates_to` API stands
 **Date:** 2026-07-20
 **Surfaced by:** the demo — `Authorship`, `MemberUser`, `MemberGroup` all reinvent the same `belongs_to`-in-a-component boilerplate.
 **Supersedes the deferral in:** [ADR-0006](0006-relationships-are-plain-components.md)
+
+> **Superseded in part, 2026-09-02.** [ADR-0017](0017-shared-relationships-table.md)
+> replaces the per-relationship backing table (`post_authors`, the dynamic
+> `Post::AuthorRelationship` class, the `ecs_rails:relationship` generator) with
+> one shared `relationships` table keyed by `(entity_id, slot)`, so that a
+> `relates_to` needs no migration. Everything about the *API* below — one line on
+> the entity, no component file, `post.author` / `post.author=`, the asymmetric
+> cascade/nullify foreign keys, `optional: true`, join entities for many-to-many
+> — is unchanged. The "Naming: owner-scoped" section's rejection of a shared
+> table considered only a *relationship-named* one (`authorships`); the
+> slot-keyed table it did not consider is collision-free because the owner's
+> discriminator (`owner_model`) and the entity-model scope do the work the table
+> name did.
 
 ## Context
 

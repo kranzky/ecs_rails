@@ -122,6 +122,13 @@
       "humanMinutes": 20,
       "aiMinutes": 145,
       "costs": []
+    },
+    {
+      "date": "2026-09-02",
+      "summary": "Reframed the v2 roadmap around a sharper, falsifiable claim: after `rails g ecs_rails:install` and one `db:migrate`, building an application requires no further migrations. Reviewed all eleven open Linear issues against that goal and found the set coherent but short of it: three things still generated a migration after install (a table per component via the catalogue-as-generators plan in ECS-9, a table per `relates_to`, and a table per marker), and the video script in ECS-10 still ran `db:migrate` after composing entities. Argued the pros and cons of the fix the user then accepted: one shared `relationships` table keyed by (entity_id, slot) with `owner_model` and an `exclusive` flag under a partial unique index, so `has_one` stays DB-enforced with no per-relationship index (precedent: `active_storage_attachments`; equivalent to today in expressiveness, enforcement and query shape, differing only in costing zero migrations). Wrote ADR-0017 (shared relationships table, superseding ADR-0013's storage, amending ADR-0014's leak-proof argument) and ADR-0018 (the catalogue ships in the gem as concerns; install writes one-line app classes and one migration for every catalogue table; `ecs_rails:upgrade` is the only migration a user ever runs afterwards; markers become slots of one Marker component with a `marker` declaration, amending ADR-0009's rejection of that keyword; the component generator stays as the escape hatch). Rewrote RFC-0015 over the shared table and un-gated it \u2014 the marketplace design already lists the six manys and the orphan bug, so inverse relationships are built up front. Revised the marketplace design (build order, decisions, no demo-local components), the backlog and the docs index. In Linear: created ECS-14 (this design), ECS-15 (relationships on the shared table), ECS-16 (markers), ECS-17 (rebuild the forum on the catalogue only, so db/migrate holds one file), ECS-18 (demo back on a path dependency), ECS-19 (0.3.0 release), ECS-20 (blog post \"The Last Migration\"); reworked ECS-9 into the catalogue-in-the-gem, rebased ECS-6, widened ECS-7 to the whole first catalogue (~17 components), re-scripted ECS-10 so the only migrate is right after install, raised ECS-11 and shipped its slot syntax first, and moved ECS-2 out of the launch scope. Critical path: ECS-12 \u2192 ECS-4 \u2192 ECS-15/16 \u2192 ECS-9 \u2192 ECS-6 \u2192 ECS-5 \u2192 ECS-17 \u2192 marketplace \u2192 ECS-11 \u2192 ECS-19 \u2192 ECS-20/ECS-10.",
+      "humanMinutes": 25,
+      "aiMinutes": 75,
+      "costs": []
     }
   ]
 }

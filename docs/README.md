@@ -7,6 +7,10 @@ Rails.
 
 0. **[retrospective-v0.1.md](retrospective-v0.1.md)** — what v0.1 is, what the
    demo found, and where it goes next. The story, in one page.
+   **v2** is the [marketplace demo](design/marketplace-demo.md) and the claim
+   it exists to prove: *after install and one migration, no further migrations*
+   ([ADR-0017](adr/0017-shared-relationships-table.md),
+   [ADR-0018](adr/0018-catalogue-in-the-gem.md)). Tracked in Linear team ECS.
 1. **[architecture.md](architecture.md)** — the invariants. The specification
    every task refers back to. Start here.
 2. **[adr/](adr/)** — why the design is the way it is. Read before proposing a
@@ -34,6 +38,8 @@ Rails.
 | [0014](adr/0014-relationship-name-query-sugar.md) | Query and preload relationships by name |
 | [0015](adr/0015-plural-components-via-slot.md) | Plural components via a `(entity_id, slot)` unique index |
 | [0016](adr/0016-prefixed-delegation-by-default.md) | Delegation is component-prefixed by default (`prefix: false` opts out) |
+| [0017](adr/0017-shared-relationships-table.md) | One shared `relationships` table — a `relates_to` needs no migration (supersedes 0013's storage) |
+| [0018](adr/0018-catalogue-in-the-gem.md) | The catalogue ships in the gem; install is the last migration (`marker`, `ecs_rails:upgrade`) |
 
 ## RFCs — the v0.1 build order
 
@@ -55,7 +61,7 @@ Each RFC is one commit. Each commit compiles and passes tests.
 | [0012](rfc/0012-relationship-dsl.md) | Relationship DSL (relates_to) | 0004, 0005, 0008 ✅ |
 | [0013](rfc/0013-relationship-name-query-sugar.md) | Relationship query sugar (with_related/includes_related) | 0010, 0011, 0012 ✅ |
 | [0014](rfc/0014-plural-components.md) | Labelled (plural) components (`prefix:` / slot) | 0004, 0005, 0006, 0009, 0010 · proposed |
-| [0015](rfc/0015-inverse-relationships.md) | Inverse relationships (`has_many` / `has_one` over `relates_to`) | 0012, 0013 · sketch |
+| [0015](rfc/0015-inverse-relationships.md) | Inverse relationships (`has_many` / `has_one` over the shared table) | 0012, 0013, 0014, ADR-0017 · proposed |
 
 RFC-0001 and 0002 are independent and can be built in parallel.
 

@@ -4,6 +4,14 @@
 **Date:** 2026-07-18
 **Surfaced by:** the demo (docs/friction-log.md)
 
+> **Amended 2026-09-02.** [ADR-0018](0018-catalogue-in-the-gem.md) §4 adds a
+> `marker :moderator` declaration. This ADR rejected a `marker` keyword because it
+> would fork the model into two concepts; that reason no longer applies once
+> markers are slots of one `Marker` catalogue component, because the keyword is
+> sugar for `component Marker, prefix: :moderator` that restores the bare
+> `moderator?` predicate. Presence — `add` / `has?` / `remove`, a row is the
+> meaning — is exactly as decided below.
+
 ## Context
 
 The proposal's "No STI" claim rests on **marker components**: `Moderator` and

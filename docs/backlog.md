@@ -22,7 +22,11 @@ speculation — see [friction-log.md](friction-log.md).
 | **Required components** — `component Email, required: true` | **Not built.** In tension with [ADR-0003](adr/0003-virtual-components-skip-validation.md). | Repeatedly hand-writing the same entity-level presence validation. |
 | ~~**Relationship DSL**~~ | ✅ **Shipped** — `relates_to`, [ADR-0013](adr/0013-relationship-dsl.md) / [RFC-0012](rfc/0012-relationship-dsl.md). | fired |
 | **Plural components (labelled)** — `component PostalAddress, prefix: :business` → `business_address` | **Decided, not yet built** — [ADR-0015](adr/0015-plural-components-via-slot.md) / [RFC-0014](rfc/0014-plural-components.md). Generalizes the unique index to `(entity_id, slot)`; a slot-keyed singleton, not an anonymous collection. Prerequisite for shipping `Phone`/`PostalAddress`/`Token` as standard generators. | The standard-component-library survey: the most universal components are naturally multi-role. |
-| **Inverse relationships (`has_many` / `has_one`)** — the parent side of `relates_to`: `post.comments`, `order.invoice` | **Sketched, not built** — [RFC-0015](rfc/0015-inverse-relationships.md). Wraps the child-side `with_related` query as a native `has_many :through` over the relationship join table — a real `CollectionProxy` (`<<`, `build`, preload), no new storage. `has_one` is its at-most-one form; `belongs_to`/component-`has_one` are already `relates_to`/`component`. | The [marketplace demo](design/marketplace-demo.md): every unbounded many (baskets, order lines, reviews) plus one-to-one inverses, and the nullify-on-destroy orphan bug. |
+| **Inverse relationships (`has_many` / `has_one`)** — the parent side of `relates_to`: `post.comments`, `order.invoice` | **Proposed, building up front** — [RFC-0015](rfc/0015-inverse-relationships.md), rewritten over the shared table. A native `has_many :through` with a slot condition — a real `CollectionProxy`, no new storage. `has_one` is DB-enforced by the install-time partial unique index. | fired — the [marketplace design](design/marketplace-demo.md) lists the six manys, two one-to-one inverses and the orphan bug (Linear ECS-6). |
+| **Shared `relationships` table** — every `relates_to` a row, no migration | **Decided, not yet built** — [ADR-0017](adr/0017-shared-relationships-table.md). Supersedes ADR-0013's per-relationship tables. | fired — the zero-migrations goal (Linear ECS-15). |
+| **The catalogue in the gem** — standard components as concerns, one install migration, `ecs_rails:upgrade`; markers on one table via `marker` | **Decided, not yet built** — [ADR-0018](adr/0018-catalogue-in-the-gem.md). | fired — the zero-migrations goal (Linear ECS-9, ECS-16). |
+| **Reader renaming for generic components** — `component Text, prefix: :title, as: :title` | **Not built.** RFC-0014 rejected per-slot renaming as scope creep. | The forum rebuilt on the catalogue (Linear ECS-17) — if `post.title_text` reads badly in real views and forms. |
+| **Per-relationship table opt-in** — `relates_to :x, Y, table: true` for a hot path | **Not built.** [ADR-0017](adr/0017-shared-relationships-table.md) names it as the escape hatch. | A profiled hot path on the shared table. Not before. |
 
 ### Hard requirements the demo handed the query DSL
 
@@ -48,7 +52,8 @@ When the cross-component query RFC is written, it must:
 - **Component callbacks.** `after_component_added`, `after_component_removed`.
 - **Events.** Publish on component change. Probably belongs in the host app.
 - **Caching.** Explicitly a non-goal until profiled.
-- **Component serialization.** `entity.as_json` walking components.
+- **Component serialization.** `entity.as_json` walking components. Specced
+  in Linear ECS-2; out of the v2 launch scope.
 - **Archetypes.** `archetype :moderator, [Name, Email, Moderator]` — reusable
   component bundles. Suspiciously close to reinventing inheritance; be careful.
 - **Shared component rows.** Two entities pointing at one row. Currently
@@ -63,4 +68,8 @@ When the cross-component query RFC is written, it must:
 | ~~Plural components~~ → **reconsidered** | Was rejected under [ADR-0005](adr/0005-one-component-per-entity.md). The *anonymous-collection* form (`many: true`) stays rejected — it forks delegation/laziness. The *labelled* form is now planned: [ADR-0015](adr/0015-plural-components-via-slot.md) / [RFC-0014](rfc/0014-plural-components.md). |
 | Anonymous plural components — `component Phone, many: true` returning a collection | [ADR-0015](adr/0015-plural-components-via-slot.md) — forks delegation, laziness and error keys. Unbounded-N is a join entity; fixed roles are labelled slots. |
 | `method_missing` delegation | [ADR-0004](adr/0004-delegation-conflicts-raise.md) — cannot detect conflicts eagerly. |
+| One table per `relates_to` | Was [ADR-0013](adr/0013-relationship-dsl.md)'s storage; superseded by [ADR-0017](adr/0017-shared-relationships-table.md) — a migration per relationship defeats the zero-migrations goal. The API is unchanged. |
+| Standard components as per-component generators | Superseded by [ADR-0018](adr/0018-catalogue-in-the-gem.md) — a migration per component defeats the goal; the catalogue ships in the gem. |
+| Uniqueness for `has_one` by validation only | [ADR-0017](adr/0017-shared-relationships-table.md) — two concurrent checkouts would issue two invoices. The partial unique index keeps it in the database. |
+| A single `values` table (entity–attribute–value) | [ADR-0018](adr/0018-catalogue-in-the-gem.md) — catalogue tables are typed per shape with real FKs, indexes and validations. No values blob. |
 | Pure ECS identity (no `model` column) | [ADR-0002](adr/0002-single-entities-table.md) — every query becomes a join. |
