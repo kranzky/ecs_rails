@@ -93,8 +93,9 @@ come from the same columns as today.
   ([ADR-0017](0017-shared-relationships-table.md)) and `markers` (§4) with their
   indexes.
 
-An optional `--only money,postal_address` selects a subset. The default is the
-whole shelf; the point is that it is all already there.
+Components are grouped into **sets** (§5); `rails g ecs_rails:install --sets
+core,commerce` selects which are created. `core` is the default. The video
+shows the whole shelf arriving; a prototype need not carry every table.
 
 ### 3. `ecs_rails:upgrade` is the only migration a user ever runs afterwards
 
@@ -142,32 +143,96 @@ away.
 ### 5. The first catalogue
 
 Provisional — authored demo-first for shape, per [PROCESS.md](../../PROCESS.md),
-and adjusted as the forum rebuild and the marketplace argue. Roughly seventeen
-tables:
+and adjusted as the forum rebuild and the marketplace argue. Grouped into
+**sets** so that install can take `--sets core,commerce,social,saas` (`core` is
+the default) and a prototype need not carry every table.
 
-| Component | Shape | Slots the demos use |
+**`core`** — identity, content, time, ordering, search:
+
+| Component | Shape | Slots the demos use / notes |
 |---|---|---|
-| `Name` | first, last | — |
+| `Name` | given, family, full | schema.org `givenName` / `familyName`; an organisation's name is `Text` under slot `name` |
 | `Email` | address, verified | — |
+| `Password` | password_digest | `has_secure_password`; with a `Session` entity (`Token` + `Timestamp` + `relates_to :user`) this is Rails 8's generated authentication, from the catalogue |
 | `Phone` | e164, extension | mobile, work |
 | `PostalAddress` | line1, line2, locality, region, postcode, country | shipping, billing, registered, warehouse |
 | `Geolocation` | lat, lng, geocoded_at | paired to an address slot |
-| `Money` | amount_cents, currency | price, total, unit_price |
+| `Link` | url, label | website, github, webhook |
 | `Text` | value | title, body, bio, description |
-| `Identifier` | value | sku, order_number, invoice_number, slug |
+| `Identifier` | value — `UNIQUE (slot, value)` | sku, order_number, invoice_number, slug, stripe_customer |
 | `Counter` | count | likes, stock, quantity |
 | `Rating` | stars | — |
 | `Timestamp` | at | issued_at, published_at |
-| `State` | status, transitions | publish, listing, order |
-| `Image` | attachment | avatar, logo |
+| `CalendarDate` | date | birthdays, due dates — a date is not a timestamp; named so as never to shadow Ruby's `Date` |
+| `Period` | starts_at, ends_at, time_zone, all_day | events, bookings, availability; `overlaps?`, `current?` |
+| `Position` | position | ordering within a list — kanban columns, checklist items; one slot per list |
+| `State` | status, transitions | publish, listing, order — the transitions log is **optional per slot** (`history: false`), so visibility / priority / severity enums use the same table without a log |
+| `Tags` | names (text[], GIN) | free tagging; an unbounded set of *strings* is a value, not a collection of entities |
+| `SearchVector` | document (tsvector, GIN) | Postgres full-text search, no dependency; rebuilt by an entity-blind `Indexer` system from the entity's `Text` slots — the second system showcase beside the geocoder (needs RFC-0010's non-equality conditions, Linear ECS-5) |
+| `Discard` | discarded_at | soft delete as presence: `discard!`, `undiscard!`; `without_component(Discard)` is "kept" |
+| `Image` | attachment | avatar, logo (Active Storage) |
 | `Role` | name | — |
-| `Token` | value, expires_at | reset, invite |
-| `Marker` | — | one per marker name |
-| `Relationship` | target_id, owner_model, exclusive | one per relationship name |
+| `Token` | digest, expires_at, purpose | reset, invite, api — **stores a digest, never the value** (the `generates_token_for` shape: generate once, show once, verify against the digest) |
+| `Marker` | — | one per marker name (§4) |
+| `Relationship` | target_id, owner_model, exclusive | one per relationship name ([ADR-0017](0017-shared-relationships-table.md)) |
+
+**`commerce`** — `Money` (amount_cents, currency; price, total, unit_price).
+Later: `Rate` (basis points), `Measurement` (value + UCUM unit),
+`Subscription`, `Quota`.
+
+**`social`**, **`saas`** — empty in 0.3.0; named so the sets exist. Candidates
+below.
 
 The catalogue carries **no third-party dependencies** (no `phonelib`, no
 `money`): it ships in the gem, so any dependency is imposed on every user.
 Validation is regex and enum.
+
+#### Deferred — wait for a demo to ask
+
+| Component | Shape | Trigger |
+|---|---|---|
+| `Rate` | basis_points | tax, discount, commission, progress — when the marketplace prices a discount |
+| `Measurement` | value, unit (UCUM) | shipping weight, recipes |
+| `Recurrence` | rrule (RFC 5545) | repeating events; storing is trivial, expanding without a dependency is not |
+| `Consent` | document, version, accepted_at | terms / privacy acceptance — a marker cannot record *which version* |
+| `Locale` | locale, time_zone | per-user formatting; two `Text` slots until it earns behaviour |
+| `Subscription` | plan, status, current_period_end | a mirror of the Stripe subscription object |
+| `Quota` | used, limit, resets_at | metering and rate limits |
+| `Document` | data (jsonb) | the deliberate schemaless blob — webhook payloads, imports, drafts; to be named honestly as the one place the catalogue lets you defer typing |
+| `Embedding` | vector | AI apps; only when the `pgvector` extension is present |
+| `IpAddress` | address (inet) | sessions and audit |
+
+**Not catalogue components, and the docs should say so:** versioning and audit
+history are unbounded per entity — child entities driven by a system.
+Reactions and follows are join entities. A boolean preference is a marker named
+for the non-default case (`marker :emails_muted`), not a toggle with a default
+of `true`.
+
+#### Naming rule
+
+A catalogue name must never shadow a Ruby core constant (`Date`, `Time`,
+`Set`, `Range`, `String`, …), and should avoid the constants of popular gems
+where a short name is available. Some collisions are unavoidable — `Money`
+collides with the `money` gem, `Geocoder` (the demo's system) with the
+`geocoder` gem — and the one-line app class is the remedy: the install
+generator accepts a rename, and the documented idiom is
+
+```ruby
+class Price < ApplicationComponent
+  include EcsRails::Catalogue::Money
+end
+```
+
+The application owns the constant; the gem owns the standard.
+
+#### Declaration-time slot configuration
+
+Several components need per-slot options — `State` its vocabulary and
+`history:`, `Measurement` its unit, `Tags` an optional allow-list. These are
+passed through the `component` declaration to the concern,
+`component State, prefix: :order, states: %w[pending paid shipped], history: true`,
+and settled once in the slot work (Linear ECS-4) because four or five
+components depend on the same mechanism.
 
 ## Reason
 
@@ -209,9 +274,10 @@ column, and it has the same shape as `active_storage_attachments`.
 - **The gem grows a catalogue** and takes on the standards behind it (E.164,
   ISO 4217, schema.org `PostalAddress`, WGS 84). Catalogue additions are gem
   releases with an upgrade migration.
-- **The application's components directory holds ~17 one-liners** after
-  install. That is visible and slightly noisy; it is also the eject-by-default
-  that makes the catalogue legible.
+- **The application's components directory holds ~25 one-liners** after a
+  full install (fewer with `--sets`). That is visible and slightly noisy; it is
+  also the eject-by-default that makes the catalogue legible, and it is what
+  makes renaming a component a one-line edit.
 - **Generic component naming is the ergonomic risk.** `component Text, prefix:
   :title` yields the reader `post.title_text`, and the string is a hop further.
   [RFC-0014](../rfc/0014-plural-components.md) rejected per-slot reader renaming
