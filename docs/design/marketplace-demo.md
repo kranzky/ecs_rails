@@ -1,8 +1,19 @@
 # Design: Marketplace demo
 
-**Status:** Draft
+**Status:** Draft — revised 2026-09-02 for the **zero-migrations** goal
 **Depends on:** [RFC-0014](../rfc/0014-plural-components.md) (labelled components — *not yet built*),
-new standard components (Money, PostalAddress, Phone — *not yet built*)
+[ADR-0017](../adr/0017-shared-relationships-table.md) (shared relationships table — *not yet built*),
+[ADR-0018](../adr/0018-catalogue-in-the-gem.md) (the catalogue in the gem — *not yet built*),
+[RFC-0015](../rfc/0015-inverse-relationships.md) (inverse relationships — *not yet built*)
+
+> **The v2 goal, 2026-09-02.** The marketplace is now the proof of a sharper
+> claim than "exercise every feature": **after `rails g ecs_rails:install` and
+> one `db:migrate`, the whole marketplace is built with no further migrations.**
+> Every component below comes from the catalogue ([ADR-0018](../adr/0018-catalogue-in-the-gem.md)),
+> every `relates_to` is a row in the shared `relationships` table
+> ([ADR-0017](../adr/0017-shared-relationships-table.md)), every marker a row in
+> `markers`, and `demo/db/migrate` contains exactly one file. Linear: ECS-3
+> (epic), ECS-14 (design). Sections below that predate the revision are marked.
 
 The bulletin board is the smallest thing that proved ECS is pleasant on Rails.
 The marketplace is the next question: does the model *scale up* to a real
@@ -30,7 +41,8 @@ possible." Mapped to concrete features:
 | Join entities (ADR-0005) | `BasketItem`, `OrderItem` — the *unbounded* collections |
 | Query DSL (`with_component`/`with_related`, RFC-0010/0013) | "my orders", "a company's products", "listed products" |
 | Preloading (RFC-0011/0013) | product grid renders price + seller + review count |
-| **Standard components (the catalogue)** | `Money`, `PostalAddress`, `Phone`, `Geolocation`, plus small demo ones (`Rating`, `Quantity`) |
+| **Standard components (the catalogue)** | `Money`, `PostalAddress`, `Phone`, `Geolocation`, `Text`, `Identifier`, `Counter`, `Rating`, `Timestamp`, `State`, … — **every** component, from the catalogue ([ADR-0018](../adr/0018-catalogue-in-the-gem.md)); nothing demo-local |
+| **Zero migrations after install** | `ls demo/db/migrate` → one file |
 | Behaviour-carrying components (ADR-0001) | `OrderState` state machine transitions itself |
 | Composition over inheritance | one `User` is **customer and employee at once** — no `Customer`/`Employee` subclass; `Employment` layers on the seller capability |
 | Component reuse across entity types | the forum's `Role` component serves both `Membership` (groups) and `Employment` (companies) |
@@ -88,12 +100,12 @@ class Company < ApplicationEntity
 end
 
 class Product < ApplicationEntity
-  component Title                               # product.title_text (prefixed, ADR-0016)
-  component Body                                # description, reused → product.body_text
+  component Text,       prefix: :title          # product.title_text (catalogue Text, ADR-0018)
+  component Text,       prefix: :body           # product.body_text
   component Money                               # the price (singular)
-  component Sku                                 # identifier
-  component Stock                               # available quantity
-  component ListingState                        # draft / listed / delisted
+  component Identifier, prefix: :sku
+  component Counter,    prefix: :stock          # available quantity
+  component State,      prefix: :listing        # draft / listed / delisted
   relates_to :seller, Company
 end
 
@@ -194,15 +206,19 @@ weakness compounds in a transactional domain:
 
 None of this blocks the demo — the forum runs on it — but the marketplace is
 where the missing inverse-association ergonomics and the nullify-on-target
-lifecycle stop being cosmetic. This demo is the **forcing function** for
-[RFC-0015](../rfc/0015-inverse-relationships.md) (inverse relationships): its
-manys — `basket.items`, `order.items`, `product.reviews`, `company.products` —
-and its one-to-one inverses — `order.invoice`, `user.basket` — are exactly the
-`has_many` / `has_one` the parent side is missing today. Build the demo on the
-raw child-side `with_related` query *first*, log the friction, and let that
-justify RFC-0015 rather than speccing it in advance. (`belongs_to` and a
-component `has_one` need nothing new — they are already `relates_to` and
-`component`; only the entity→entity *inverse* is missing.)
+lifecycle stop being cosmetic. Its manys — `basket.items`, `order.items`,
+`product.reviews`, `company.products` — and its one-to-one inverses —
+`order.invoice`, `user.basket` — are exactly the `has_many` / `has_one` the
+parent side is missing today.
+
+> **Revised 2026-09-02.** This section originally said to build on the raw
+> child-side query first and let friction justify RFC-0015. The list above *is*
+> the friction, on record; waiting would mean rewriting checkout and the basket
+> pages. [RFC-0015](../rfc/0015-inverse-relationships.md) is built **up front**,
+> over the shared `relationships` table ([ADR-0017](../adr/0017-shared-relationships-table.md)),
+> before the marketplace pages (Linear ECS-6). The per-relationship `comment_posts`
+> table described above no longer exists under ADR-0017; the nullify-on-target
+> behaviour is unchanged, and `dependent: :destroy` on the link rows is the fix.
 
 ### Why the "manys" are join entities, not plural components
 
@@ -293,10 +309,11 @@ Nice-to-have, not required.
 | `Geolocation` | `lat:decimal`, `lng:decimal`, `geocoded_at:datetime` | WGS 84; filled by the Geocoder system (§4), paired to a `PostalAddress` by slot |
 
 These are the components the blog promises: *"installed rather than written."*
-They are built **in the demo first** (friction-driven, per PROCESS.md), and only
-promoted to gem generators once the demo has a verdict on their shape. A `Money`
-that carries `+`, formatting, and a currency-mismatch guard is the first real
-test of behaviour-carrying components pulling their weight (ADR-0001).
+They are authored **demo-first for shape** (friction-driven, per PROCESS.md),
+then promoted to **gem concerns** — not generators — and created by the install
+migration ([ADR-0018](../adr/0018-catalogue-in-the-gem.md), revised 2026-09-02).
+A `Money` that carries `+`, formatting, and a currency-mismatch guard is the
+first real test of behaviour-carrying components pulling their weight (ADR-0001).
 
 `Geolocation` is deliberately a *separate* component from `PostalAddress` rather
 than columns on it: it is derived, populated asynchronously by a system, and
@@ -305,21 +322,33 @@ pairs with its address by **sharing the same slot** (RFC-0014) — so
 That pairing is what lets one entity-blind system geocode every address in the
 system regardless of who owns it (§4).
 
-### Small, demo-local
+### ~~Small, demo-local~~ — now generic catalogue components under slots
 
-`Sku`, `OrderNumber`, `InvoiceNumber` (identifier strings — candidates to
-generalise into one `Identifier`/`Slug` later), `Stock`/`Quantity` (an integer
-count), `Rating` (1..5), `IssuedAt` (a timestamp), `ListingState` and
-`OrderState` (state machines).
+*Revised 2026-09-02.* Under the zero-migrations goal there are **no demo-local
+components**. What this section listed as one-offs are catalogue shapes under
+slots ([ADR-0018](../adr/0018-catalogue-in-the-gem.md) §5): `Sku`,
+`OrderNumber`, `InvoiceNumber` → `Identifier` under slots `sku` /
+`order_number` / `invoice_number`; `Stock`, `Quantity` → `Counter`; `Rating`
+stays `Rating`; `IssuedAt` → `Timestamp` under slot `issued_at`;
+`ListingState`, `OrderState`, the forum's `PublishState` → one `State`
+component (status + transitions log) under slots `listing` / `order` /
+`publish`. The forum's `Title`, `Body`, `Bio`, `Description` → `Text`;
+`Likes` → `Counter`; `Moderator`, `Administrator` → `marker`. The forum is
+rebuilt on the catalogue first (Linear ECS-17) so that generic naming is judged
+before the marketplace multiplies it.
 
-### `OrderState` — the state-machine component
+### `State` — the state-machine component
 
-The catalogue's StateMachine, made concrete: a `status:string` plus a
+The catalogue's `State`, made concrete: a `status:string` plus a
 `transitions:jsonb` log of `{at, from, to, event}`. Behaviour lives on the
-component (ADR-0001):
+component (ADR-0001). The catalogue concern carries `transition!` and the log;
+the *vocabulary* of states for an order is the entity's business, declared
+where the slot is (`component State, prefix: :order, states: %w[…]` or a
+per-entity module — decided when built). Sketched as a bespoke class for
+legibility:
 
 ```ruby
-class OrderState < ApplicationComponent
+class OrderState < ApplicationComponent   # illustrative; really State under slot :order
   STATES = %w[pending paid shipped delivered cancelled].freeze
 
   def pay!    = transition!("paid")
@@ -426,6 +455,13 @@ service, no keys.
 
 ### Hard prerequisites — must land before the demo can be built
 
+*Revised 2026-09-02:* the critical path is now ECS-12 (prefixed delegation) →
+ECS-4 (slots) → ECS-15 (shared relationships table, [ADR-0017](../adr/0017-shared-relationships-table.md))
++ ECS-16 (markers) → ECS-9 (the catalogue in the gem, [ADR-0018](../adr/0018-catalogue-in-the-gem.md))
+→ ECS-6 (inverse relationships) → ECS-5 (query filtering/ordering) → ECS-17
+(forum rebuilt on the catalogue). Items 1–2 below stand; 3–5 are amended in
+place.
+
 1. **RFC-0014 (plural components) is designed but unimplemented.** Billing vs
    shipping addresses and mobile vs work phones are core to the demo and cannot
    be expressed today. This is the critical-path dependency: the gem work comes
@@ -443,11 +479,10 @@ service, no keys.
 ### Structural constraints — not blockers, but they dictate the model
 
 3. **No anonymous collections (ADR-0005/0015).** Every "many" is a join entity.
-   This is the demo's real stress test. Expect ergonomic friction:
-   `basket.items` is a `with_related` query returning `BasketItem`s, not a Rails
-   `has_many` you can `<<` into. If that friction is severe, it is a signal
-   about the architecture — capture it in the friction log rather than working
-   around it silently.
+   This is the demo's real stress test. *Revised:* `basket.items` is a real
+   `has_many` (RFC-0015, built up front), so the remaining friction to watch is
+   the join entity's own lifecycle (`BasketItem` has components of its own) and
+   `build`/`<<` ergonomics over a `through` association.
 
 4. **No aggregation primitive.** An order total, a product's average rating, a
    review count — none is something the component DSL computes. They are plain
@@ -496,23 +531,28 @@ service, no keys.
 
 ---
 
-## 6. Build order
+## 6. Build order — revised 2026-09-02
 
-1. **Gem — RFC-0014 (plural components).** The one hard dependency for labelled
-   addresses and phones.
-2. **Gem — non-equality query conditions.** Small RFC unblocking price/rating
-   filters (decision §5). Independent of step 1; can run in parallel.
-3. **Demo components:** author `Money` (USD), `PostalAddress`, `Phone` (+ small
-   locals), with validation and behaviour. Log friction; promote the good ones
-   to gem generators afterwards.
-4. **Sellers & catalogue:** `Company`, `Product`, `Employment`, listing pages
-   with filters. Reuses everything already proven by the forum, plus step 2.
-5. **Reviews:** `Review` — the forum, re-pointed at products. Lowest risk.
-6. **Basket & checkout:** `Basket`, `BasketItem`, the `Checkout` system, the
-   simulated gateway. The most novel, highest-friction step.
-7. **Orders & invoices:** `Order`, `OrderItem`, `Invoice`, "my orders".
+Gem first, in dependency order; each step one PR with green tests.
 
-Steps 4–5 need only steps 1–3; steps 6–7 are gated on all of 1–3.
+1. **ECS-18** — demo back on a path dependency (restores the gem→demo loop).
+2. **ECS-12** — prefixed delegation (ADR-0016).
+3. **ECS-4** — slots (RFC-0014): the slot-scoped `has_one` and lazy-reader
+   presets, built generally because 4 and 5 reuse them.
+4. **ECS-15** — relationships on the shared table (ADR-0017); delete the
+   relationship generator. **ECS-16** — markers on a shared table, `marker`.
+5. **ECS-9 + ECS-7** — the catalogue as gem concerns, the install migration,
+   `ecs_rails:upgrade`. Components authored demo-first for shape.
+6. **ECS-6** — inverse relationships (RFC-0015) over the shared table.
+7. **ECS-5** — non-equality query conditions and ordering.
+8. **ECS-17** — the forum rebuilt on the catalogue only. One file in
+   `db/migrate`. First verdict on generic component naming.
+9. **Marketplace** (issues cut when ECS-17 lands): sellers & catalogue pages
+   with filters; reviews; basket & checkout with the simulated gateway; orders &
+   invoices; **ECS-8** geocoder.
+10. **ECS-11** entity generator (slot syntax in the first cut).
+11. **ECS-19** release 0.3.0, repin and redeploy the demo.
+12. **ECS-20** blog post "The Last Migration"; **ECS-10** video.
 
 ## 7. Decisions — settled
 
@@ -520,7 +560,13 @@ Steps 4–5 need only steps 1–3; steps 6–7 are gated on all of 1–3.
 - **Filters:** price/rating filtering is in scope → non-equality query
   conditions become a prerequisite (build-order step 2).
 - **Currency:** USD, single-currency, code still stored on `Money`.
-- **Standard components:** built **in the demo first**, promoted to gem
-  generators afterwards (matches PROCESS.md).
+- **Standard components:** authored **demo-first for shape**, promoted to
+  **gem concerns** created by the install migration — not generators
+  ([ADR-0018](../adr/0018-catalogue-in-the-gem.md); revised 2026-09-02).
+- **Relationships:** one shared `relationships` table
+  ([ADR-0017](../adr/0017-shared-relationships-table.md)); `has_one` uniqueness
+  DB-enforced by a partial unique index created at install.
+- **Inverse relationships:** built up front (RFC-0015), not after friction.
+- **Zero migrations after install** is the claim the demo exists to prove.
 </content>
 </invoke>

@@ -4,6 +4,17 @@
 **Date:** 2026-07-21
 **Surfaced by:** the full demo UI (docs/friction-log.md)
 
+> **Amended 2026-09-02.** The "belt-and-braces" paragraph under Consequences
+> was written when every relationship had its own owner-scoped table. Under
+> [ADR-0017](0017-shared-relationships-table.md) all relationships share one
+> table, so a relationship query is leak-proof for the same reason a shared
+> component query is: the slot narrows to the relationship name and the
+> entity-model scope narrows to the owner type. The scope is now load-bearing,
+> not belt-and-braces. Nothing else changes — `with_related` already rode
+> `with_component`, which already applied the scope, so the generated SQL keeps
+> its shape. The verbs, the metadata-by-name lookup and the fail-loud error are
+> all as below.
+
 ## Context
 
 [RFC-0012](../rfc/0012-relationship-dsl.md) deferred relationship-name query
