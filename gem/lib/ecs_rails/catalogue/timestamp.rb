@@ -7,6 +7,7 @@ module EcsRails
       extend Definition
 
       table "timestamps"
+      primary_attribute :at
       schema do |t|
         t.datetime :at, default: nil
       end

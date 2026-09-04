@@ -278,6 +278,18 @@ module EcsRails
         @set || :core
       end
 
+      # Declares (or reads) the component's primary attribute — the one a
+      # labelled slot stands for, so `component Text, prefix: :title` also
+      # delegates `post.title` (see EcsRails::Slots::Component::ClassMethods#primary).
+      # Applied to the including class at include time.
+      #
+      # @param name [Symbol, nil]
+      # @return [Symbol, nil]
+      def primary_attribute(name = nil)
+        @primary_attribute = name.to_sym if name
+        @primary_attribute
+      end
+
       # Declares (with a block) or reads the schema.
       #
       # @yieldparam t [Schema::Recorder]
@@ -301,6 +313,7 @@ module EcsRails
         end
 
         base.table_name = table
+        base.primary(primary_attribute) if primary_attribute
         base.class_eval(&@included_block) if @included_block
       end
     end

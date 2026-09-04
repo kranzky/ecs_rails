@@ -85,6 +85,33 @@ module EcsRails
           define_method(name) { slot_options.fetch(name) }
         end
 
+        # Declares (or reads) the component's **primary attribute** — the one a
+        # labelled slot stands for. With it, `component Text, prefix: :title`
+        # delegates `post.title` / `post.title=` straight to `title_text.value`
+        # alongside the prefixed `title_text_value`, so the slot name is the
+        # field name: forms post `title:`, helpers get a String, mass assignment
+        # reads like Rails. The reader stays `title_text`.
+        #
+        # Only a labelled slot gets the bare pair (the default slot has no name
+        # to lend); `delegate: false` drops it with everything else; `except:`
+        # naming the attribute removes it; and it goes through the ordinary
+        # conflict machinery, so `component Text, prefix: :author` beside
+        # `relates_to :author` raises (ADR-0004). Decided after the forum rebuild
+        # (RFC-0014 amendment, 2026-09-04).
+        #
+        #   class Text < ApplicationComponent
+        #     primary :value
+        #   end
+        #
+        # @param name [Symbol, nil] the attribute; omit to read
+        # @return [Symbol, nil] the primary attribute, or nil when none is declared
+        def primary(name = nil)
+          @ecs_primary = name.to_sym if name
+          return @ecs_primary if defined?(@ecs_primary) && @ecs_primary
+
+          superclass.respond_to?(:primary) ? superclass.primary : nil
+        end
+
         # The names this component accepts as per-slot options, ancestry
         # included.
         #

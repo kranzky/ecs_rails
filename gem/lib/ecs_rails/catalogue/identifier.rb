@@ -8,6 +8,7 @@ module EcsRails
       extend Definition
 
       table "identifiers"
+      primary_attribute :value
       schema do |t|
         t.string :value, default: nil
         t.index %i[slot value], unique: true

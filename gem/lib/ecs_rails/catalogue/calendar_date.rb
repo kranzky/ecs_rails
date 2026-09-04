@@ -8,6 +8,7 @@ module EcsRails
       extend Definition
 
       table "calendar_dates"
+      primary_attribute :date
       schema do |t|
         t.date :date, default: nil
       end

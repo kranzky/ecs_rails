@@ -70,9 +70,9 @@ them needs no migration at all: a slot names the role.
 
 ```ruby
 class Product < ApplicationEntity
-  component Text,       prefix: :title      # product.title_text
+  component Text,       prefix: :title      # product.title (the String); product.title_text (the Text)
   component Money,      prefix: :price      # product.price_money.to_s => "USD 19.99"
-  component Identifier, prefix: :sku        # unique per slot
+  component Identifier, prefix: :sku        # product.sku, unique per slot
   component State,      prefix: :listing, states: %w[draft listed delisted]
   relates_to :seller, Company
   marker :featured

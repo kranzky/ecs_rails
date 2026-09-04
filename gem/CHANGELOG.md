@@ -8,6 +8,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Primary attributes** (RFC-0014 amendment). A component declares
+  `primary :value`; a labelled slot of it then also delegates the bare slot
+  name, so `component Text, prefix: :title` gives `post.title` / `post.title=`
+  (→ `title_text.value`) beside `post.title_text` and `post.title_text_value`.
+  The catalogue declares them on `Text`, `Identifier`, `Counter`, `Timestamp`,
+  `CalendarDate`, `Rating`, `Position` and `Role`. Decided by the forum rebuild.
+
 - **The catalogue** (ADR-0018, RFC-0017): 25 standard components shipped as
   concerns under `EcsRails::Catalogue` — `Name`, `Email`, `Password`, `Phone`,
   `Address`, `Geolocation`, `Link`, `Text`, `Identifier`, `Counter`, `Rating`,

@@ -151,6 +151,8 @@ module EcsRails
       slot_options = normalized_slot_options(component_class, slot_options)
       validate_not_inherited!(component_class, slot)
 
+      validate_primary!(component_class)
+
       # RFC-0005 is resolved *before* anything is registered or defined, so that
       # a bad `only:`/`except:` name or a DelegationConflict leaves the class in
       # exactly the state it was in. #delegation_map validates the option names
@@ -404,6 +406,12 @@ module EcsRails
     # — which is what keeps two slots of one component apart. `delegate: false`
     # is the empty map: reader and predicate only.
     #
+    # A labelled slot of a component with a **primary attribute**
+    # (EcsRails::Slots::Component::ClassMethods#primary) also gets the bare
+    # pair: `component Text, prefix: :title` maps `title` and `title=` to
+    # `value` and `value=`, so `post.title` is the string. The slot name is the
+    # field name. Only when the primary survived `only:`/`except:`.
+    #
     # Conflict detection, reader collision and method generation all work on
     # this map, so "what does the entity answer" is computed in one place.
     def delegation_map(component_class, slot, options)
@@ -413,7 +421,14 @@ module EcsRails
       return names.to_h { |name| [name, name] } if options[:prefix] == false
 
       reader = reader_name_for(component_class, slot)
-      names.to_h { |name| [:"#{reader}_#{name}", name] }
+      map = names.to_h { |name| [:"#{reader}_#{name}", name] }
+
+      primary = component_class.primary
+      if primary && !slot.to_s.empty? && names.include?(primary)
+        map[slot.to_sym] = primary
+        map[:"#{slot}="] = :"#{primary}=" if names.include?(:"#{primary}=")
+      end
+      map
     end
 
     # The same map for a declaration already in the registry.
@@ -807,6 +822,18 @@ module EcsRails
               "#{model_name.singular}.<reader>_<method>), false (bare <method>), " \
               "or a Symbol slot label (`prefix: :business`, RFC-0014); got #{prefix.inspect}"
       end
+    end
+
+    # A declared primary attribute must be something the component delegates —
+    # a typo (`primary :valu`) would otherwise silently produce no bare pair.
+    def validate_primary!(component_class)
+      primary = component_class.primary
+      return if primary.nil? || delegable_methods(component_class).include?(primary)
+
+      raise ArgumentError,
+            "#{component_class.name} declares `primary :#{primary}`, but has no delegable " \
+            "##{primary}. Delegable methods: " \
+            "#{delegable_methods(component_class).map { |m| "##{m}" }.join(', ')}."
     end
 
     # RFC-0014 slot configuration: every extra keyword on `component` must be an
