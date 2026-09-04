@@ -15,6 +15,7 @@ require "rails/generators/active_record/migration"
 # depending on some other file having loaded it first (see RFC-0008's isolation
 # note and spec/generators/generator_isolation_spec.rb).
 require "ecs_rails"
+require_relative "../catalogue_options"
 
 module EcsRails
   # The Rails generators (RFC-0008): `ecs_rails:install`, `ecs_rails:component`
@@ -26,24 +27,29 @@ module EcsRails
   module Generators
     # `rails g ecs_rails:install`
     #
-    # Implements RFC-0008. Emits the install migration — the `entities` table,
-    # the shared `relationships` table (ADR-0017) and the shared `markers` table
-    # (ADR-0018 §4) — the two abstract base classes a host app subclasses from,
-    # and the one-line `Relationship` and `Marker` catalogue classes (ADR-0018).
-    # The migration mirrors docs/architecture.md §2 exactly — if the two ever
-    # disagree, the architecture document wins.
+    # Implements RFC-0008 and ADR-0018. Emits the install migration — the
+    # `entities` table plus one table per catalogue component in the selected
+    # sets, each rendered from the gem's schema declarations — the two abstract
+    # base classes a host app subclasses from, and one one-line class per
+    # catalogue component. After `db:migrate`, an application builds from the
+    # catalogue with no further migration.
+    #
+    #   rails g ecs_rails:install                         # the core set
+    #   rails g ecs_rails:install --sets core commerce    # more of the shelf
+    #   rails g ecs_rails:install --rename money:Price    # the collision remedy
     #
     # Inherits from Base rather than NamedBase: install takes no NAME argument.
     class InstallGenerator < Rails::Generators::Base
       include ActiveRecord::Generators::Migration
+      include CatalogueOptions
 
       source_root File.expand_path("templates", __dir__)
 
-      desc "Creates the install migration (entities, relationships, markers), the " \
-           "ApplicationEntity / ApplicationComponent base classes, and the " \
-           "Relationship and Marker components."
+      desc "Creates the install migration (entities + every catalogue table in the " \
+           "chosen sets), the ApplicationEntity / ApplicationComponent base classes, " \
+           "and a one-line class per catalogue component."
 
-      # Emits the install migration: `entities`, `relationships` and `markers`.
+      # Emits the install migration.
       #
       # A Thor task: invoked as a generator step, not called directly.
       #
@@ -65,18 +71,11 @@ module EcsRails
                  File.join(EcsRails.config.components_path, "application_component.rb")
       end
 
-      # ADR-0017 / ADR-0018: the one-line catalogue class every `relates_to`
-      # is a row of. The application owns the constant; the behaviour is the
-      # gem's concern. The rest of the catalogue arrives the same way (ECS-9).
-      def create_relationship_component
-        template "relationship.rb.tt",
-                 File.join(EcsRails.config.components_path, "relationship.rb")
-      end
-
-      # ADR-0018 §4: the one-line catalogue class every `marker` is a row of.
-      def create_marker_component
-        template "marker.rb.tt",
-                 File.join(EcsRails.config.components_path, "marker.rb")
+      # ADR-0018: one one-line class per catalogue component in the selected
+      # sets. The application owns the constant (renamed with --rename where it
+      # collides); the behaviour and the table are the gem's concern.
+      def create_catalogue_classes
+        create_catalogue_class_files(catalogue_components)
       end
 
       # ADR-0010: the generated initializer both records the chosen layout (so

@@ -14,6 +14,7 @@ ActiveRecord::Base.logger = nil
 
 require_relative "support/schema"
 require_relative "support/models"
+require_relative "support/catalogue_models"
 
 # The declarations support/models.rb made at load time. EcsRails.registry is a
 # process-wide singleton, and some specs `clear!` it to test in isolation — which

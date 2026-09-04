@@ -39,9 +39,17 @@ module GeneratorHelper
 
   # Runs the generator under test (described_class) exactly as Rails would.
   # Returns the generator instance. Thor's chatter is swallowed.
+  #
+  # `args` is the whole command line — positional arguments AND switches
+  # (`%w[Email address:string]`, `%w[--sets core commerce]`). Thor takes them
+  # separately: positionals first, switches as `local_options`. Passed all as
+  # positionals, switches are silently ignored; passed all as options, a
+  # NamedBase generator never sees its NAME. Thor::Options.split cuts at the
+  # first switch, exactly as `rails g` does.
   def run_generator(args = [], config = {})
+    positional, switches = Thor::Options.split(args)
     generator = described_class.new(
-      args, {}, config.merge(destination_root: destination_root)
+      positional, switches, config.merge(destination_root: destination_root)
     )
     silence_stream { generator.invoke_all }
     generator
@@ -76,12 +84,19 @@ module GeneratorHelper
     File.read(paths.first, encoding: "UTF-8")
   end
 
+  # Thor's chatter is swallowed, and its prompts are refused: a file conflict
+  # would otherwise `ask` on $stdin and hang the suite. An empty $stdin makes
+  # Thor abort instead, so a spec that collides with a generated file fails
+  # loudly (this bit once — install writes a catalogue `email.rb`).
   def silence_stream
-    original = $stdout
+    original_out = $stdout
+    original_in = $stdin
     $stdout = StringIO.new
+    $stdin = StringIO.new
     yield
   ensure
-    $stdout = original
+    $stdout = original_out
+    $stdin = original_in
   end
 
   def cleanup_destination_root

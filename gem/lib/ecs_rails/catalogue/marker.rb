@@ -29,11 +29,10 @@ module EcsRails
     # `component Marker, prefix: :moderator, delegate: false` that restores the
     # bare `moderator?` predicate prefixing would otherwise take away.
     module Marker
-      extend ActiveSupport::Concern
+      extend Definition
 
-      included do
-        self.table_name = "markers"
-      end
+      table "markers"
+      schema { |_t| } # no attributes: presence is the whole meaning
     end
   end
 end

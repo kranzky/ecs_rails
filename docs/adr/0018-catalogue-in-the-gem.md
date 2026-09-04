@@ -1,6 +1,6 @@
 # ADR-0018: The catalogue ships in the gem; install is the last migration
 
-**Status:** Accepted
+**Status:** Accepted — implemented 2026-09-04 (Linear ECS-9 / ECS-7, [RFC-0017](../rfc/0017-catalogue.md); §4 earlier as ECS-16, [RFC-0016](../rfc/0016-markers.md))
 **Date:** 2026-09-02
 **Amends:** [ADR-0009](0009-component-presence.md) (its rejection of a `marker` keyword)
 **Builds on:** [ADR-0015](0015-plural-components-via-slot.md) (slots), [ADR-0016](0016-prefixed-delegation-by-default.md) (prefixed delegation), [ADR-0017](0017-shared-relationships-table.md) (shared relationships)
@@ -298,6 +298,27 @@ column, and it has the same shape as `active_storage_attachments`.
 - **"Standard components built demo-first then promoted to gem generators"** in
   the [marketplace design](../design/marketplace-demo.md) §7 is superseded:
   demo-first for *shape*, then promoted to **gem concerns**.
+
+## Implementation notes (2026-09-04, ECS-9 / ECS-7)
+
+- The catalogue module is `EcsRails::Catalogue`; a component `extend`s
+  `Catalogue::Definition` (not `ActiveSupport::Concern`, which cannot tell
+  *which* concern is being included) and declares `table`, `set`, `schema` and
+  `included`. The schema recording has two outputs — a live table and migration
+  source — and the gem's test schema uses the first, so the tables the suite
+  runs against are the declarations.
+- `PostalAddress` is `Address` (ADR-0016's payoff, and the slot reader rule).
+- `Image` is `url` + `alt`, gaining `has_one_attached :file` only when Active
+  Storage is present; a component with no columns is never dirty, so an
+  attachment-only Image would need `add` before `attach`.
+- `Token` drops `purpose` (the slot is the purpose) and keeps `digest`,
+  `expires_at`.
+- `ecs_rails:upgrade` has four jobs in order — slots, catalogue (create or
+  diff), relationships data move, markers data move — each a migration file
+  only when needed. The upgrade also writes missing one-line classes for the
+  selected sets and never touches an existing file.
+- The demo is rebuilt on the catalogue in ECS-17; this ADR's "spec that the
+  bulletin board loads against the install migration alone" lands there.
 - **The escape hatch is part of the story, not an embarrassment.** The blog
   should show a slot being promoted to a bespoke component, because "when do
   you stop?" is the first question a serious reader asks.

@@ -9,6 +9,7 @@ require "rails/generators/active_record/migration"
 # Stands on its own requires, like the other generators (RFC-0008's isolation
 # note and spec/generators/generator_isolation_spec.rb).
 require "ecs_rails"
+require_relative "../catalogue_options"
 
 module EcsRails
   module Generators
@@ -36,10 +37,19 @@ module EcsRails
     #    `<name>_id`, `owner_model` = the owner's discriminator; the old table is
     #    then dropped. Irreversible, and written as `up`/`down` to say so.
     #
-    # 3. **Shared markers** (ADR-0018 §4) — creates the `markers` table if it is
-    #    missing, and moves every pre-0.3 marker table (a component table with no
-    #    attribute columns at all: `moderators`, `administrators`) into it, slot =
-    #    the table's singular name; the old table is then dropped. Irreversible.
+    # 3. **Shared markers** (ADR-0018 §4) — moves every pre-0.3 marker table (a
+    #    component table with no attribute columns at all: `moderators`,
+    #    `administrators`) into `markers`, slot = the table's singular name; the
+    #    old table is then dropped. Irreversible.
+    #
+    # Before 2 and 3, **the catalogue** (ADR-0018): for every catalogue
+    # component in the selected `--sets` (and every catalogue table that already
+    # exists, whatever its set), a missing table is created and a table that
+    # predates a column or index is brought forward — both rendered from the
+    # gem's schema declarations, the same recordings install renders. Missing
+    # one-line classes are written too; existing files are never touched. This
+    # is how a newer gem version's catalogue additions, or a set added later,
+    # reach an application.
     #
     # Tables are found by inspecting the database, not the registry: a generator
     # runs before the app's classes are loaded, and the registry would miss a
@@ -52,6 +62,7 @@ module EcsRails
     # and the generator says so.
     class UpgradeGenerator < Rails::Generators::Base
       include ActiveRecord::Generators::Migration
+      include CatalogueOptions
 
       source_root File.expand_path("templates", __dir__)
 
@@ -60,7 +71,8 @@ module EcsRails
 
       # Emits the slot migration for component tables that lack the column, or
       # says there is nothing to do. Backing tables about to be moved into
-      # `relationships` are skipped — they are dropped a migration later.
+      # `relationships`, and marker tables about to be moved into `markers`, are
+      # skipped — they are dropped a migration later.
       #
       # A Thor task: invoked as a generator step, not called directly.
       #
@@ -77,14 +89,36 @@ module EcsRails
         )
       end
 
-      # Emits the shared-relationships migration when the `relationships` table
-      # is missing or per-relationship backing tables remain, or says so.
+      # Emits the catalogue migration — missing tables and missing columns or
+      # indexes on existing ones — or says everything is current, and writes any
+      # missing one-line classes for the selected sets.
+      #
+      # A Thor task: invoked as a generator step, not called directly.
+      #
+      # @return [void]
+      def create_catalogue_migration
+        create_catalogue_class_files(catalogue_components)
+
+        if catalogue_changes.empty?
+          say "Every catalogue table is current.", :green
+          return
+        end
+
+        migration_template(
+          "catalogue_migration.rb.tt",
+          File.join(db_migrate_path, "ecs_rails_catalogue.rb")
+        )
+      end
+
+      # Emits the shared-relationships data move when per-relationship backing
+      # tables remain, or says so. The `relationships` table itself is the
+      # catalogue migration's business, which runs first.
       #
       # A Thor task: invoked as a generator step, not called directly.
       #
       # @return [void]
       def create_relationships_migration
-        if relationships_table_exists? && backing_tables.empty?
+        if backing_tables.empty?
           say "Relationships already live in the shared relationships table.", :green
           return
         end
@@ -95,14 +129,15 @@ module EcsRails
         )
       end
 
-      # Emits the shared-markers migration when the `markers` table is missing
-      # or empty per-marker tables remain, or says so.
+      # Emits the shared-markers data move when empty per-marker tables remain,
+      # or says so. The `markers` table itself is the catalogue migration's
+      # business, which runs first.
       #
       # A Thor task: invoked as a generator step, not called directly.
       #
       # @return [void]
       def create_markers_migration
-        if markers_table_exists? && marker_tables.empty?
+        if marker_tables.empty?
           say "Markers already live in the shared markers table.", :green
           return
         end
@@ -128,10 +163,6 @@ module EcsRails
         end
       end
 
-      def markers_table_exists?
-        connection.tables.include?("markers")
-      end
-
       # Pre-0.3 marker tables: a component table with no attribute columns at all
       # — only id, entity_id, (slot,) timestamps — other than `markers` itself.
       # Each becomes `{ table: "moderators", slot: "moderator" }`.
@@ -150,8 +181,46 @@ module EcsRails
         end
       end
 
-      def relationships_table_exists?
-        connection.tables.include?("relationships")
+      # The catalogue components this upgrade brings forward: the selected sets,
+      # plus any component the application already has a one-line class for,
+      # whatever its set (an app that installed `commerce` earlier keeps getting
+      # its upgrades). The class file, not the table, is the evidence: a bespoke
+      # table that merely shares a catalogue name (`names`, say) must not be
+      # "upgraded" with the catalogue's columns. Within a selected set the table
+      # IS treated as the catalogue's — the developer asked for that set.
+      def upgradeable_components
+        @upgradeable_components ||= (catalogue_components +
+          EcsRails::Catalogue.components.select { |c| catalogue_class_file?(c) }).uniq
+      end
+
+      # Does the components directory hold a class including this concern?
+      def catalogue_class_file?(component)
+        dir = File.join(destination_root, EcsRails.config.components_path)
+        return false unless File.directory?(dir)
+
+        Dir.glob(File.join(dir, "*.rb")).any? do |file|
+          File.read(file).include?("include EcsRails::Catalogue::#{component.class_name}")
+        end
+      end
+
+      # `[{ component:, source: }]` — the migration source for each component
+      # whose table is missing, or is missing a column or index. Empty when the
+      # catalogue is current.
+      def catalogue_changes
+        @catalogue_changes ||= upgradeable_components.filter_map do |component|
+          table = component.table
+          source =
+            if connection.tables.include?(table)
+              component.schema.to_ruby_diff(
+                table_name: table,
+                existing_columns: column_names(table),
+                existing_indexes: connection.indexes(table).map(&:columns)
+              )
+            else
+              component.schema.to_ruby(table_name: table)
+            end
+          { component: component, source: source } unless source.empty?
+        end
       end
 
       # ADR-0013 backing tables, recognised by shape and name: columns are

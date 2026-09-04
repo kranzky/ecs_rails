@@ -8,6 +8,19 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **The catalogue** (ADR-0018, RFC-0017): 25 standard components shipped as
+  concerns under `EcsRails::Catalogue` — `Name`, `Email`, `Password`, `Phone`,
+  `Address`, `Geolocation`, `Link`, `Text`, `Identifier`, `Counter`, `Rating`,
+  `Timestamp`, `CalendarDate`, `Period`, `Position`, `State`, `Tags`,
+  `SearchVector`, `Discard`, `Image`, `Role`, `Token`, `Marker`, `Relationship`
+  (`core`) and `Money` (`commerce`). Each carries its behaviour, validations and
+  a schema declaration; `rails g ecs_rails:install` writes a one-line class per
+  component and ONE migration creating every table in the chosen `--sets`, so
+  an application builds from the catalogue with no further migration.
+  `--rename money:Price` is the name-collision remedy. `rails g
+  ecs_rails:upgrade` diffs the declarations against the database and writes
+  what is missing.
+
 - **Markers on one shared table** (ADR-0018 §4, RFC-0016). `marker :moderator`
   declares a marker as slot "moderator" of the app's `Marker` component
   (`EcsRails::Catalogue::Marker`, one-line class written by install), with the

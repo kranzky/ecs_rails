@@ -22,9 +22,11 @@ RSpec.describe "generated migrations actually run", type: :generator do
     ActiveRecord::Base.connection
   end
 
-  # Runs a specific generator class, since this file exercises both.
+  # Runs a specific generator class, since this file exercises several. `args`
+  # is the whole command line, switches included — see GeneratorHelper.
   def generate(generator_class, args)
-    generator = generator_class.new(args, {}, destination_root: destination_root)
+    positional, switches = Thor::Options.split(args)
+    generator = generator_class.new(positional, switches, destination_root: destination_root)
     silence_stream { generator.invoke_all }
   end
 
@@ -42,10 +44,10 @@ RSpec.describe "generated migrations actually run", type: :generator do
     connection.execute("SET LOCAL search_path TO #{scratch_schema}, public")
 
     generate(EcsRails::Generators::InstallGenerator, [])
-    generate(EcsRails::Generators::ComponentGenerator, %w[Email address:string verified:boolean])
+    generate(EcsRails::Generators::ComponentGenerator, %w[Gadget address:string verified:boolean])
 
     run_migration("ecs_rails_install", "EcsRailsInstall")
-    run_migration("create_emails", "CreateEmails")
+    run_migration("create_gadgets", "CreateGadgets")
   end
 
   # No `after` cleanup: the transaction spec_helper.rb wraps every example in
@@ -102,7 +104,7 @@ RSpec.describe "generated migrations actually run", type: :generator do
 
   describe "the component table" do
     it "makes entity_id a non-null uuid" do
-      entity_id = columns_of("emails").find { |c| c["column_name"] == "entity_id" }
+      entity_id = columns_of("gadgets").find { |c| c["column_name"] == "entity_id" }
 
       aggregate_failures do
         expect(entity_id["data_type"]).to eq("uuid")
@@ -111,7 +113,7 @@ RSpec.describe "generated migrations actually run", type: :generator do
     end
 
     it "applies the explicit defaults" do
-      cols = columns_of("emails")
+      cols = columns_of("gadgets")
       address = cols.find { |c| c["column_name"] == "address" }
       verified = cols.find { |c| c["column_name"] == "verified" }
 
@@ -124,13 +126,13 @@ RSpec.describe "generated migrations actually run", type: :generator do
     # ADR-0005 / ADR-0015, proven against the catalog rather than the file text.
     it "creates a UNIQUE index on (entity_id, slot)" do
       indexes = connection.select_values(
-        "SELECT indexdef FROM pg_indexes WHERE schemaname = '#{scratch_schema}' AND tablename = 'emails'"
+        "SELECT indexdef FROM pg_indexes WHERE schemaname = '#{scratch_schema}' AND tablename = 'gadgets'"
       )
       expect(indexes).to include(match(/CREATE UNIQUE INDEX .*\(entity_id, slot\)/))
     end
 
     it "gives slot a non-null empty-string default" do
-      slot = columns_of("emails").find { |c| c["column_name"] == "slot" }
+      slot = columns_of("gadgets").find { |c| c["column_name"] == "slot" }
 
       aggregate_failures do
         expect(slot["is_nullable"]).to eq("NO")
@@ -145,7 +147,7 @@ RSpec.describe "generated migrations actually run", type: :generator do
         FROM pg_constraint c
         JOIN pg_class t ON t.oid = c.conrelid
         JOIN pg_namespace n ON n.oid = t.relnamespace
-        WHERE n.nspname = '#{scratch_schema}' AND t.relname = 'emails' AND c.contype = 'f'
+        WHERE n.nspname = '#{scratch_schema}' AND t.relname = 'gadgets' AND c.contype = 'f'
       SQL
 
       expect(delete_rules).to eq(["c"])
@@ -162,11 +164,11 @@ RSpec.describe "generated migrations actually run", type: :generator do
 
     it "rejects a second component row for the same entity and slot" do
       entity_id = create_entity
-      connection.execute("INSERT INTO emails (entity_id, created_at, updated_at) VALUES ('#{entity_id}', now(), now())")
+      connection.execute("INSERT INTO gadgets (entity_id, created_at, updated_at) VALUES ('#{entity_id}', now(), now())")
 
       expect do
         violating do
-          connection.execute("INSERT INTO emails (entity_id, created_at, updated_at) VALUES ('#{entity_id}', now(), now())")
+          connection.execute("INSERT INTO gadgets (entity_id, created_at, updated_at) VALUES ('#{entity_id}', now(), now())")
         end
       end.to raise_error(ActiveRecord::RecordNotUnique)
     end
@@ -174,18 +176,18 @@ RSpec.describe "generated migrations actually run", type: :generator do
     # RFC-0014 / ADR-0015: the same component in another slot is a second row.
     it "accepts a second row for the same entity in a different slot" do
       entity_id = create_entity
-      connection.execute("INSERT INTO emails (entity_id, created_at, updated_at) VALUES ('#{entity_id}', now(), now())")
+      connection.execute("INSERT INTO gadgets (entity_id, created_at, updated_at) VALUES ('#{entity_id}', now(), now())")
       connection.execute(
-        "INSERT INTO emails (entity_id, slot, created_at, updated_at) VALUES ('#{entity_id}', 'work', now(), now())"
+        "INSERT INTO gadgets (entity_id, slot, created_at, updated_at) VALUES ('#{entity_id}', 'work', now(), now())"
       )
 
-      expect(connection.select_value("SELECT count(*) FROM emails").to_i).to eq(2)
+      expect(connection.select_value("SELECT count(*) FROM gadgets").to_i).to eq(2)
     end
 
     it "rejects a component row with no entity" do
       expect do
         violating do
-          connection.execute("INSERT INTO emails (entity_id, created_at, updated_at) VALUES (NULL, now(), now())")
+          connection.execute("INSERT INTO gadgets (entity_id, created_at, updated_at) VALUES (NULL, now(), now())")
         end
       end.to raise_error(ActiveRecord::NotNullViolation)
     end
@@ -194,7 +196,7 @@ RSpec.describe "generated migrations actually run", type: :generator do
       expect do
         violating do
           connection.execute(
-            "INSERT INTO emails (entity_id, created_at, updated_at) VALUES ('#{SecureRandom.uuid}', now(), now())"
+            "INSERT INTO gadgets (entity_id, created_at, updated_at) VALUES ('#{SecureRandom.uuid}', now(), now())"
           )
         end
       end.to raise_error(ActiveRecord::InvalidForeignKey)
@@ -202,18 +204,18 @@ RSpec.describe "generated migrations actually run", type: :generator do
 
     it "cascades a deleted entity to its component rows" do
       entity_id = create_entity
-      connection.execute("INSERT INTO emails (entity_id, created_at, updated_at) VALUES ('#{entity_id}', now(), now())")
+      connection.execute("INSERT INTO gadgets (entity_id, created_at, updated_at) VALUES ('#{entity_id}', now(), now())")
 
       connection.execute("DELETE FROM entities WHERE id = '#{entity_id}'")
 
-      expect(connection.select_value("SELECT count(*) FROM emails").to_i).to eq(0)
+      expect(connection.select_value("SELECT count(*) FROM gadgets").to_i).to eq(0)
     end
 
     it "applies the boolean default on insert" do
       entity_id = create_entity
-      connection.execute("INSERT INTO emails (entity_id, created_at, updated_at) VALUES ('#{entity_id}', now(), now())")
+      connection.execute("INSERT INTO gadgets (entity_id, created_at, updated_at) VALUES ('#{entity_id}', now(), now())")
 
-      expect(connection.select_value("SELECT verified FROM emails")).to be(false)
+      expect(connection.select_value("SELECT verified FROM gadgets")).to be(false)
     end
   end
 
@@ -319,6 +321,94 @@ RSpec.describe "generated migrations actually run", type: :generator do
     end
   end
 
+  # ADR-0018 / RFC-0017: install creates every core catalogue table, each with
+  # the §2 invariants, and the tables ARE the gem's declarations.
+  describe "the catalogue tables" do
+    it "are all created, with the unique (entity_id, slot) index and a cascading FK" do
+      scratch_tables = connection.select_values(
+        "SELECT tablename FROM pg_tables WHERE schemaname = '#{scratch_schema}'"
+      )
+      core = EcsRails::Catalogue.in_sets(:core)
+
+      aggregate_failures do
+        core.each do |component|
+          expect(scratch_tables).to include(component.table)
+          indexes = connection.select_values(
+            "SELECT indexdef FROM pg_indexes WHERE schemaname = '#{scratch_schema}' AND tablename = '#{component.table}'"
+          )
+          expect(indexes).to include(match(/CREATE UNIQUE INDEX .*\(entity_id, slot\)/)), component.table
+        end
+        expect(scratch_tables).not_to include("monies")
+      end
+    end
+
+    it "gives Identifier its per-slot uniqueness and Tags its GIN index" do
+      identifiers = connection.select_values(
+        "SELECT indexdef FROM pg_indexes WHERE schemaname = '#{scratch_schema}' AND tablename = 'identifiers'"
+      )
+      tags = connection.select_values(
+        "SELECT indexdef FROM pg_indexes WHERE schemaname = '#{scratch_schema}' AND tablename = 'tags'"
+      )
+
+      aggregate_failures do
+        expect(identifiers).to include(match(/CREATE UNIQUE INDEX .*\(slot, value\)/))
+        expect(tags).to include(match(/USING gin \(names\)/))
+      end
+    end
+  end
+
+  # RFC-0017: the upgrade's catalogue job — a missing table (a set added later,
+  # or a newer gem's component) is created; a table that predates a column gets
+  # it. Nothing is dropped.
+  describe "the catalogue upgrade" do
+    before { connection.execute("SET LOCAL search_path TO #{scratch_schema}") }
+
+    it "creates the tables of a set added later, and their classes" do
+      generate(EcsRails::Generators::UpgradeGenerator, %w[--sets core commerce])
+      run_migration("ecs_rails_catalogue", "EcsRailsCatalogue")
+
+      aggregate_failures do
+        expect(connection.tables).to include("monies")
+        expect(file("app/entities/components/money.rb")).to match(/include EcsRails::Catalogue::Money/)
+        expect(migration("ecs_rails_catalogue")).not_to include("create_table :texts") # already there
+      end
+    end
+
+    it "adds a column a table predates, without touching the rest" do
+      connection.execute("ALTER TABLE addresses DROP COLUMN line2")
+      connection.schema_cache.clear!
+
+      generate(EcsRails::Generators::UpgradeGenerator, [])
+      contents = migration("ecs_rails_catalogue")
+      run_migration("ecs_rails_catalogue", "EcsRailsCatalogue")
+
+      aggregate_failures do
+        expect(contents.lines.grep(/add_column|create_table/).map(&:strip))
+          .to eq(["add_column :addresses, :line2, :string, default: nil"])
+        expect(columns_of("addresses").map { |c| c["column_name"] }).to include("line2")
+      end
+    end
+
+    it "leaves a bespoke table that shares a catalogue name alone when no class claims it" do
+      # `monies` exists but is the app's own (no class including Catalogue::Money)
+      # and commerce is not selected: not the upgrade's business.
+      connection.execute("CREATE TABLE monies (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), entity_id uuid NOT NULL, slot character varying NOT NULL DEFAULT '', total integer, created_at timestamp NOT NULL, updated_at timestamp NOT NULL)")
+      connection.schema_cache.clear!
+
+      generate(EcsRails::Generators::UpgradeGenerator, [])
+
+      expect(migration_paths("ecs_rails_catalogue")).to be_empty
+    end
+
+    it "does not overwrite an application's edited class" do
+      File.write(File.join(destination_root, "app/entities/components/text.rb"), "# edited\n")
+
+      generate(EcsRails::Generators::UpgradeGenerator, [])
+
+      expect(file("app/entities/components/text.rb")).to eq("# edited\n")
+    end
+  end
+
   # ADR-0018 §4: the shared markers table, created by install.
   describe "the markers table" do
     it "is created with the unique (entity_id, slot) index and a cascading FK" do
@@ -350,13 +440,13 @@ RSpec.describe "generated migrations actually run", type: :generator do
       connection.execute("SET LOCAL search_path TO #{scratch_schema}")
       # A 0.2.x-shaped component table: no slot, entity_id-only unique index.
       connection.execute(<<~SQL)
-        CREATE TABLE names (
+        CREATE TABLE nicknames (
           id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
           entity_id uuid NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
           first character varying,
           created_at timestamp NOT NULL, updated_at timestamp NOT NULL
         );
-        CREATE UNIQUE INDEX index_names_on_entity_id ON names (entity_id);
+        CREATE UNIQUE INDEX index_nicknames_on_entity_id ON nicknames (entity_id);
       SQL
       connection.schema_cache.clear!
     end
@@ -365,13 +455,13 @@ RSpec.describe "generated migrations actually run", type: :generator do
       generate(EcsRails::Generators::UpgradeGenerator, [])
       run_migration("ecs_rails_add_slots", "EcsRailsAddSlots")
 
-      slot = columns_of("names").find { |c| c["column_name"] == "slot" }
+      slot = columns_of("nicknames").find { |c| c["column_name"] == "slot" }
 
       aggregate_failures do
         expect(slot).not_to be_nil
         expect(slot["is_nullable"]).to eq("NO")
-        expect(indexes_of("names")).to include(match(/CREATE UNIQUE INDEX .*\(entity_id, slot\)/))
-        expect(indexes_of("names")).not_to include(match(/\(entity_id\)$/))
+        expect(indexes_of("nicknames")).to include(match(/CREATE UNIQUE INDEX .*\(entity_id, slot\)/))
+        expect(indexes_of("nicknames")).not_to include(match(/\(entity_id\)$/))
       end
     end
 
@@ -380,8 +470,8 @@ RSpec.describe "generated migrations actually run", type: :generator do
       contents = migration("ecs_rails_add_slots")
 
       aggregate_failures do
-        expect(contents).to include("add_column :names, :slot")
-        expect(contents).not_to include("add_column :emails")
+        expect(contents).to include("add_column :nicknames, :slot")
+        expect(contents).not_to include("add_column :gadgets")
         expect(contents).not_to include(":entities")
       end
     end
@@ -390,21 +480,22 @@ RSpec.describe "generated migrations actually run", type: :generator do
       entity_id = connection.select_value(
         "INSERT INTO entities (model, created_at) VALUES ('users', now()) RETURNING id"
       )
-      connection.execute("INSERT INTO names (entity_id, first, created_at, updated_at) VALUES ('#{entity_id}', 'Ada', now(), now())")
+      connection.execute("INSERT INTO nicknames (entity_id, first, created_at, updated_at) VALUES ('#{entity_id}', 'Ada', now(), now())")
 
       generate(EcsRails::Generators::UpgradeGenerator, [])
       run_migration("ecs_rails_add_slots", "EcsRailsAddSlots")
 
-      expect(connection.select_all("SELECT first, slot FROM names").to_a).to eq([{ "first" => "Ada", "slot" => "" }])
+      expect(connection.select_all("SELECT first, slot FROM nicknames").to_a).to eq([{ "first" => "Ada", "slot" => "" }])
     end
 
     it "writes nothing when every component table is already current" do
-      connection.execute("DROP TABLE names")
+      connection.execute("DROP TABLE nicknames")
       connection.schema_cache.clear!
 
       generate(EcsRails::Generators::UpgradeGenerator, [])
 
       aggregate_failures do
+        expect(migration_paths("ecs_rails_catalogue")).to be_empty
         expect(migration_paths("ecs_rails_add_slots")).to be_empty
         expect(migration_paths("ecs_rails_shared_relationships")).to be_empty
         expect(migration_paths("ecs_rails_shared_markers")).to be_empty
@@ -439,7 +530,9 @@ RSpec.describe "generated migrations actually run", type: :generator do
       contents = migration("ecs_rails_shared_markers")
 
       aggregate_failures do
-        expect(contents).to include("create_table :markers", "FROM moderators", "drop_table :moderators")
+        expect(contents).to include("FROM moderators", "drop_table :moderators")
+        expect(contents).not_to include("create_table")
+        expect(migration("ecs_rails_catalogue")).to include("create_table :markers")
         expect(migration_paths("ecs_rails_add_slots")).to be_empty
       end
     end
@@ -449,6 +542,7 @@ RSpec.describe "generated migrations actually run", type: :generator do
       connection.execute("INSERT INTO moderators (entity_id, created_at, updated_at) VALUES ('#{user}', now(), now())")
 
       generate(EcsRails::Generators::UpgradeGenerator, [])
+      run_migration("ecs_rails_catalogue", "EcsRailsCatalogue")
       run_migration("ecs_rails_shared_markers", "EcsRailsSharedMarkers")
 
       aggregate_failures do
@@ -461,7 +555,7 @@ RSpec.describe "generated migrations actually run", type: :generator do
     it "leaves a component with attributes alone" do
       generate(EcsRails::Generators::UpgradeGenerator, [])
 
-      expect(migration("ecs_rails_shared_markers")).not_to include("emails")
+      expect(migration("ecs_rails_shared_markers")).not_to include("gadgets")
     end
   end
 
@@ -507,8 +601,9 @@ RSpec.describe "generated migrations actually run", type: :generator do
       aggregate_failures do
         expect(contents).to include("FROM post_authors", "drop_table :post_authors")
         expect(contents).to include("FROM membership_users", "drop_table :membership_users")
-        expect(contents).to include("create_table :relationships")
-        expect(migration_paths("ecs_rails_add_slots")).to be_empty # emails already has slot; backings skipped
+        expect(contents).not_to include("create_table") # the catalogue migration creates relationships
+        expect(migration("ecs_rails_catalogue")).to include("create_table :relationships")
+        expect(migration_paths("ecs_rails_add_slots")).to be_empty # gadgets already has slot; backings skipped
       end
     end
 
@@ -520,6 +615,7 @@ RSpec.describe "generated migrations actually run", type: :generator do
       connection.execute("INSERT INTO membership_users (entity_id, user_id, created_at, updated_at) VALUES ('#{membership}', '#{user}', now(), now())")
 
       generate(EcsRails::Generators::UpgradeGenerator, [])
+      run_migration("ecs_rails_catalogue", "EcsRailsCatalogue")
       run_migration("ecs_rails_shared_relationships", "EcsRailsSharedRelationships")
 
       rows = connection.select_all(
@@ -552,16 +648,15 @@ RSpec.describe "generated migrations actually run", type: :generator do
       expect(migration("ecs_rails_shared_relationships")).not_to include("sponsors")
     end
 
-    it "only creates the table when there is nothing to move" do
+    it "writes no data move when there is nothing to move, and creates the table in the catalogue migration" do
       connection.execute("DROP TABLE post_authors; DROP TABLE membership_users")
       connection.schema_cache.clear!
 
       generate(EcsRails::Generators::UpgradeGenerator, [])
-      contents = migration("ecs_rails_shared_relationships")
 
       aggregate_failures do
-        expect(contents).to include("create_table :relationships")
-        expect(contents).not_to include("INSERT INTO")
+        expect(migration_paths("ecs_rails_shared_relationships")).to be_empty
+        expect(migration("ecs_rails_catalogue")).to include("create_table :relationships")
       end
     end
   end

@@ -52,11 +52,19 @@ module EcsRails
     # `entities`, not at a per-type table — so this Ruby check is the type
     # system, and it is mandatory (ADR-0017).
     module Relationship
-      extend ActiveSupport::Concern
+      extend Definition
+
+      table "relationships"
+      schema do |t|
+        t.uuid    :target_id,   default: nil
+        t.string  :owner_model, null: false
+        t.boolean :exclusive,   default: false, null: false
+        t.index %i[target_id slot]
+        t.index %i[target_id slot owner_model], unique: true, where: "exclusive", name: "index_relationships_exclusive"
+        t.foreign_key :target_id, on_delete: :nullify
+      end
 
       included do
-        self.table_name = "relationships"
-
         # The pointed-at entity. The association targets the abstract entity
         # base, exactly as Component's `belongs_to :entity` does, and the loaded
         # row's `model` decides the subclass (ADR-0008) — so `post.author` is a
