@@ -14,7 +14,7 @@ class GroupsController < ApplicationController
     @memberships = Membership
                    .with_related(:group, @group)
                    .includes_components(Role)
-                   .preload(user_relationship: { user: :name })
+                   .preload(user_relationship: { target: :name })
     @candidates = User.all.includes_components(Name)
   end
 

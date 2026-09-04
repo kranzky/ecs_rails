@@ -3,11 +3,12 @@
 class PostsController < ApplicationController
   def index
     # Preload the components the index renders (RFC-0011), plus the nested
-    # author-name hop through the :author relationship (RFC-0012). Turns an
+    # author-name hop through the :author relationship (RFC-0012): the row in
+    # the shared relationships table, its target, the target's Name. Turns an
     # N+1 into a bounded query count.
     @posts = Post.published
                  .includes_components(Title, Body, Likes)
-                 .preload(author_relationship: { author: :name })
+                 .preload(author_relationship: { target: :name })
   end
 
   def show
@@ -17,7 +18,7 @@ class PostsController < ApplicationController
     @comments = Comment
                 .with_related(:post, @post)
                 .includes_components(Body, Likes)
-                .preload(author_relationship: { author: :name })
+                .preload(author_relationship: { target: :name })
                 .order(created_at: :asc)
     @comment = Comment.new
     @authors = User.all
