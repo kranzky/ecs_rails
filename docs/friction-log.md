@@ -789,3 +789,80 @@ load, naming both parties. The slot became `review_count`.
 uniqueness came from the catalogue too — `Identifier` carries a unique
 `(slot, value)` index, so a duplicate SKU is a `RecordNotUnique` the
 controller turns into a form error, not a validation the demo had to write.
+
+## The marketplace, second cut (ECS-23)
+
+Basket, checkout, orders, invoices — the transactional half, and the first
+System that writes. Five more entities, still one file in `db/migrate`.
+
+### 🟢 `basket.items` is a real collection now, and `has_one :basket` fell out of `unique: true` — 2026-09-04
+
+**What happened.** The design's long complaint (§2, "how an unbounded many
+works today — and why it hurts") was written against the child-side-only
+world. With RFC-0015 built, `Basket has_many :items, "BasketItem", via:
+:basket` is a `CollectionProxy`: `basket.items.with_related(:product, p)`,
+`includes_components(Counter)`, `order`, `find`, `each(&:destroy)` all work
+as Rails. The child had to be *named* — `items` does not infer `BasketItem`
+— which is the same rule as `has_many :items, class_name:` and reads fine.
+On the user, `has_one :basket, via: :customer` is legal precisely because
+`Basket relates_to :customer, User, unique: true`, and `user.create_basket!`
+flushes its join row (the ECS-6 guard doing its job).
+
+**Verdict.** 🟢 The nullify-on-target sharp edge from the design is gone in
+practice: a basket clears itself by destroying its items *as entities*
+(`items.each(&:destroy)`), because `dependent: :destroy` on an inverse only
+removes link rows. That asymmetry is worth one sentence in the README.
+
+### 🟢 Copies, not links: the checkout's snapshots are ordinary component writes — 2026-09-04
+
+**What happened.** `Demo::Checkout` copies the customer's `shipping` and
+`billing` Address slots onto the order, the product's `Money` and `Text`
+onto each line, and the order's `Money` and Address onto the invoice — all
+with `assign_attributes(other.attributes.slice(...))` on the lazy reader.
+Repricing the product afterwards leaves the order line at the sold price
+(pinned by spec). The order total is `Money#+` over the lines, which refuses
+to mix currencies without the demo writing a check.
+
+**Verdict.** 🟢 Behaviour-carrying components paid off twice: `Money` did
+the arithmetic and the currency guard, `State` did the transition and kept
+the `paid → shipped → delivered` log the order page shows. The vocabulary
+lives on the slot (`states: Order::STATES`), the mechanism on the component.
+
+### 🟡 Sequential numbers are a `max + 1` the app has to own — 2026-09-04
+
+**What happened.** Entities have UUID keys, so `ORD-000001` comes from
+`Identifier.where(slot: "order_number").maximum(:value)` inside the checkout
+transaction, with Identifier's unique `(slot, value)` index as the backstop
+(a race collides and rolls the checkout back). Fine for a demo; a real shop
+wants a sequence.
+
+**Verdict.** 🟡 The catalogue could ship it — `Identifier` with a
+`sequence:` slot option backed by a Postgres sequence — but not until a
+second app asks.
+
+### 🟡 The systems gap, on record — 2026-09-04
+
+**What happened.** `Demo::Checkout` is a PORO with a `transaction do` block
+and a `rescue` that turns a declined card into a message. Nothing in the gem
+schedules it, makes it idempotent, or retries it; a double-submit is caught
+only by the basket being empty afterwards. `Demo::Indexer` and the ECS-8
+geocoder are the same shape: `module_function`, a loop, no base class.
+
+**Verdict.** 🟡 Exactly the friction the design predicted (§4). Three
+systems in, the common shape is "a callable over one component table or one
+transaction" and nothing more — which argues *against* a System base class
+for now, and for a page in the docs that says how to write one.
+
+### 🟢 Two Address slots on a user, two on an order, one on a company — 2026-09-04
+
+**What happened.** `addresses` now holds a company's registered address
+(slot `""`), a user's `shipping` and `billing`, an order's `shipping` and
+`billing`, and an invoice's `billing` — six roles, one table, no migration.
+The user page edits its two slots through the readers
+(`user.billing_address.assign_attributes(...)`) and an untouched slot stays
+virtual: Alan saved a shipping address and a mobile and got exactly one
+`addresses` row and one `phones` row. A bad phone number surfaced as
+`Mobile phone e164 is invalid` through the entity's errors.
+
+**Verdict.** 🟢 RFC-0014's showcase, done. The error message names the slot
+reader (`Mobile phone`), which is the right level of detail for a form.

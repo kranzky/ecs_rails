@@ -192,6 +192,13 @@
       "humanMinutes": 3,
       "aiMinutes": 60,
       "costs": []
+    },
+    {
+      "date": "2026-09-04",
+      "summary": "Marketplace, second cut (Linear ECS-23): Basket, BasketItem, Order, OrderItem and Invoice entities from the catalogue only; User gains shipping/billing Address slots and mobile/work Phone slots plus has_one :basket (legal because Basket's relates_to :customer is unique: true) and has_many :orders. Demo::Checkout is a PORO system in one transaction: copies addresses, unit prices and titles onto the order (snapshots, never links \u2014 pinned by spec), totals with Money#+, charges a simulated Demo::PaymentGateway (one magic number declines and rolls everything back), transitions the State to paid with its history log, issues an Invoice (has_one via unique: true), takes stock, clears the basket; Demo::Numbering does ORD-/INV- sequential numbers by max+1 on an Identifier slot with the unique index as backstop. Pages: basket (add from product page with quantity bump, update, remove), checkout prefilled from the user's slots with same-as-shipping, orders list and order page with allowed transitions (paid \u2192 shipped \u2192 delivered / cancelled) and the transitions log, invoice page, and a contact form on the user page editing the four slots. 20 demo specs green; every page and flow verified over HTTP incl. the declined-card rollback and a bad phone surfacing the component's validation. Friction log: five verdicts (inverses as real collections and the dependent: asymmetry, copies not links, max+1 numbering, the systems gap, six address roles in one table). Gem unchanged.",
+      "humanMinutes": 3,
+      "aiMinutes": 55,
+      "costs": []
     }
   ]
 }

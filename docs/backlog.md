@@ -47,7 +47,7 @@ When the cross-component query RFC is written, it must:
 
 ## Speculative
 
-- **Systems base class.** v0.1 says systems are POROs and need no gem code.
+- **Systems base class.** v0.1 says systems are POROs and need no gem code. Three systems in (Indexer, Checkout, the ECS-8 geocoder), the common shape is "a callable over one component table or one transaction" and nothing more — the friction log (ECS-23) argues for a documentation page on writing one, not a class.
   Revisit only if a real pattern emerges — scheduling, batching, idempotency.
 - **Component scopes promoted to the entity.** `User.verified` →
   `Email.verified`. Attractive; interacts badly with delegation conflicts.

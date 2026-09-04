@@ -1,6 +1,6 @@
 # Design: Marketplace demo
 
-**Status:** In build — first cut (sellers, products, catalogue pages with filters and sort, reviews, `CompanyPolicy`) landed 2026-09-04 as Linear ECS-22; basket/checkout/orders/invoices are ECS-23; geocoder ECS-8. Component names below predate the catalogue (`PostalAddress` → `Address`, `Likes` → `Counter`, …); the entities as built are in `demo/app/entities/`. Revised 2026-09-02 for the **zero-migrations** goal
+**Status:** Built — first cut (sellers, products, catalogue pages with filters and sort, reviews, `CompanyPolicy`) landed 2026-09-04 as Linear ECS-22; second cut (basket, checkout with the simulated gateway, orders, invoices, the user's address/phone slots) landed the same day as ECS-23; geocoder remains ECS-8. Component names below predate the catalogue (`PostalAddress` → `Address`, `Likes` → `Counter`, …); the entities as built are in `demo/app/entities/`. Revised 2026-09-02 for the **zero-migrations** goal
 **Depends on:** [RFC-0014](../rfc/0014-plural-components.md) (labelled components — *not yet built*),
 [ADR-0017](../adr/0017-shared-relationships-table.md) (shared relationships table — *not yet built*),
 [ADR-0018](../adr/0018-catalogue-in-the-gem.md) (the catalogue in the gem — *not yet built*),
@@ -549,7 +549,8 @@ Gem first, in dependency order; each step one PR with green tests.
    `db/migrate`. First verdict on generic component naming.
 9. **Marketplace** — **ECS-22** sellers, catalogue pages with filters and
    sort, reviews, policy (*built 2026-09-04*); **ECS-23** basket & checkout
-   with the simulated gateway, orders & invoices; **ECS-8** geocoder.
+   with the simulated gateway, orders & invoices (*built 2026-09-04*);
+   **ECS-8** geocoder.
 10. **ECS-11** entity generator (slot syntax in the first cut).
 11. **ECS-19** release 0.3.0, repin and redeploy the demo.
 12. **ECS-20** blog post "The Last Migration"; **ECS-10** video.
