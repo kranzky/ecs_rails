@@ -4,13 +4,13 @@ class UsersController < ApplicationController
   def index
     # includes_components(Marker) preloads every marker slot, so the badges'
     # `moderator?` / `administrator?` cost no queries on the list.
-    @users = User.all.includes_components(Name, Email, Avatar, Marker)
+    @users = User.all.includes_components(Name, Email, Image, Marker)
   end
 
   def show
     @user = User.find(params[:id])
     @posts = Post.with_related(:author, @user)
-                 .includes_components(Title, Likes, PublishState)
+                 .includes_components(Text, Counter, State)
                  .order(created_at: :desc)
   end
 
@@ -25,10 +25,10 @@ class UsersController < ApplicationController
     # blank bio must stay nil (the column default) or the Bio component is
     # dirtied by "" and gets a row for nothing.
     user = User.new(
-      name_first: cap(user_params[:first], 50),
-      name_last: cap(user_params[:last], 50),
+      name_given: cap(user_params[:first], 50),
+      name_family: cap(user_params[:last], 50),
       email_address: cap(user_params[:email], 100),
-      bio_text: cap(user_params[:bio], 300).presence
+      bio: cap(user_params[:bio], 300).presence
     )
 
     if user.save

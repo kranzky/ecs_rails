@@ -292,3 +292,48 @@ table. `group.rules_description_text` reads fine in the view and the form; the
 prefixed slot name is long but says exactly what it is. The 17 existing
 component tables were upgraded by one generated migration. See the
 [friction log](../friction-log.md).
+
+## Amendment: the primary attribute (2026-09-04, ECS-17)
+
+The forum rebuild delivered the verdict this RFC asked for. The slot *reader*
+(`post.title_text`) reads well; the trailing attribute does not —
+`title_text_value:` in mass assignment, `.value` in every form, `.to_s` for
+every helper that wants a String. The friction is specific to components with
+one load-bearing attribute.
+
+**Decision (the user's, on the recommendation in the friction log):** a component
+may declare a **primary attribute**, and a labelled slot of such a component
+also delegates the **bare slot name** to it.
+
+```ruby
+class Text < ApplicationComponent
+  primary :value
+end
+
+class Post < ApplicationEntity
+  component Text, prefix: :title
+end
+
+post.title              # => "Hello"           title_text.value
+post.title = "Changed"  #                      title_text.value=
+post.title_text         # => #<Text>           the component, as before
+post.title_text_value   # => "Hello"           the prefixed form, as before
+Post.create!(title: "Hello")
+```
+
+- The slot name is the field name. Forms post `title:`, controllers write
+  `post.title = …`, helpers receive a String.
+- Only a **labelled** slot gets the bare pair; the default slot has no name to
+  lend (`component Text` still delegates `text_value`).
+- `delegate: false` drops it with everything else; `except: [:value]` removes
+  it; it goes through the ordinary conflict machinery, so `component Text,
+  prefix: :author` beside `relates_to :author` raises (ADR-0004).
+- A primary that is not a delegable attribute raises at declaration.
+- In the catalogue: `Text`, `Identifier` → `value`; `Counter` → `count`;
+  `Timestamp` → `at`; `CalendarDate` → `date`; `Rating` → `stars`; `Position` →
+  `position`; `Role` → `name`. `State` deliberately not (`post.publish` reads as
+  a verb; `publish_state.status` is clearer).
+- **Rejected:** `as:` on the reader. It shortens `title_text` to `title` but
+  leaves `_value` in place, and it makes the component reader compete with the
+  field for the best name. This RFC's "per-slot reader renaming is scope creep"
+  stands.

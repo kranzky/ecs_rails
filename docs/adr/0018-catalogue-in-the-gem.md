@@ -317,8 +317,12 @@ column, and it has the same shape as `active_storage_attachments`.
   diff), relationships data move, markers data move — each a migration file
   only when needed. The upgrade also writes missing one-line classes for the
   selected sets and never touches an existing file.
-- The demo is rebuilt on the catalogue in ECS-17; this ADR's "spec that the
-  bulletin board loads against the install migration alone" lands there.
+- The demo was rebuilt on the catalogue in ECS-17 the same day:
+  `demo/db/migrate` holds one file, `demo/spec/zero_migrations_spec.rb` pins
+  it, and the friction log records the first verdict on generic naming — the
+  reader reads well, the trailing attribute (`title_text_value`) does not; a
+  slot-named bare delegation of a component's primary attribute is the
+  recommended remedy, awaiting a decision.
 - **The escape hatch is part of the story, not an embarrassment.** The blog
   should show a slot being promoted to a bespoke component, because "when do
   you stop?" is the first question a serious reader asks.

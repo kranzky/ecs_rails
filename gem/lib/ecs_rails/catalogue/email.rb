@@ -16,7 +16,7 @@ module EcsRails
       end
 
       included do
-        validates :address, format: { with: URI::MailTo::EMAIL_REGEXP, allow_nil: true }
+        validates :address, format: { with: URI::MailTo::EMAIL_REGEXP, allow_blank: true }
       end
 
       # Marks the address verified and saves.

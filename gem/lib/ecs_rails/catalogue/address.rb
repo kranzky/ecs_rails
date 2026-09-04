@@ -22,7 +22,7 @@ module EcsRails
       end
 
       included do
-        validates :country, format: { with: /\A[A-Z]{2}\z/, allow_nil: true }
+        validates :country, format: { with: /\A[A-Z]{2}\z/, allow_blank: true }
       end
 
       # @return [String] the address on one line, comma separated

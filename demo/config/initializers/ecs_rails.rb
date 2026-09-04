@@ -1,19 +1,19 @@
 # frozen_string_literal: true
 
-# ECS Rails directory layout.
+# ECS Rails directory layout (ADR-0010).
 #
-# Entities live in app/entities, components in app/entities/components. Rails
-# already treats app/entities as an autoload root (app/entities/user.rb -> User),
-# but the nested components/ directory would namespace its classes as
-# Components::Name. Collapsing it makes app/entities/components/name.rb -> Name,
-# top-level — the same mechanism Rails uses for app/models/concerns.
-#
-# entities_path is the single source of truth: the ecs_rails:component generator
-# reads it to decide where to place new components.
+# entities_path is the single knob: entities live here, components live in its
+# `components` subdirectory. Set it to "app/models" to restore the old
+# single-directory layout (no collapse is needed then, since nothing nests).
 EcsRails.configure do |config|
   config.entities_path = "app/entities"
 end
 
+# Rails auto-adds every immediate subdirectory of app/ as an autoload root, so
+# app/entities works for free. The nested components/ directory is the exception:
+# without this, Zeitwerk would namespace it as Components::Name. `collapse` makes
+# the components/ segment transparent, exactly as Rails does for app/models/
+# concerns — so app/entities/components/name.rb resolves to the top-level `Name`.
 Rails.autoloaders.main.collapse(
   Rails.root.join(EcsRails.config.entities_path, "components")
 )

@@ -7,6 +7,7 @@ module EcsRails
       extend Definition
 
       table "ratings"
+      primary_attribute :stars
       schema do |t|
         t.integer :stars, default: nil
       end

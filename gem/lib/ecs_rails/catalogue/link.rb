@@ -13,7 +13,7 @@ module EcsRails
       end
 
       included do
-        validates :url, format: { with: %r{\Ahttps?://\S+\z}, allow_nil: true }
+        validates :url, format: { with: %r{\Ahttps?://\S+\z}, allow_blank: true }
       end
 
       # @return [String, nil] the host part of the URL

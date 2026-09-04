@@ -66,7 +66,7 @@ fly deploy
 > its comment, `bundle lock`, and deploy.
 
 The `release_command` in `fly.toml` runs `bin/rails db:prepare demo:reset`, so
-the database is created, migrated, and seeded on every deploy.
+the database is created, migrated (one migration — the install) and seeded on every deploy.
 
 ## 5. Custom domain (ecs-rails.kranzky.com)
 

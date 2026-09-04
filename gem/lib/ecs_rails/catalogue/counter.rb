@@ -9,6 +9,7 @@ module EcsRails
       extend Definition
 
       table "counters"
+      primary_attribute :count
       schema do |t|
         t.integer :count, default: 0, null: false
       end

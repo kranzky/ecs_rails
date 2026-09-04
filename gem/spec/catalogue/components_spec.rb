@@ -126,10 +126,12 @@ RSpec.describe "the catalogue components" do
         component Text, prefix: :title
         component Text, prefix: :body
       end
-      thing = klass.create!(title_text_value: "Hello", body_text_value: "one two three")
+      thing = klass.create!(title: "Hello", body: "one two three")
 
       aggregate_failures do
-        expect(thing.reload.title_text.to_s).to eq "Hello"
+        expect(thing.reload.title).to eq "Hello"         # the primary, bare (RFC-0014 amendment)
+        expect(thing.title_text.to_s).to eq "Hello"      # the component
+        expect(thing.title_text_value).to eq "Hello"     # the prefixed form
         expect(thing.body_text.words).to eq 3
         expect(Text.where(entity_id: thing.id).pluck(:slot)).to contain_exactly("title", "body")
       end
@@ -139,9 +141,9 @@ RSpec.describe "the catalogue components" do
   describe "Identifier" do
     it "is unique per slot at the database" do
       klass = entity { component Identifier, prefix: :sku }
-      klass.create!(sku_identifier_value: "ABC-1")
+      klass.create!(sku: "ABC-1")
 
-      expect { klass.create!(sku_identifier_value: "ABC-1") }.to raise_error(ActiveRecord::RecordNotUnique)
+      expect { klass.create!(sku: "ABC-1") }.to raise_error(ActiveRecord::RecordNotUnique)
     end
 
     it "allows the same value under another slot" do
@@ -160,7 +162,9 @@ RSpec.describe "the catalogue components" do
       thing = klass.create!
 
       aggregate_failures do
+        expect(thing.likes).to eq 0 # the primary, bare
         expect(thing.likes_counter.increment!).to eq 1
+        expect(thing.likes).to eq 1
         expect(thing.likes_counter).to be_persisted
         expect(thing.likes_counter.increment!(4)).to eq 5
         expect(thing.likes_counter.decrement!).to eq 4
@@ -406,6 +410,23 @@ RSpec.describe "the catalogue components" do
 
     it "is in the commerce set, not core" do
       expect(EcsRails::Catalogue::Money.set).to eq :commerce
+    end
+  end
+
+  describe "primary attributes" do
+    it "are declared on the single-attribute components, and only those" do
+      primaries = EcsRails::Catalogue.components.to_h { |c| [c.catalogue_name, c.primary_attribute] }.compact
+
+      expect(primaries).to eq(
+        text: :value, identifier: :value, counter: :count, timestamp: :at, calendar_date: :date,
+        rating: :stars, position: :position, role: :name
+      )
+    end
+
+    it "reach the app class through the one-line include" do
+      expect(Text.primary).to eq :value
+      expect(Role.primary).to eq :name
+      expect(State.primary).to be_nil
     end
   end
 

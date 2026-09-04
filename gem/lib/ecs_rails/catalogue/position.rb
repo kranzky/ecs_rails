@@ -8,6 +8,7 @@ module EcsRails
       extend Definition
 
       table "positions"
+      primary_attribute :position
       schema do |t|
         t.integer :position, default: 0, null: false
         t.index %i[slot position]

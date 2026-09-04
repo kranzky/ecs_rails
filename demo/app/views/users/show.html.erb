@@ -15,8 +15,8 @@
     </div>
   </div>
 
-  <% if @user.bio_text.present? %>
-    <p class="prose" style="margin:1rem 0 0;color:var(--muted)"><%= @user.bio_text %></p>
+  <% if @user.bio.present? %>
+    <p class="prose" style="margin:1rem 0 0;color:var(--muted)"><%= @user.bio %></p>
   <% end %>
 
   <hr class="divider">
@@ -37,7 +37,7 @@
 </div>
 
 <section style="margin-top:2rem">
-  <h2 class="section-title">Posts by <%= @user.name_first %> · <%= @posts.size %></h2>
+  <h2 class="section-title">Posts by <%= @user.name_given %> · <%= @posts.size %></h2>
   <% if @posts.empty? %>
     <div class="empty">No posts yet.</div>
   <% else %>
@@ -45,7 +45,7 @@
       <% @posts.each do |post| %>
         <%= link_to post, class: "card card-link #{'is-draft' if post.draft?}" do %>
           <div class="btn-row" style="justify-content:space-between;align-items:baseline">
-            <strong style="color:var(--text)"><%= post.title_text %></strong>
+            <strong style="color:var(--text)"><%= post.title %></strong>
             <% if post.draft? %><span class="badge badge--draft">Draft</span><% end %>
           </div>
           <div class="meta" style="margin-top:.3rem"><span class="count">♥ <%= likes_count(post) %></span></div>

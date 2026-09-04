@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 
-# A component: data and behaviour, owned by exactly one entity.
-#
-# Methods defined here execute with `self` bound to the component, never the
-# entity (ADR-0001), and are delegated onto any entity that declares
-# `component Name`.
-#
-# This class must never reference an entity subclass.
+# Name, from the ECS Rails catalogue (ADR-0018). The
+# behaviour, validations and table (`names`) come from the gem's
+# concern; this application owns the constant. Add local behaviour here. Declare
+# it on an entity with `component Name` (or under a slot,
+# `component Name, prefix: :label`); the table already exists.
 class Name < ApplicationComponent
+  include EcsRails::Catalogue::Name
 end

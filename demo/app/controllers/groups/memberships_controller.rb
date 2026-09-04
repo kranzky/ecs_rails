@@ -13,7 +13,7 @@ class Groups::MembershipsController < ApplicationController
       role_name: cap(params[:membership][:role], 30).presence || "member"
     )
 
-    redirect_to group, notice: "#{helpers.display_name(user)} joined #{group.name_first}."
+    redirect_to group, notice: "#{helpers.display_name(user)} joined #{group.name}."
   end
 
   def destroy

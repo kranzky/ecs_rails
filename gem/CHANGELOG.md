@@ -8,6 +8,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Primary attributes** (RFC-0014 amendment). A component declares
+  `primary :value`; a labelled slot of it then also delegates the bare slot
+  name, so `component Text, prefix: :title` gives `post.title` / `post.title=`
+  (→ `title_text.value`) beside `post.title_text` and `post.title_text_value`.
+  The catalogue declares them on `Text`, `Identifier`, `Counter`, `Timestamp`,
+  `CalendarDate`, `Rating`, `Position` and `Role`. Decided by the forum rebuild.
+
 - **The catalogue** (ADR-0018, RFC-0017): 25 standard components shipped as
   concerns under `EcsRails::Catalogue` — `Name`, `Email`, `Password`, `Phone`,
   `Address`, `Geolocation`, `Link`, `Text`, `Identifier`, `Counter`, `Rating`,
@@ -73,6 +80,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   and the `(entity_id, slot)` unique index to every existing component table
   that lacks them, found by inspecting the database. Safe on shipped data.
   This is the only migration a 0.2.x app needs to run.
+
+### Fixed
+
+- The catalogue's format validators (`Email#address`, `Phone#e164` and
+  `#extension`, `Link#url`, `Address#country`, `Image#url`) use `allow_blank`,
+  not `allow_nil`: a blank form field no longer reads "is invalid" on top of
+  the application's own presence rule. Surfaced by the forum rebuild (ECS-17).
 
 ### Removed
 

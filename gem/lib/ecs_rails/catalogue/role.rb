@@ -8,6 +8,7 @@ module EcsRails
       extend Definition
 
       table "roles"
+      primary_attribute :name
       schema do |t|
         t.string :name, default: nil
       end

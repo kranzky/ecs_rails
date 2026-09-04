@@ -378,6 +378,83 @@ RSpec.describe "labelled components (slots)" do
     end
   end
 
+  # --- the primary attribute ---------------------------------------------------
+  #
+  # Decided after the forum rebuild (RFC-0014 amendment): a component with one
+  # load-bearing attribute declares it `primary`, and a labelled slot then also
+  # answers the bare slot name — `post.title` is `title_text.value`.
+  describe "a primary attribute" do
+    def text_class
+      stub_const("Blurb", Class.new(ApplicationComponent) do
+        self.table_name = "texts"
+        primary :value
+      end)
+    end
+
+    it "delegates the bare slot name to the primary, alongside the prefixed form" do
+      text_class
+      klass = stub_const("Article", Class.new(ApplicationEntity))
+      klass.component Blurb, prefix: :title
+      article = klass.create!(title: "Hello")
+
+      aggregate_failures do
+        expect(article.title).to eq "Hello"
+        expect(article.title_blurb_value).to eq "Hello"
+        expect(article.title_blurb).to be_a Blurb
+        article.title = "Changed"
+        expect(article.title_blurb.value).to eq "Changed"
+        expect(article.reload.title).to eq "Hello" # the write is not saved yet
+      end
+    end
+
+    it "does not add a bare pair on the default slot — there is no name to lend" do
+      text_class
+      klass = stub_const("Article", Class.new(ApplicationEntity))
+      klass.component Blurb
+
+      expect(klass.new).to respond_to(:blurb_value)
+      expect(klass.new).not_to respond_to(:value)
+    end
+
+    it "is dropped with delegate: false and by except:" do
+      text_class
+      klass = stub_const("Article", Class.new(ApplicationEntity))
+      klass.component Blurb, prefix: :title, delegate: false
+      klass.component Blurb, prefix: :body, except: [:value]
+
+      expect(klass.new).not_to respond_to(:title, :title=, :body, :body=, :body_blurb_value)
+    end
+
+    it "collides like any delegated name" do
+      text_class
+      klass = stub_const("Article", Class.new(ApplicationEntity))
+      klass.relates_to :author, User
+
+      expect { klass.component Blurb, prefix: :author }.to raise_error(EcsRails::DelegationConflict, /#author/)
+    end
+
+    it "rejects a primary that is not a delegable attribute" do
+      stub_const("Blurb", Class.new(ApplicationComponent) do
+        self.table_name = "texts"
+        primary :valu
+      end)
+      klass = stub_const("Article", Class.new(ApplicationEntity))
+
+      expect { klass.component Blurb, prefix: :title }.to raise_error(ArgumentError, /primary :valu/)
+    end
+
+    it "is inherited by a subclass of the component" do
+      text_class
+      stub_const("Snippet", Class.new(Blurb))
+
+      expect(Snippet.primary).to eq :value
+    end
+
+    it "is nil when undeclared" do
+      expect(Email.primary).to be_nil
+    end
+  end
+
   # --- reader collisions -----------------------------------------------------
   describe "a slot reader colliding with an existing name" do
     it "raises when the new reader is already a sibling's reader" do
