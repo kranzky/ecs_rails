@@ -53,7 +53,11 @@ end</code></pre>
       <p class="prose" style="margin-bottom:0">The posts list is
          <code>Post.with_component(State, prefix: :publish, status: "published")</code>
          — it filters by what an entity is made of, and scopes to the entity type
-         so a shared component can't leak across types.</p>
+         so a shared component can't leak across types. Its search box is
+         <code>with_component(SearchVector) { matching(q) }</code> and “most liked”
+         is <code>order_by_component(Counter, prefix: :likes, direction: :desc)</code>
+         — a scalar subquery in <code>ORDER BY</code>, because <code>EXISTS</code>
+         can't sort.</p>
     </div>
     <div class="card">
       <h3 class="section-title">One component, two slots</h3>

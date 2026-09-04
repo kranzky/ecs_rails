@@ -3,15 +3,31 @@
 <div class="page-head page-head--row">
   <div>
     <h1>Bulletin</h1>
-    <p>Published posts, newest first.</p>
+    <p>Published posts, <%= @sort == "likes" ? "most liked first" : "newest first" %>.</p>
   </div>
   <%= link_to "New post", new_post_path, class: "btn btn--primary" %>
 </div>
 
+<div class="btn-row" style="margin-bottom:1rem;align-items:center;gap:.75rem">
+  <%= form_with url: posts_path, method: :get, class: "inline" do |f| %>
+    <%= f.search_field :q, value: @query, placeholder: "Search posts…", class: "input", style: "width:16rem" %>
+    <%= f.hidden_field :sort, value: @sort %>
+    <%= f.submit "Search", class: "btn btn--sm btn--ghost" %>
+  <% end %>
+  <span class="dot"></span>
+  <%= link_to "Newest", posts_path(q: @query.presence), class: "btn btn--sm #{'btn--primary' if @sort == 'newest'}" %>
+  <%= link_to "Most liked", posts_path(q: @query.presence, sort: "likes"), class: "btn btn--sm #{'btn--primary' if @sort == 'likes'}" %>
+</div>
+
 <% if @posts.empty? %>
   <div class="empty">
-    <p>No published posts yet.</p>
-    <%= link_to "Write the first one", new_post_path, class: "btn btn--primary" %>
+    <% if @query.present? %>
+      <p>Nothing matches “<%= @query %>”.</p>
+      <%= link_to "Clear search", posts_path, class: "btn btn--ghost" %>
+    <% else %>
+      <p>No published posts yet.</p>
+      <%= link_to "Write the first one", new_post_path, class: "btn btn--primary" %>
+    <% end %>
   </div>
 <% else %>
   <div class="stack">

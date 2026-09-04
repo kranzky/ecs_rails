@@ -42,6 +42,8 @@ module Demo
         membership(u, g, role)
       end
 
+      Demo::Indexer.call
+
       "#{User.count} users, #{Post.count} posts (#{Post.published.count} published), " \
         "#{Comment.count} comments, #{Group.count} groups, #{Membership.count} memberships"
     end
