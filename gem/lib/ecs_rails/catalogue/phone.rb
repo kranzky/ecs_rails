@@ -17,8 +17,8 @@ module EcsRails
       end
 
       included do
-        validates :e164, format: { with: /\A\+[1-9]\d{1,14}\z/, allow_nil: true }
-        validates :extension, format: { with: /\A\d+\z/, allow_nil: true }
+        validates :e164, format: { with: /\A\+[1-9]\d{1,14}\z/, allow_blank: true }
+        validates :extension, format: { with: /\A\d+\z/, allow_blank: true }
       end
 
       # @return [String] the number with the extension, e.g. "+61812345678 x204"

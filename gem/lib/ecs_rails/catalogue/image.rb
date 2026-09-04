@@ -15,7 +15,7 @@ module EcsRails
       end
 
       included do
-        validates :url, format: { with: %r{\Ahttps?://\S+\z}, allow_nil: true }
+        validates :url, format: { with: %r{\Ahttps?://\S+\z}, allow_blank: true }
         has_one_attached :file if respond_to?(:has_one_attached)
       end
 

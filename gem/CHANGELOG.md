@@ -74,6 +74,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   that lacks them, found by inspecting the database. Safe on shipped data.
   This is the only migration a 0.2.x app needs to run.
 
+### Fixed
+
+- The catalogue's format validators (`Email#address`, `Phone#e164` and
+  `#extension`, `Link#url`, `Address#country`, `Image#url`) use `allow_blank`,
+  not `allow_nil`: a blank form field no longer reads "is invalid" on top of
+  the application's own presence rule. Surfaced by the forum rebuild (ECS-17).
+
 ### Removed
 
 - `rails g ecs_rails:relationship` and the per-relationship backing tables
