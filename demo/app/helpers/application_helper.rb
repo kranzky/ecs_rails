@@ -11,7 +11,7 @@ module ApplicationHelper
   def display_name(user)
     return "Unknown" if user.nil?
 
-    full = [user.name.first, user.name.last].compact.join(" ")
+    full = [user.name_first, user.name_last].compact.join(" ")
     full.presence || "Anonymous"
   end
 
@@ -19,7 +19,7 @@ module ApplicationHelper
   def initials_for(user)
     return "?" if user.nil?
 
-    parts = [user.name.first, user.name.last].compact
+    parts = [user.name_first, user.name_last].compact
     return "?" if parts.empty?
 
     parts.map { |p| p[0] }.join.upcase
@@ -27,7 +27,7 @@ module ApplicationHelper
 
   # A round avatar chip. Uses the Avatar component's url if set, else initials.
   def avatar_for(user, klass: "avatar")
-    url = user&.avatar&.url
+    url = user&.avatar_url
     style = url.present? ? "background-image:url(#{url})" : nil
     content_tag :span, (url.present? ? "" : initials_for(user)),
                 class: klass, style: style, title: display_name(user)
@@ -41,7 +41,7 @@ module ApplicationHelper
   end
 
   def likes_count(entity)
-    entity.likes.count || 0
+    entity.likes_count || 0
   end
 
   # --- demo reset countdown -------------------------------------------------

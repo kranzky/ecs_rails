@@ -25,14 +25,14 @@ class PostsController < ApplicationController
 
   def new
     @post = Post.new
-    @post.publish_state.state = "published" # default the checkbox to checked
+    @post.state = "published" # default the checkbox to checked
     @authors = User.all
   end
 
   def create
     post = Post.new
     assign(post, post_params)
-    post.likes.count = 0
+    post.likes_count = 0
 
     if post.save
       redirect_to post, notice: post.published? ? "Post published." : "Draft saved."
@@ -73,10 +73,10 @@ class PostsController < ApplicationController
   # Shared by create and update. The publish checkbox always submits (check_box
   # renders a hidden "0"), so its key is always present on a form post.
   def assign(post, attrs)
-    post.title.text = cap(attrs[:title], 120) if attrs.key?(:title)
-    post.body.text = cap(attrs[:body], 5000) if attrs.key?(:body)
+    post.title_text = cap(attrs[:title], 120) if attrs.key?(:title)
+    post.body_text = cap(attrs[:body], 5000) if attrs.key?(:body)
     post.author = User.find(attrs[:author_id]) if attrs[:author_id].present?
-    post.publish_state.state = attrs[:publish] == "1" ? "published" : "draft" if attrs.key?(:publish)
+    post.state = attrs[:publish] == "1" ? "published" : "draft" if attrs.key?(:publish)
   end
 
   def post_params

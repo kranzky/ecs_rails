@@ -27,9 +27,12 @@ RUN apt-get update -qq && \
       build-essential git libpq-dev pkg-config && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-# Install gems. ecs_on_rails comes from RubyGems now that it is published; it was
-# a git source before, which is why git is in the build deps above (also Rails 8's
-# stock build dependency) and why the .git cleanup below exists — now a no-op.
+# Install gems. During the v2 build the Gemfile takes ecs_on_rails from
+# `path: "../gem"` (ECS-18), which lies OUTSIDE this build context — so this
+# stage cannot build until the 0.3.0 release (ECS-19) repins the published gem.
+# For a mid-build deploy, switch the Gemfile to the pre-publication git source
+# (see the Gemfile comment); git is in the build deps above for exactly that,
+# and the .git cleanup below is what tidies up after it.
 COPY Gemfile Gemfile.lock ./
 RUN bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \

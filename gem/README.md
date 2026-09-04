@@ -35,12 +35,18 @@ end
 ```ruby
 user = User.create!            # one row in `entities`, no component rows
 user.email                     # => #<Email> — virtual, not persisted
-user.email.address = "a@b.com"
+user.email_address = "a@b.com" # delegated: the Email component, prefixed
 user.save!                     # now `emails` gets a row
 
-user.send_welcome_email        # delegated to the Email component
+user.email.send_welcome_email  # behaviour lives on the component
 user.errors[:"email.address"]  # component errors merge onto the entity
+
+User.create!(name_first: "Ada", email_address: "a@b.com")  # flat keys route too
 ```
+
+Delegated methods carry the component's name — `user.email_address`,
+`user.name_first` — so two components can share an attribute without a clash.
+`component PublishState, prefix: false` opts a declaration back to bare names.
 
 Every v0.1 capability, working today:
 

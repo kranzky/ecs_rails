@@ -129,6 +129,13 @@
       "humanMinutes": 25,
       "aiMinutes": 75,
       "costs": []
+    },
+    {
+      "date": "2026-09-04",
+      "summary": "Implemented ADR-0016: delegation is component-prefixed by default (Linear ECS-12), with ECS-18 along for the ride. Gem: `component Foo` now delegates `#{reader}_#{method}` (`user.email_address`, `user.email_send_welcome_email`) through a single delegation map that conflict detection, reader-collision detection and method generation all read; `prefix: false` opts a declaration back to bare names, `prefix: true` is the explicit default, and a Symbol raises until RFC-0014's slots exist. The open question was settled by the user for a uniform prefix (verbs included; ugly verbs are reached via the reader or renamed). `only:`/`except:` keep naming the component's own methods. `relates_to` declares its backing component bare so `post.author` keeps its shape. Conflicts now need two bare declarations, so Name#title and Group#title coexist with no option. Flat mass assignment falls out for free and is pinned: `User.create!(name_first:, email_address:)` routes, dirties and persists through the cascade, `update!` too, unknown and stale bare keys still raise, and Rails multiparameter date_select fields route as well (the issue suspected they would not). delegation_spec rewritten; 564 examples green (was 534), YARD 100%. Demo: switched to `path: \"../gem\"` (ECS-18; Fly deploys pause until 0.3.0, documented in the Gemfile, Dockerfile and DEPLOY.md), dropped `except: [:text]` from Post and Comment, `PublishState` took `prefix: false` for `post.state`, every view/helper/controller moved to prefixed names and every create collapsed to flat mass assignment, including the seed. Verified by booting the server and exercising every page and write flow with curl; caught that a blank form field arrives as \"\" and dirties a lazy component, fixed with `.presence` and logged as a papercut. Docs: architecture.md \u00a74 rewritten, RFC-0005 amendment, ADR-0016 implementation notes, friction-log v2 section, CHANGELOG Unreleased, gem README, root README (corrected the stale 'not yet published' note), and a project CLAUDE.md.",
+      "humanMinutes": 10,
+      "aiMinutes": 70,
+      "costs": []
     }
   ]
 }

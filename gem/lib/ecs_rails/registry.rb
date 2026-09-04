@@ -31,12 +31,14 @@ module EcsRails
       # @!attribute [r] component_class_name
       #   @return [String] the declared component's class name
       # @!attribute [r] options
-      #   @return [Hash] the frozen `only:`/`except:` delegation options
+      #   @return [Hash] the frozen delegation options: `only:`/`except:` as
+      #     symbol arrays, and `prefix: false` for bare delegation (ADR-0016).
+      #     `{}` means everything delegated, reader-prefixed.
       attr_reader :entity_class_name, :component_class_name, :options
 
       # @param entity_class_name [String] the declaring entity's class name
       # @param component_class_name [String] the declared component's class name
-      # @param options [Hash] `only:`/`except:` delegation options
+      # @param options [Hash] `only:`/`except:`/`prefix:` delegation options
       def initialize(entity_class_name:, component_class_name:, options: {})
         @entity_class_name = entity_class_name
         @component_class_name = component_class_name
@@ -95,7 +97,7 @@ module EcsRails
     #
     # @param entity_class [Class<EcsRails::Entity>] the declaring entity
     # @param component_class [Class<EcsRails::Component>] the declared component
-    # @param options [Hash] `only:`/`except:` delegation options
+    # @param options [Hash] `only:`/`except:`/`prefix:` delegation options
     # @return [Declaration] the recorded declaration
     # @raise [EcsRails::DuplicateComponent] if this entity already declares this
     #   component (ADR-0005)

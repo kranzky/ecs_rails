@@ -1,9 +1,9 @@
-<% content_for :title, @group.name.first %>
+<% content_for :title, @group.name_first %>
 <%= link_to "← Back to groups", groups_path, class: "back" %>
 
 <div class="card">
-  <h1 style="margin:0 0 .3rem"><%= @group.name.first %></h1>
-  <p style="color:var(--muted);margin:0"><%= @group.description.text %></p>
+  <h1 style="margin:0 0 .3rem"><%= @group.name_first %></h1>
+  <p style="color:var(--muted);margin:0"><%= @group.description_text %></p>
 </div>
 
 <section style="margin-top:2rem">
@@ -17,7 +17,7 @@
           <%= avatar_for m.user %>
           <div class="comment__body" style="display:flex;align-items:center;gap:.6rem">
             <strong style="color:var(--text)"><%= display_name m.user %></strong>
-            <span class="badge"><%= m.role.name %></span>
+            <span class="badge"><%= m.role_name %></span>
           </div>
           <%= button_to "Remove", group_membership_path(@group, m), method: :delete,
                 class: "btn btn--sm btn--ghost btn--danger", form_class: "inline" %>

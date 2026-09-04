@@ -162,7 +162,15 @@ module EcsRails
       detect_relationship_collision!(name)
 
       backing = build_relationship_component(name, target_class)
-      declaration = component(backing)
+
+      # Bare, not reader-prefixed (ADR-0016's `prefix: false`): the whole point
+      # of the backing component is to surface its `belongs_to` as `post.author`
+      # and `post.author=`. Prefixed, they would be `author_relationship_author`
+      # — and ADR-0017 promises the relationship API does not change shape. The
+      # reader collision the prefix normally prevents cannot arise here, because
+      # the component is named for the relationship and the association for the
+      # target (see the module comment).
+      declaration = component(backing, prefix: false)
 
       # RFC-0013 / ADR-0014: record the relationship metadata the `*_related`
       # query verbs resolve against. Recorded here, at declaration, so there is
@@ -371,12 +379,13 @@ module EcsRails
     # backing class, and no doubled const_set warning is printed.
     #
     # Reuses the DSL's own reader/delegation resolution (#reader_name_for,
-    # #delegated_method_names), so "what names does this entity already answer"
-    # is computed the one way the gem computes it everywhere else.
+    # #delegation_map — the entity-level names, prefixed per ADR-0016), so "what
+    # names does this entity already answer" is computed the one way the gem
+    # computes it everywhere else.
     def detect_relationship_collision!(name)
       taken = component_declarations.flat_map do |declaration|
         component = declaration.component_class
-        [reader_name_for(component)] + delegated_method_names(component, declaration.options)
+        [reader_name_for(component)] + delegation_map(component, declaration.options).keys
       end
 
       return unless taken.include?(name)

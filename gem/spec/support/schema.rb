@@ -38,6 +38,10 @@ ActiveRecord::Schema.define do
     t.uuid   :entity_id,   null: false
     t.string :title,       default: nil
     t.string :description, default: nil
+    # A date, so delegation_spec can prove Rails multiparameter form fields
+    # (`date_select` posting `group_founded_on(1i)`…) route through a prefixed
+    # delegated writer (ADR-0016 / ECS-12).
+    t.date   :founded_on,  default: nil
     t.timestamps
   end
 

@@ -45,54 +45,29 @@ module Demo
         "#{Comment.count} comments, #{Group.count} groups, #{Membership.count} memberships"
     end
 
+    # Flat mass assignment through the prefixed delegated writers (ADR-0016):
+    # one create! per entity, and only the dirtied components get rows.
     def user(first, last, email, bio: nil, moderator: false, admin: false)
-      u = User.create!
-      u.name.first = first
-      u.name.last = last
-      u.email.address = email
-      u.bio.text = bio if bio
-      u.save!
+      u = User.create!(name_first: first, name_last: last, email_address: email, bio_text: bio)
       u.add(Moderator) if moderator
       u.add(Administrator) if admin
       u
     end
 
     def post(author, title, body, state)
-      p = Post.create!
-      p.title.text = title
-      p.body.text = body
-      p.author = author
-      p.publish_state.state = state
-      p.likes.count = rand(0..12)
-      p.save!
-      p
+      Post.create!(title_text: title, body_text: body, author: author, state: state, likes_count: rand(0..12))
     end
 
     def comment(post, author, text)
-      c = Comment.create!
-      c.body.text = text
-      c.author = author
-      c.post = post
-      c.likes.count = rand(0..5)
-      c.save!
-      c
+      Comment.create!(body_text: text, author: author, post: post, likes_count: rand(0..5))
     end
 
     def group(name, description)
-      g = Group.create!
-      g.name.first = name
-      g.description.text = description
-      g.save!
-      g
+      Group.create!(name_first: name, description_text: description)
     end
 
     def membership(user, group, role)
-      m = Membership.create!
-      m.user = user
-      m.group = group
-      m.role.name = role
-      m.save!
-      m
+      Membership.create!(user: user, group: group, role_name: role)
     end
   end
 end

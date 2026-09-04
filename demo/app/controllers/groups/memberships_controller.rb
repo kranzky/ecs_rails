@@ -7,13 +7,13 @@ class Groups::MembershipsController < ApplicationController
     group = Group.find(params[:group_id])
     user = User.find(params[:membership][:user_id])
 
-    membership = Membership.new
-    membership.user = user
-    membership.group = group
-    membership.role.name = cap(params[:membership][:role], 30).presence || "member"
-    membership.save!
+    membership = Membership.create!(
+      user: user,
+      group: group,
+      role_name: cap(params[:membership][:role], 30).presence || "member"
+    )
 
-    redirect_to group, notice: "#{helpers.display_name(user)} joined #{group.name.first}."
+    redirect_to group, notice: "#{helpers.display_name(user)} joined #{group.name_first}."
   end
 
   def destroy

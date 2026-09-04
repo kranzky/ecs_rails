@@ -21,9 +21,13 @@ class GroupsController < ApplicationController
   end
 
   def create
-    group = Group.new
-    group.name.first = cap(group_params[:name], 80)
-    group.description.text = cap(group_params[:description], 300) if group_params[:description].present?
+    # Flat mass assignment: prefixed delegated writers mean assign_attributes
+    # routes each key to its component (ADR-0016). `.presence` keeps a blank
+    # description at its nil default, so no Description row is written for it.
+    group = Group.new(
+      name_first: cap(group_params[:name], 80),
+      description_text: cap(group_params[:description], 300).presence
+    )
 
     if group.save
       redirect_to group, notice: "Group created."

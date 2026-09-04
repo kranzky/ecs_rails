@@ -1,16 +1,21 @@
 # RFC-0005: Method delegation
 
-**Status:** Implemented
+**Status:** Implemented — amended by [ADR-0016](../adr/0016-prefixed-delegation-by-default.md) (see [the amendment](#amendment-reader-prefixed-names-adr-0016))
 **Depends on:** RFC-0004, RFC-0006
 
 ## Goal
 
 ```ruby
-user.address            # → user.email.address
-user.send_welcome_email # → user.email.send_welcome_email
+user.email_address            # → user.email.address
+user.email_send_welcome_email # → user.email.send_welcome_email
 ```
 
-Component methods are callable on the entity.
+Component methods are callable on the entity, under the component's name.
+
+> The rules, tests and notes below are the RFC as originally implemented, with
+> **bare** names (`user.address`). [ADR-0016](../adr/0016-prefixed-delegation-by-default.md)
+> changed the default to reader-prefixed names on 2026-09-04; the amendment at
+> the end records exactly what moved. Everything else here still holds.
 
 ## Rules
 
@@ -187,3 +192,58 @@ conflict-raises-loudly behaviour feels protective rather than annoying *because*
 the escape hatch is one word (`except: [:title]`) and the message names the fix
 verbatim — the cost of a clash is a one-line edit at the declaration, paid once,
 in CI, with both culprits named.
+
+## Amendment: reader-prefixed names (ADR-0016)
+
+*2026-09-04, Linear ECS-12.* Implemented in `EcsRails::DSL#delegation_map`, the
+one place that turns the delegated set into entity-level names.
+
+- **The delegated name is `#{reader}_#{method}`.** `component Email` gives
+  `user.email_address`, `user.email_address=`, `user.email_verified`,
+  `user.email_send_welcome_email`. The reader (`user.email`) and the presence
+  predicate (`user.email?`) are unchanged.
+- **Uniform, including behaviour.** The open question — prefix attributes only,
+  or every delegated method — was settled for *every method*. An attributes-only
+  rule needs a heuristic for what counts as an attribute and reopens exactly the
+  verb collisions ADR-0016 exists to close. `user.email_send_welcome_email` is
+  ugly; the reader (`user.email.send_welcome_email`) is always there, and an
+  ugly verb can be renamed on the component.
+- **`prefix: false`** restores the bare names for one declaration. `prefix: true`
+  is the default and is accepted but not recorded. A Symbol (`prefix: :business`)
+  is RFC-0014's slot label and **raises** until slots land — it must not be
+  silently treated as truthy.
+- **`only:`/`except:` name the component's methods**, not the prefixed
+  entity-level name: `except: [:title]`, never `except: [:group_title]`. The
+  latter raises the usual unknown-name `ArgumentError`, listing what the
+  component does delegate.
+- **`relates_to` declares its backing component with `prefix: false`**, so
+  `post.author` / `post.author=` keep their shape (ADR-0013, and ADR-0017's
+  promise that the relationship API does not change).
+- **Conflict detection compares entity-level names.** `Name#title` and
+  `Group#title` now coexist as `name_title` / `group_title` with no option. A
+  `DelegationConflict` needs two bare declarations, or a prefixed name that
+  happens to spell another's. The reader-collision raise likewise fires only for
+  a bare declaration — a prefixed name begins with its own reader plus an
+  underscore, so it can never equal one. Both messages now include the prefix
+  as a way out.
+- **Flat mass assignment is emergent and pinned.** Because the prefixed writers
+  exist, `assign_attributes` routes them: `User.create!(name_first: "Ada",
+  email_address: "a@b.com")` reaches the lazy reader, dirties exactly those
+  components and persists them through the cascade; `update!` too. Unknown keys
+  still raise `ActiveModel::UnknownAttributeError`, including the stale bare
+  form (`address:`). Rails **multiparameter** fields also route: `date_select`
+  posts `group_founded_on(1i)`…, ActiveRecord folds them into one Hash and
+  sends it to `group_founded_on=`, which is a delegated writer, and the
+  component's own date type casts the Hash. ECS-12 flagged this as an edge that
+  might not route; it does, and is pinned.
+- **The exact-set tests moved with it.** Email delegates exactly
+  `email_address email_address= email_send_welcome_email email_verified
+  email_verified= email_who_am_i` plus `email` and `email?`.
+
+**On the API feel, this time from the demo.** The forum's `except: [:text]` on
+`Title` and `Body` is gone; views read `post.title_text` and `user.email_address`
+without complaint. `PublishState` took `prefix: false` for `post.state`. The
+verb case came up once — `post.likes.increment!` — and the reader form was the
+obvious spelling, so nothing was renamed. Flat mass assignment collapsed every
+controller `create` and the whole seed into one `create!` per entity. See
+[the friction log](../friction-log.md).

@@ -58,6 +58,13 @@ fly secrets set RAILS_MASTER_KEY="$(cat config/master.key)" --app ecs-rails-demo
 fly deploy
 ```
 
+> **Paused during the v2 build.** `demo/Gemfile` takes the gem from
+> `path: "../gem"` (ECS-18), which the Docker build context cannot see, so
+> `fly deploy` fails until the 0.3.0 release (ECS-19) repins
+> `gem "ecs_on_rails", "~> 0.3.0"`. The live site keeps serving 0.2.2 meanwhile.
+> For a one-off deploy before then, point the Gemfile at the git source noted in
+> its comment, `bundle lock`, and deploy.
+
 The `release_command` in `fly.toml` runs `bin/rails db:prepare demo:reset`, so
 the database is created, migrated, and seeded on every deploy.
 

@@ -65,7 +65,9 @@ end
 
 # Shares a #title accessor with Name (both have a `title` column, see
 # spec/support/schema.rb), to exercise the delegation conflict in
-# ADR-0004 / RFC-0005. User resolves it with `component Group, except: [:title]`.
+# ADR-0004 / RFC-0005. Under ADR-0016 the two no longer clash on User — they
+# delegate as `name_title` and `group_title` — so the conflict specs declare
+# both with `prefix: false` to force the bare names back into one namespace.
 class Group < ApplicationComponent
 end
 
@@ -92,14 +94,15 @@ end
 # write it: an entity is a list of the components it is composed from, and
 # nothing else.
 #
-# `except: [:title]` is the escape hatch from ADR-0004: Name and Group both
-# expose #title, and delegating both would be a DelegationConflict. RFC-0005
-# raises it; RFC-0004 only records the option, so this line is inert today and
-# load-bearing the moment delegation lands.
+# Name and Group both expose #title. Before ADR-0016 that was a
+# DelegationConflict, resolved here with `component Group, except: [:title]`.
+# Delegation is reader-prefixed now — `user.name_title`, `user.group_title` —
+# so the two coexist with no option at all. That is the ADR's whole payoff, and
+# this fixture reads the way a host app would write it after it.
 class User < ApplicationEntity
   component Name
   component Email
-  component Group, except: [:title]
+  component Group
   # A marker (RFC-0009). Presence is set with `user.add(Moderator)`, asked with
   # `user.moderator?`, and cleared with `user.remove(Moderator)`.
   component Moderator
