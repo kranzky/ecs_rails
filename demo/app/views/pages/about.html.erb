@@ -12,15 +12,18 @@
     <p class="prose">A <code>Post</code> isn't a wide table. It's an identity row
        composed from small components — each its own table:</p>
     <pre style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:1rem;overflow:auto"><code>class Post &lt; ApplicationEntity
-  component Title
-  component Body
-  component PublishState
-  component Likes
-  relates_to :author, User
+  component Title                        # post.title_text
+  component Body                         # post.body_text
+  component PublishState, prefix: false  # post.state
+  component Likes                        # post.likes_count
+  relates_to :author, User               # post.author
 end</code></pre>
-    <p class="prose" style="margin-bottom:0"><code>post.title.text</code>,
+    <p class="prose" style="margin-bottom:0"><code>post.title_text</code>,
        <code>post.author</code>, <code>post.likes.increment!</code> — the state and
-       behaviour live in the components, delegated onto the entity.</p>
+       behaviour live in the components, delegated onto the entity with the
+       component's name as a prefix, so <code>Title</code> and <code>Body</code>
+       can both have a <code>text</code>. A flat hash routes too:
+       <code>Post.new(title_text: "…", body_text: "…")</code>.</p>
   </div>
 
   <div class="grid grid--2">
@@ -36,7 +39,7 @@ end</code></pre>
       <h3 class="section-title">Lazy by default</h3>
       <p class="prose" style="margin-bottom:0">A component costs nothing until a
          value differs from its default — no row, no query. A new person with no
-         bio has no <code>bios</code> row, yet <code>user.bio.text</code> still
+         bio has no <code>bios</code> row, yet <code>user.bio_text</code> still
          works.</p>
     </div>
     <div class="card">

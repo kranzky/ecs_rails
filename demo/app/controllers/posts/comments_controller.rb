@@ -5,11 +5,10 @@ class Posts::CommentsController < ApplicationController
     post = Post.find(params[:post_id])
     return redirect_to(post, alert: "You can't comment on a draft.") if post.draft?
 
-    comment = Comment.new
-    comment.body.text = cap(params.dig(:comment, :body), 2000)
-    comment.post = post
+    # Flat mass assignment (ADR-0016). `post:` is a relationship writer, which
+    # relates_to leaves bare on purpose; the rest are prefixed component keys.
+    comment = Comment.new(body_text: cap(params.dig(:comment, :body), 2000), post: post, likes_count: 0)
     comment.author = User.find(params[:comment][:author_id]) if params.dig(:comment, :author_id).present?
-    comment.likes.count = 0
 
     if comment.save
       redirect_to post, notice: "Comment added."

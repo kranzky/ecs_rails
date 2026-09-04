@@ -1,10 +1,16 @@
 # frozen_string_literal: true
 
 class Post < ApplicationEntity
-  component Title, except: [:text]
-  component Body, except: [:text]
-  component PublishState
-  component Likes
+  # Delegation is reader-prefixed (ADR-0016): post.title_text, post.body_text.
+  # Title and Body both carry a `text` column; before ADR-0016 that was a
+  # DelegationConflict resolved with `except: [:text]`, which dropped the
+  # delegation altogether. Now both coexist and neither needs an option.
+  component Title
+  component Body
+  # The prefix would be redundant here — post.publish_state_state — so opt out
+  # and take the bare name: post.state.
+  component PublishState, prefix: false
+  component Likes               # post.likes_count; post.likes.increment! for the verb
   relates_to :author, User      # post.author => User; no component file
 
   # "All published posts", via the query DSL (RFC-0010). with_component applies
@@ -15,7 +21,7 @@ class Post < ApplicationEntity
   end
 
   def published?
-    publish_state.state == "published"
+    state == "published"
   end
 
   def draft?
@@ -24,7 +30,7 @@ class Post < ApplicationEntity
 
   # Behaviour on the entity: flip the PublishState component and persist.
   def publish!
-    publish_state.state = "published"
+    self.state = "published"
     save!
   end
 end

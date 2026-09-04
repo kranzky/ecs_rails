@@ -15,7 +15,7 @@
         <%= avatar_for user, klass: "avatar avatar--lg" %>
         <div class="profile__meta">
           <h2 class="profile__name" style="font-size:1.15rem"><%= display_name user %></h2>
-          <div class="meta"><%= user.email.address %></div>
+          <div class="meta"><%= user.email_address %></div>
           <div class="profile__badges">
             <% if user.administrator? %><span class="badge badge--admin">★ Admin</span><% end %>
             <% if user.moderator? %><span class="badge badge--mod">Moderator</span><% end %>
