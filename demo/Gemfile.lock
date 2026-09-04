@@ -1,3 +1,11 @@
+PATH
+  remote: ../gem
+  specs:
+    ecs_on_rails (0.2.2)
+      activerecord (>= 7.1, < 9.0)
+      activesupport (>= 7.1, < 9.0)
+      railties (>= 7.1, < 9.0)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -93,10 +101,6 @@ GEM
       reline (>= 0.3.8)
     diff-lcs (1.6.2)
     drb (2.2.3)
-    ecs_on_rails (0.2.2)
-      activerecord (>= 7.1, < 9.0)
-      activesupport (>= 7.1, < 9.0)
-      railties (>= 7.1, < 9.0)
     erb (6.0.5)
     erubi (1.13.1)
     globalid (1.4.0)
@@ -285,7 +289,7 @@ DEPENDENCIES
   bootsnap
   bundler-audit
   debug
-  ecs_on_rails (~> 0.2.2)
+  ecs_on_rails!
   importmap-rails
   pg (~> 1.1)
   propshaft
