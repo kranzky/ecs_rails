@@ -13,13 +13,13 @@ class PostsController < ApplicationController
 
   def show
     @post = Post.find(params[:id])
-    # Comments on this post — by relationship name (RFC-0013), no backing class.
-    # The author name is a two-hop preload (kept explicit, an RFC-0013 non-goal).
-    @comments = Comment
-                .with_related(:post, @post)
-                .includes_components(Text, Counter)
-                .preload(author_relationship: { target: :name })
-                .order(created_at: :asc)
+    # Comments on this post — the inverse association (RFC-0015), a real
+    # collection, with the component DSL chained on. The author name is a
+    # two-hop preload (kept explicit, an RFC-0013 non-goal).
+    @comments = @post.comments
+                     .includes_components(Text, Counter)
+                     .preload(author_relationship: { target: :name })
+                     .order(created_at: :asc)
     @comment = Comment.new
     @authors = User.all
   end

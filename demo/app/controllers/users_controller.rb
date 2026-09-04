@@ -9,9 +9,10 @@ class UsersController < ApplicationController
 
   def show
     @user = User.find(params[:id])
-    @posts = Post.with_related(:author, @user)
-                 .includes_components(Text, Counter, State)
-                 .order(created_at: :desc)
+    # The inverse association (RFC-0015): user.posts is a collection.
+    @posts = @user.posts
+                  .includes_components(Text, Counter, State)
+                  .order(created_at: :desc)
   end
 
   def new

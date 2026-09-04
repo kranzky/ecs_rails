@@ -18,6 +18,7 @@
   component State,   prefix: :publish, states: %w[draft published] # post.publish_state
   component Counter, prefix: :likes                               # post.likes
   relates_to :author, User                                        # post.author
+  has_many :comments, via: :post                                  # post.comments
 end</code></pre>
     <p class="prose" style="margin-bottom:0">This whole board was written
        <strong>after</strong> <code>rails g ecs_rails:install</code> and one
@@ -64,9 +65,10 @@ end</code></pre>
     <div class="card">
       <h3 class="section-title">Relationships & join entities</h3>
       <p class="prose" style="margin-bottom:0"><code>relates_to :author, User</code>
-         links a post to its author with no boilerplate. A
-         <%= link_to "group", groups_path %> membership is a join <em>entity</em>
-         carrying two relationships and a role.</p>
+         links a post to its author, and <code>has_many :posts, via: :author</code>
+         on the user reads them back as a real collection — both rows in one
+         <code>relationships</code> table. A <%= link_to "group", groups_path %>
+         membership is a join <em>entity</em> carrying two relationships and a role.</p>
     </div>
   </div>
 

@@ -8,6 +8,11 @@ class Post < ApplicationEntity
   component State,   prefix: :publish, states: %w[draft published] # post.publish_state.status
   component Counter, prefix: :likes                              # post.likes (the Integer), post.likes_counter
   relates_to :author, User                                       # post.author => User
+  # The parent side (RFC-0015): a real collection over the shared relationships
+  # table; the child (Comment) is inferred from the name and resolved on first
+  # use, never at load. dependent: :destroy removes the link rows with the post,
+  # so no comment is left pointing at nothing.
+  has_many :comments, via: :post, dependent: :destroy            # post.comments
 
   # "All published posts", via the query DSL (RFC-0010): the State rows in slot
   # "publish" whose status is published, scoped to posts. Compiles to a
