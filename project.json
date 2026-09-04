@@ -143,6 +143,13 @@
       "humanMinutes": 5,
       "aiMinutes": 80,
       "costs": []
+    },
+    {
+      "date": "2026-09-04",
+      "summary": "Implemented the shared relationships table per ADR-0017 (Linear ECS-15). Gem: every `relates_to` is now `component Relationship, prefix: name, delegate: false` \u2014 a row in one `relationships` table created at install, under a slot named for the relationship \u2014 with the four accessors (`author`, `author=`, `author_id`, `author_id=`) defined by the DSL and forwarding to the slot-scoped reader's `target`. `Relationship` is the app's one-line class including the new `EcsRails::Catalogue::Relationship` concern (ADR-0018's shape, the first catalogue entry), written by `ecs_rails:install` and found via the new `config.relationship_class_name`. Target type is checked in Ruby on assignment (`InvalidRelationship`); `owner_model` and `exclusive` are stamped before save; new `relates_to ..., unique: true` makes a link one-to-one via the install-time partial unique index. Relationship names reserve their accessors so later bare delegations conflict. `with_related`/`without_related`/`includes_related` compile to slot-scoped `with_component` on Relationship; nested preloads name `target`. Removed the dynamic backing classes, the per-relationship tables, and the `ecs_rails:relationship` generator. The install migration is now `ecs_rails_install` and creates both tables; `ecs_rails:upgrade` gained a data-moving job that creates `relationships` and copies every ADR-0013 backing table (recognised by shape and name) into it, proven against real 0.2.x-shaped tables. 672 examples green (was 649), YARD 100%. Demo: the upgrade generator moved all five backing tables in one migration with every link intact; only the two raw nested preloads changed. Docs: architecture \u00a72/\u00a75 rewritten, RFC-0012 and RFC-0013 amendments, ADR-0017 implementation notes, CHANGELOG, READMEs, backlog, CLAUDE.md, friction log.",
+      "humanMinutes": 5,
+      "aiMinutes": 75,
+      "costs": []
     }
   ]
 }

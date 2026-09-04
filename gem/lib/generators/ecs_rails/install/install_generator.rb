@@ -18,17 +18,19 @@ require "ecs_rails"
 
 module EcsRails
   # The Rails generators (RFC-0008): `ecs_rails:install`, `ecs_rails:component`
-  # and `ecs_rails:relationship`.
+  # and `ecs_rails:upgrade`. (`ecs_rails:relationship` was removed by ADR-0017:
+  # a relationship needs no table of its own.)
   #
   # They read {EcsRails.config} to place their files (ADR-0010). The gem runtime
   # never consults that config — only these do.
   module Generators
     # `rails g ecs_rails:install`
     #
-    # Implements RFC-0008. Emits the `entities` migration and the two abstract
-    # base classes a host app subclasses from. The migration mirrors
-    # docs/architecture.md §2 exactly — if the two ever disagree, the
-    # architecture document wins.
+    # Implements RFC-0008. Emits the install migration — the `entities` table and
+    # the shared `relationships` table (ADR-0017) — the two abstract base classes
+    # a host app subclasses from, and the one-line `Relationship` catalogue class
+    # (ADR-0018). The migration mirrors docs/architecture.md §2 exactly — if the
+    # two ever disagree, the architecture document wins.
     #
     # Inherits from Base rather than NamedBase: install takes no NAME argument.
     class InstallGenerator < Rails::Generators::Base
@@ -36,18 +38,19 @@ module EcsRails
 
       source_root File.expand_path("templates", __dir__)
 
-      desc "Creates the entities migration and the ApplicationEntity / " \
-           "ApplicationComponent base classes."
+      desc "Creates the install migration (entities + relationships), the " \
+           "ApplicationEntity / ApplicationComponent base classes, and the " \
+           "Relationship component."
 
-      # Emits the `entities` table migration.
+      # Emits the install migration: `entities` and `relationships`.
       #
       # A Thor task: invoked as a generator step, not called directly.
       #
       # @return [void]
       def create_migration_file
         migration_template(
-          "migration.rb.tt",
-          File.join(db_migrate_path, "ecs_rails_create_entities.rb")
+          "install_migration.rb.tt",
+          File.join(db_migrate_path, "ecs_rails_install.rb")
         )
       end
 
@@ -59,6 +62,14 @@ module EcsRails
                  File.join(EcsRails.config.entities_path, "application_entity.rb")
         template "application_component.rb.tt",
                  File.join(EcsRails.config.components_path, "application_component.rb")
+      end
+
+      # ADR-0017 / ADR-0018: the one-line catalogue class every `relates_to`
+      # is a row of. The application owns the constant; the behaviour is the
+      # gem's concern. The rest of the catalogue arrives the same way (ECS-9).
+      def create_relationship_component
+        template "relationship.rb.tt",
+                 File.join(EcsRails.config.components_path, "relationship.rb")
       end
 
       # ADR-0010: the generated initializer both records the chosen layout (so

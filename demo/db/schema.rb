@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_04_033414) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_04_040850) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -50,26 +50,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_04_033414) do
     t.index ["entity_id", "slot"], name: "index_bodies_on_entity_id_and_slot", unique: true
   end
 
-  create_table "comment_authors", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "author_id"
-    t.datetime "created_at", null: false
-    t.uuid "entity_id", null: false
-    t.string "slot", default: "", null: false
-    t.datetime "updated_at", null: false
-    t.index ["author_id"], name: "index_comment_authors_on_author_id"
-    t.index ["entity_id", "slot"], name: "index_comment_authors_on_entity_id_and_slot", unique: true
-  end
-
-  create_table "comment_posts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.uuid "entity_id", null: false
-    t.uuid "post_id"
-    t.string "slot", default: "", null: false
-    t.datetime "updated_at", null: false
-    t.index ["entity_id", "slot"], name: "index_comment_posts_on_entity_id_and_slot", unique: true
-    t.index ["post_id"], name: "index_comment_posts_on_post_id"
-  end
-
   create_table "descriptions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.uuid "entity_id", null: false
@@ -104,26 +84,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_04_033414) do
     t.index ["entity_id", "slot"], name: "index_likes_on_entity_id_and_slot", unique: true
   end
 
-  create_table "membership_groups", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.uuid "entity_id", null: false
-    t.uuid "group_id"
-    t.string "slot", default: "", null: false
-    t.datetime "updated_at", null: false
-    t.index ["entity_id", "slot"], name: "index_membership_groups_on_entity_id_and_slot", unique: true
-    t.index ["group_id"], name: "index_membership_groups_on_group_id"
-  end
-
-  create_table "membership_users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.uuid "entity_id", null: false
-    t.string "slot", default: "", null: false
-    t.datetime "updated_at", null: false
-    t.uuid "user_id"
-    t.index ["entity_id", "slot"], name: "index_membership_users_on_entity_id_and_slot", unique: true
-    t.index ["user_id"], name: "index_membership_users_on_user_id"
-  end
-
   create_table "moderators", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.uuid "entity_id", null: false
@@ -142,16 +102,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_04_033414) do
     t.index ["entity_id", "slot"], name: "index_names_on_entity_id_and_slot", unique: true
   end
 
-  create_table "post_authors", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "author_id"
-    t.datetime "created_at", null: false
-    t.uuid "entity_id", null: false
-    t.string "slot", default: "", null: false
-    t.datetime "updated_at", null: false
-    t.index ["author_id"], name: "index_post_authors_on_author_id"
-    t.index ["entity_id", "slot"], name: "index_post_authors_on_entity_id_and_slot", unique: true
-  end
-
   create_table "publish_states", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.uuid "entity_id", null: false
@@ -159,6 +109,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_04_033414) do
     t.string "state"
     t.datetime "updated_at", null: false
     t.index ["entity_id", "slot"], name: "index_publish_states_on_entity_id_and_slot", unique: true
+  end
+
+  create_table "relationships", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "entity_id", null: false
+    t.boolean "exclusive", default: false, null: false
+    t.string "owner_model", null: false
+    t.string "slot", default: "", null: false
+    t.uuid "target_id"
+    t.datetime "updated_at", null: false
+    t.index ["entity_id", "slot"], name: "index_relationships_on_entity_id_and_slot", unique: true
+    t.index ["target_id", "slot", "owner_model"], name: "index_relationships_exclusive", unique: true, where: "exclusive"
+    t.index ["target_id", "slot"], name: "index_relationships_on_target_id_and_slot"
   end
 
   create_table "roles", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -183,22 +146,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_04_033414) do
   add_foreign_key "avatars", "entities", on_delete: :cascade
   add_foreign_key "bios", "entities", on_delete: :cascade
   add_foreign_key "bodies", "entities", on_delete: :cascade
-  add_foreign_key "comment_authors", "entities", column: "author_id", on_delete: :nullify
-  add_foreign_key "comment_authors", "entities", on_delete: :cascade
-  add_foreign_key "comment_posts", "entities", column: "post_id", on_delete: :nullify
-  add_foreign_key "comment_posts", "entities", on_delete: :cascade
   add_foreign_key "descriptions", "entities", on_delete: :cascade
   add_foreign_key "emails", "entities", on_delete: :cascade
   add_foreign_key "likes", "entities", on_delete: :cascade
-  add_foreign_key "membership_groups", "entities", column: "group_id", on_delete: :nullify
-  add_foreign_key "membership_groups", "entities", on_delete: :cascade
-  add_foreign_key "membership_users", "entities", column: "user_id", on_delete: :nullify
-  add_foreign_key "membership_users", "entities", on_delete: :cascade
   add_foreign_key "moderators", "entities", on_delete: :cascade
   add_foreign_key "names", "entities", on_delete: :cascade
-  add_foreign_key "post_authors", "entities", column: "author_id", on_delete: :nullify
-  add_foreign_key "post_authors", "entities", on_delete: :cascade
   add_foreign_key "publish_states", "entities", on_delete: :cascade
+  add_foreign_key "relationships", "entities", column: "target_id", on_delete: :nullify
+  add_foreign_key "relationships", "entities", on_delete: :cascade
   add_foreign_key "roles", "entities", on_delete: :cascade
   add_foreign_key "titles", "entities", on_delete: :cascade
 end

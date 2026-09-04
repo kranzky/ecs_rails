@@ -44,7 +44,7 @@ RSpec.describe "generated migrations actually run", type: :generator do
     generate(EcsRails::Generators::InstallGenerator, [])
     generate(EcsRails::Generators::ComponentGenerator, %w[Email address:string verified:boolean])
 
-    run_migration("ecs_rails_create_entities", "EcsRailsCreateEntities")
+    run_migration("ecs_rails_install", "EcsRailsInstall")
     run_migration("create_emails", "CreateEmails")
   end
 
@@ -217,15 +217,11 @@ RSpec.describe "generated migrations actually run", type: :generator do
     end
   end
 
-  # RFC-0012 / ADR-0013: the relationship migration, executed against the real
-  # catalog. The point is the asymmetric FK delete rules — entity_id CASCADE,
-  # target NULLIFY — and that the database actually enforces the nullify.
-  describe "the relationship migration" do
-    before do
-      generate(EcsRails::Generators::RelationshipGenerator, %w[Post author:User])
-      run_migration("create_post_authors", "CreatePostAuthors")
-    end
-
+  # ADR-0017: the shared relationships table, created by install and executed
+  # against the real catalog. The point is the asymmetric FK delete rules —
+  # entity_id CASCADE, target_id NULLIFY — and the partial unique index that
+  # makes `unique: true` a database guarantee.
+  describe "the relationships table" do
     def delete_rule_for(column)
       connection.select_value(<<~SQL)
         SELECT c.confdeltype
@@ -233,45 +229,93 @@ RSpec.describe "generated migrations actually run", type: :generator do
         JOIN pg_class t ON t.oid = c.conrelid
         JOIN pg_namespace n ON n.oid = t.relnamespace
         JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = ANY (c.conkey)
-        WHERE n.nspname = '#{scratch_schema}' AND t.relname = 'post_authors'
+        WHERE n.nspname = '#{scratch_schema}' AND t.relname = 'relationships'
           AND c.contype = 'f' AND a.attname = '#{column}'
       SQL
+    end
+
+    def indexes
+      connection.select_values(
+        "SELECT indexdef FROM pg_indexes WHERE schemaname = '#{scratch_schema}' AND tablename = 'relationships'"
+      )
+    end
+
+    def make_entity(model = "users")
+      connection.select_value("INSERT INTO entities (model, created_at) VALUES ('#{model}', now()) RETURNING id")
+    end
+
+    def link(owner, target, slot: "order", owner_model: "invoices", exclusive: false)
+      connection.execute(
+        "INSERT INTO relationships (entity_id, slot, target_id, owner_model, exclusive, created_at, updated_at) " \
+        "VALUES ('#{owner}', '#{slot}', '#{target}', '#{owner_model}', #{exclusive}, now(), now())"
+      )
+    end
+
+    it "is created by install" do
+      names = columns_of("relationships").map { |c| c["column_name"] }
+      expect(names).to contain_exactly(
+        "id", "entity_id", "slot", "target_id", "owner_model", "exclusive", "created_at", "updated_at"
+      )
     end
 
     it "cascades on the owner side (entity_id)" do
       expect(delete_rule_for("entity_id")).to eq("c") # confdeltype 'c' = CASCADE
     end
 
-    it "nullifies on the target side (author_id)" do
-      expect(delete_rule_for("author_id")).to eq("n") # confdeltype 'n' = SET NULL
+    it "nullifies on the target side (target_id)" do
+      expect(delete_rule_for("target_id")).to eq("n") # confdeltype 'n' = SET NULL
     end
 
-    it "enforces the unique (entity_id, slot) index (one relationship per owner)" do
-      indexes = connection.select_values(
-        "SELECT indexdef FROM pg_indexes WHERE schemaname = '#{scratch_schema}' AND tablename = 'post_authors'"
-      )
+    it "enforces one target per (owner, slot)" do
       expect(indexes).to include(match(/CREATE UNIQUE INDEX .*\(entity_id, slot\)/))
+    end
+
+    it "indexes (target_id, slot) for inverse lookups" do
+      expect(indexes).to include(match(/CREATE INDEX .*\(target_id, slot\)/))
+    end
+
+    it "carries the partial unique index for exclusive rows" do
+      expect(indexes).to include(match(/CREATE UNIQUE INDEX .*\(target_id, slot, owner_model\) WHERE exclusive/))
     end
 
     # The behaviour the whole feature turns on, proven end to end: destroying the
     # target nullifies the link and leaves the row (and thus the owner) standing.
-    it "nulls the target column when the target entity is deleted" do
-      make_entity = lambda do
-        connection.select_value("INSERT INTO entities (model, created_at) VALUES ('users', now()) RETURNING id")
-      end
-      owner = make_entity.call
-      target = make_entity.call
-      connection.execute(
-        "INSERT INTO post_authors (entity_id, author_id, created_at, updated_at) " \
-        "VALUES ('#{owner}', '#{target}', now(), now())"
-      )
+    it "nulls target_id when the target entity is deleted" do
+      owner = make_entity("posts")
+      target = make_entity
+      link(owner, target, slot: "author", owner_model: "posts")
 
       connection.execute("DELETE FROM entities WHERE id = '#{target}'")
 
       aggregate_failures do
-        expect(connection.select_value("SELECT count(*) FROM post_authors").to_i).to eq(1)
-        expect(connection.select_value("SELECT author_id FROM post_authors")).to be_nil
+        expect(connection.select_value("SELECT count(*) FROM relationships").to_i).to eq(1)
+        expect(connection.select_value("SELECT target_id FROM relationships")).to be_nil
       end
+    end
+
+    it "rejects a second exclusive owner of the same type for one target" do
+      target = make_entity("orders")
+      link(make_entity("invoices"), target, exclusive: true)
+
+      expect { violating { link(make_entity("invoices"), target, exclusive: true) } }
+        .to raise_error(ActiveRecord::RecordNotUnique)
+    end
+
+    it "allows a second owner when the rows are not exclusive" do
+      target = make_entity("orders")
+      link(make_entity("invoices"), target)
+      link(make_entity("invoices"), target)
+
+      expect(connection.select_value("SELECT count(*) FROM relationships").to_i).to eq(2)
+    end
+
+    it "scopes exclusivity to the owner type" do
+      # An Invoice and an OrderItem may both point exclusively at one Order.
+      target = make_entity("orders")
+      link(make_entity("invoices"), target, exclusive: true)
+      link(make_entity("order_items"), target, owner_model: "order_items", exclusive: true)
+
+      expect(connection.select_value("SELECT count(*) FROM relationships").to_i).to eq(2)
     end
   end
 
@@ -343,7 +387,111 @@ RSpec.describe "generated migrations actually run", type: :generator do
 
       generate(EcsRails::Generators::UpgradeGenerator, [])
 
-      expect(migration_paths("ecs_rails_add_slots")).to be_empty
+      aggregate_failures do
+        expect(migration_paths("ecs_rails_add_slots")).to be_empty
+        expect(migration_paths("ecs_rails_shared_relationships")).to be_empty
+      end
+    end
+  end
+
+  # ADR-0017: the upgrade's second job. A pre-0.3 application has one backing
+  # table per relationship (`post_authors`, with `author_id`); the generated
+  # migration copies each into `relationships` under the relationship's name
+  # and drops it. Built by hand here in the shape ADR-0013's generator left it.
+  describe "the shared-relationships upgrade" do
+    def make_entity(model)
+      connection.select_value("INSERT INTO entities (model, created_at) VALUES ('#{model}', now()) RETURNING id")
+    end
+
+    before do
+      # Scratch schema ONLY: the generator inspects `connection.tables`, and with
+      # public still on the search_path the real test schema's `relationships`
+      # would read as already present. gen_random_uuid() is pg_catalog's on
+      # PostgreSQL 13+, so nothing here needs public.
+      connection.execute("SET LOCAL search_path TO #{scratch_schema}")
+      connection.execute("DROP TABLE relationships") # a 0.2.x app has none
+      connection.execute(<<~SQL)
+        CREATE TABLE post_authors (
+          id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+          entity_id uuid NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+          author_id uuid REFERENCES entities(id) ON DELETE SET NULL,
+          created_at timestamp NOT NULL, updated_at timestamp NOT NULL
+        );
+        CREATE UNIQUE INDEX index_post_authors_on_entity_id ON post_authors (entity_id);
+        CREATE TABLE membership_users (
+          id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+          entity_id uuid NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+          user_id uuid REFERENCES entities(id) ON DELETE SET NULL,
+          created_at timestamp NOT NULL, updated_at timestamp NOT NULL
+        );
+        CREATE UNIQUE INDEX index_membership_users_on_entity_id ON membership_users (entity_id);
+      SQL
+      connection.schema_cache.clear!
+    end
+
+    it "recognises the backing tables and skips them in the slots migration" do
+      generate(EcsRails::Generators::UpgradeGenerator, [])
+      contents = migration("ecs_rails_shared_relationships")
+
+      aggregate_failures do
+        expect(contents).to include("FROM post_authors", "drop_table :post_authors")
+        expect(contents).to include("FROM membership_users", "drop_table :membership_users")
+        expect(contents).to include("create_table :relationships")
+        expect(migration_paths("ecs_rails_add_slots")).to be_empty # emails already has slot; backings skipped
+      end
+    end
+
+    it "moves the rows under the relationship name and owner model, then drops the tables" do
+      post = make_entity("posts")
+      user = make_entity("users")
+      membership = make_entity("memberships")
+      connection.execute("INSERT INTO post_authors (entity_id, author_id, created_at, updated_at) VALUES ('#{post}', '#{user}', now(), now())")
+      connection.execute("INSERT INTO membership_users (entity_id, user_id, created_at, updated_at) VALUES ('#{membership}', '#{user}', now(), now())")
+
+      generate(EcsRails::Generators::UpgradeGenerator, [])
+      run_migration("ecs_rails_shared_relationships", "EcsRailsSharedRelationships")
+
+      rows = connection.select_all(
+        "SELECT entity_id, slot, target_id, owner_model, exclusive FROM relationships ORDER BY slot"
+      ).to_a
+      aggregate_failures do
+        expect(rows).to eq([
+          { "entity_id" => post, "slot" => "author", "target_id" => user, "owner_model" => "posts", "exclusive" => false },
+          { "entity_id" => membership, "slot" => "user", "target_id" => user, "owner_model" => "memberships", "exclusive" => false }
+        ])
+        expect(connection.tables).not_to include("post_authors", "membership_users")
+      end
+    end
+
+    it "leaves a bespoke single-foreign-key component alone" do
+      # `sponsors` (entity_id + sponsor_id) has the shape but not the name.
+      connection.execute(<<~SQL)
+        CREATE TABLE sponsors (
+          id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+          entity_id uuid NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+          slot character varying NOT NULL DEFAULT '',
+          sponsor_id uuid,
+          created_at timestamp NOT NULL, updated_at timestamp NOT NULL
+        );
+      SQL
+      connection.schema_cache.clear!
+
+      generate(EcsRails::Generators::UpgradeGenerator, [])
+
+      expect(migration("ecs_rails_shared_relationships")).not_to include("sponsors")
+    end
+
+    it "only creates the table when there is nothing to move" do
+      connection.execute("DROP TABLE post_authors; DROP TABLE membership_users")
+      connection.schema_cache.clear!
+
+      generate(EcsRails::Generators::UpgradeGenerator, [])
+      contents = migration("ecs_rails_shared_relationships")
+
+      aggregate_failures do
+        expect(contents).to include("create_table :relationships")
+        expect(contents).not_to include("INSERT INTO")
+      end
     end
   end
 end

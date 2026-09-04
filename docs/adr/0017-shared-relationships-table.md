@@ -1,6 +1,6 @@
 # ADR-0017: One shared `relationships` table
 
-**Status:** Accepted
+**Status:** Accepted — implemented 2026-09-04 (Linear ECS-15; see [RFC-0012's amendment](../rfc/0012-relationship-dsl.md#amendment-the-shared-relationships-table-adr-0017))
 **Date:** 2026-09-02
 **Supersedes the storage model of:** [ADR-0013](0013-relationship-dsl.md) (the `relates_to` API is unchanged)
 **Amends:** [ADR-0014](0014-relationship-name-query-sugar.md) (its "leak-proof by construction" argument)
@@ -178,6 +178,21 @@ their signatures and semantics ([RFC-0012](../rfc/0012-relationship-dsl.md),
   into `relationships` with `slot` = relationship name, `owner_model` = the
   owner's discriminator, then drop). The demo resets hourly, so for us it is a
   clean cut.
-- `architecture.md` §2 (schema) and §5 (relationships, still at the v0.1 text)
-  are rewritten when this is implemented (Linear ECS-15), as
-  [ADR-0016](0016-prefixed-delegation-by-default.md) does for §4.
+- `architecture.md` §2 (schema) and §5 (relationships) were rewritten when this
+  was implemented (Linear ECS-15).
+
+## Implementation notes (2026-09-04, ECS-15)
+
+- `Relationship` is the application's one-line class including
+  `EcsRails::Catalogue::Relationship` — the first catalogue entry in
+  [ADR-0018](0018-catalogue-in-the-gem.md)'s shape — written by install and
+  found by name via `EcsRails.config.relationship_class_name`.
+- `owner_model` and `exclusive` are stamped in `before_save`, not preset on the
+  virtual row as the Mechanism section says: a preset would differ from the
+  column defaults and make every untouched virtual relationship dirty
+  (RFC-0006). The effect is the same at the only time it matters.
+- The relationship name reserves `author`, `author=`, `author_id`, `author_id=`
+  on the entity, so later bare delegations cannot take them.
+- `ecs_rails:upgrade` creates the table for a pre-0.3 application and moves
+  each ADR-0013 backing table into it, recognised by shape and name; the
+  developer reviews the generated list before running it.

@@ -7,13 +7,16 @@ require "spec_helper"
 #
 # These wrap the component verbs (with_component / without_component /
 # includes_components, RFC-0010/0011) with the relationship's declared name, so
-# the backing `*Relationship` class never appears in app code. The tests are the
-# RFC's contract tests, ADAPTED to the gem's fixtures (spec/support/models.rb):
+# the shared `Relationship` component and its slot never appear in app code. The
+# tests are the RFC's contract tests, ADAPTED to the gem's fixtures
+# (spec/support/models.rb):
 #
-#   - Post declares `relates_to :author, User`, backed by `post_authors`.
-#   - Comment ALSO declares `relates_to :author, User`, backed by
-#     `comment_authors` — a distinct table, so the no-cross-entity-leak test is
-#     real (the RFC uses Comment for exactly this).
+#   - Post declares `relates_to :author, User` — rows in `relationships` under
+#     slot "author" (ADR-0017).
+#   - Comment ALSO declares `relates_to :author, User` — the SAME table and the
+#     SAME slot, so the no-cross-entity-leak test is real and load-bearing: only
+#     the entity-model scope `with_component` applies keeps them apart
+#     (ADR-0014, amended).
 #   - Membership is a join entity relating :user and :team.
 RSpec.describe "relationship-name query DSL" do
   describe "with_related" do
@@ -49,17 +52,31 @@ RSpec.describe "relationship-name query DSL" do
     end
 
     # THE proof it is exact sugar (ADR-0014): with_related compiles to the very
-    # same SQL as the hand-written with_component on the backing class.
-    it "is sugar over with_component on the backing class (identical SQL)" do
+    # same SQL as the hand-written, slot-scoped with_component on Relationship.
+    it "is sugar over with_component on Relationship, slot-scoped (identical SQL)" do
       ada = User.create!
 
       expect(Post.with_related(:author, ada).to_sql)
-        .to eq(Post.with_component(Post::AuthorRelationship, author_id: ada.id).to_sql)
+        .to eq(Post.with_component(Relationship, prefix: :author, target_id: ada.id).to_sql)
     end
 
-    it "with no target, equals with_component on the backing class" do
+    it "with no target, equals with_component on Relationship in the slot" do
       expect(Post.with_related(:author).to_sql)
-        .to eq(Post.with_component(Post::AuthorRelationship).to_sql)
+        .to eq(Post.with_component(Relationship, prefix: :author).to_sql)
+    end
+
+    it "narrows by slot, so another relationship to the same target does not match" do
+      # A Membership's :user and :team both live in the one table; :user rows
+      # must not answer a :team query.
+      user = User.create!
+      team = Team.create!
+      membership = Membership.create!(user: user, team: team)
+      other = Membership.create!(user: user)
+
+      aggregate_failures do
+        expect(Membership.with_related(:team, team)).to contain_exactly(membership)
+        expect(Membership.with_related(:user, user)).to contain_exactly(membership, other)
+      end
     end
 
     # No cross-entity leak (inherits ADR-0011 scoping): a Comment relating :author
@@ -135,9 +152,16 @@ RSpec.describe "relationship-name query DSL" do
       expect(Post.without_related(:author)).to contain_exactly(unset)
     end
 
-    it "is sugar over without_component on the backing class" do
+    it "is sugar over without_component on Relationship, slot-scoped" do
       expect(Post.without_related(:author).to_sql)
-        .to eq(Post.without_component(Post::AuthorRelationship).to_sql)
+        .to eq(Post.without_component(Relationship, prefix: :author).to_sql)
+    end
+
+    it "is slot-scoped, so a row in another slot does not count as set" do
+      membership = Membership.create!(user: User.create!)
+
+      expect(Membership.without_related(:team)).to contain_exactly(membership)
+      expect(Membership.without_related(:user)).to be_empty
     end
 
     it "raises a named error for an unknown relationship" do
@@ -184,8 +208,8 @@ RSpec.describe "relationship-name query DSL" do
       end
 
       rel = Post.all.includes_related(:author)
-      # posts + backings (post_authors) + targets (the User entities) = 3, NOT
-      # 1 + one backing + one target per post (the N+1 the demo hit).
+      # posts + relationship rows + targets (the User entities) = 3, NOT
+      # 1 + one row + one target per post (the N+1 the demo hit).
       expect { rel.each { |p| p.author } }.to issue_queries(3)
     end
 
@@ -209,8 +233,16 @@ RSpec.describe "relationship-name query DSL" do
       end
 
       rel = Membership.all.includes_related(:user, :team)
-      # memberships + user backings + user targets + team backings + team targets.
+      # memberships + user rows + user targets + team rows + team targets. Two
+      # slot-scoped has_ones over one table are still two preload queries.
       expect { rel.each { |m| [m.user, m.team] } }.to issue_queries(5)
+    end
+
+    it "yields the concrete target subclass through the preload (ADR-0008)" do
+      post = Post.create!(author: User.create!)
+
+      loaded = Post.all.includes_related(:author).find(post.id)
+      expect(loaded.author).to be_an_instance_of User
     end
 
     it "raises for an unknown relationship" do
@@ -239,9 +271,8 @@ RSpec.describe "relationship-name query DSL" do
   # Reload safety (RFC-0013): metadata is stored by NAME and resolved via
   # constantize on read, on a per-class ivar that a reloaded (fresh) class body
   # repopulates from empty. So after a simulated reload — a new class object under
-  # the same constant, re-running relates_to — with_related resolves against the
-  # NEW backing class. Mirrors spec/relationships_spec.rb's reload scenario, using
-  # the `reloadable_authors` table.
+  # the same constant, re-running relates_to — with_related resolves through the
+  # NEW class's metadata. Mirrors spec/relationships_spec.rb's reload scenario.
   describe "surviving a Rails development-mode class reload" do
     def reload!
       EcsRails.registry.clear!
@@ -250,10 +281,9 @@ RSpec.describe "relationship-name query DSL" do
 
     before { EcsRails.registry.clear! }
 
-    it "resolves with_related against the post-reload backing class" do
+    it "resolves with_related through the post-reload class" do
       original = stub_const("Reloadable", Class.new(ApplicationEntity))
       original.relates_to(:author, User)
-      original_backing = original::AuthorRelationship
 
       reloaded = reload!
       reloaded.relates_to(:author, User)
@@ -264,10 +294,9 @@ RSpec.describe "relationship-name query DSL" do
       entity.save!
 
       aggregate_failures do
-        # The metadata resolves to the NEW constant, not the orphaned original.
-        expect(reloaded::AuthorRelationship).not_to equal original_backing
-        expect(reloaded.relationship_meta(:author).backing_class)
-          .to equal reloaded::AuthorRelationship
+        expect(reloaded).not_to equal original
+        expect(reloaded.relationship_meta(:author).target_class).to eq User
+        expect(reloaded.relationship_meta(:author).slot).to eq "author"
         # And the query works end to end through the reloaded class.
         expect(reloaded.with_related(:author, ada)).to contain_exactly(entity)
       end

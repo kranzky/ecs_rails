@@ -8,6 +8,24 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **One shared `relationships` table** (ADR-0017). Every `relates_to` is now a
+  row in a table created at install, under a slot named for the relationship;
+  declaring a relationship needs no migration. The public API is unchanged
+  (`relates_to`, `post.author`, `post.author=`, `with_related`,
+  `without_related`, `includes_related`), plus `post.author_id` /
+  `post.author_id=`.
+- `relates_to :order, Order, unique: true` — at most one owner of this type per
+  target, enforced by a partial unique index created once at install.
+- `EcsRails::Catalogue::Relationship`, the first catalogue concern (ADR-0018);
+  `rails g ecs_rails:install` writes the one-line `Relationship` class that
+  includes it. `EcsRails.config.relationship_class_name` names it (default
+  `"Relationship"`).
+- The target type is checked on assignment: `post.author = team` raises
+  `EcsRails::InvalidRelationship`.
+- `rails g ecs_rails:upgrade` gains a second job: create `relationships` and
+  move every pre-0.3 per-relationship table into it (recognised by shape and
+  name), then drop them. Irreversible; review the generated file.
+
 - **Labelled (plural) components — slots** (RFC-0014 / ADR-0015). A component
   may be declared more than once on an entity under distinct labels, each a
   singleton with its own reader: `component Address` and `component Address,
@@ -33,8 +51,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   that lacks them, found by inspecting the database. Safe on shipped data.
   This is the only migration a 0.2.x app needs to run.
 
+### Removed
+
+- `rails g ecs_rails:relationship` and the per-relationship backing tables
+  (`post_authors`, ...). The dynamic `Post::AuthorRelationship` classes are gone;
+  `Post.components` lists `Relationship` instead.
+
 ### Changed
 
+- The install migration is now `ecs_rails_install` (`EcsRailsInstall`) and
+  creates both `entities` and `relationships`.
+- `RelationshipMeta` is `(name, target_class_name, unique)` with `slot` and
+  `reader_name` derived; `backing_class_name` and `foreign_key` are gone.
+- The nested-preload key for a relationship's target is `target`:
+  `preload(author_relationship: { target: :name })`.
 - **Every component table carries `slot string NOT NULL DEFAULT ''`, and the
   unique index moves from `entity_id` to `(entity_id, slot)`.** The
   `ecs_rails:component` and `ecs_rails:relationship` generators emit the new

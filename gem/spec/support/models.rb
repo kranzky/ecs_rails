@@ -17,6 +17,13 @@ end
 
 # --- components --------------------------------------------------------------
 
+# The one catalogue component every `relates_to` is a row of (ADR-0017 /
+# ADR-0018). Exactly the one-line class `rails g ecs_rails:install` writes into
+# a host app; the gem finds it by name (EcsRails.config.relationship_class_name).
+class Relationship < ApplicationComponent
+  include EcsRails::Catalogue::Relationship
+end
+
 class Email < ApplicationComponent
   validates :address, presence: true, format: { with: /@/, message: "is invalid" }
 
@@ -130,23 +137,22 @@ end
 # A second entity sharing a component type with the first. "Shared components"
 # means shared component *types*, never shared rows (ADR-0005).
 #
-# `relates_to :author, User` (RFC-0012 / ADR-0013) is the cross-entity link. It
-# writes no relationship component file: it dynamically defines the backing
-# component `Post::AuthorRelationship` (table `post_authors`) and declares it, so
-# `post.author` / `post.author=` reach the User via delegation and
-# `post.author_relationship` is the backing reader. This is exactly the shape of
-# the demo's old hand-written `Authorship` component.
+# `relates_to :author, User` (RFC-0012 / ADR-0013, storage per ADR-0017) is the
+# cross-entity link: a row in the shared `relationships` table under slot
+# "author". It declares the `Relationship` component into that slot, so
+# `post.author` / `post.author=` reach the User through the slot-scoped reader
+# `post.author_relationship`. No backing class, no table of its own.
 class Post < ApplicationEntity
   component Name
   component Avatar
   relates_to :author, User
 end
 
-# A SECOND entity relating `:author` to the same target as Post (RFC-0013). Its
-# owner-scoped backing table is `comment_authors`, distinct from Post's
-# `post_authors`, so `Post.with_related(:author, ada)` returning only posts is a
-# real assertion that relationship-name sugar does not leak across entity types
-# (the ADR-0011 scoping it inherits from `with_component`).
+# A SECOND entity relating `:author` to the same target as Post (RFC-0013). Under
+# ADR-0017 both live in the same `relationships` table under the same slot
+# "author", so `Post.with_related(:author, ada)` returning only posts is a real
+# assertion that the entity-model scope `with_component` applies (ADR-0011) is
+# what keeps relationship queries from leaking across entity types.
 class Comment < ApplicationEntity
   relates_to :author, User
 end
@@ -160,7 +166,7 @@ end
 
 # A join entity (ADR-0005): many-to-many is modelled as an entity carrying two
 # `relates_to` declarations, which is precisely what `relates_to` makes cheap.
-# Backing tables `membership_users` and `membership_teams`.
+# Two rows per membership in `relationships`, slots "user" and "team".
 class Membership < ApplicationEntity
   relates_to :user, User
   relates_to :team, Team

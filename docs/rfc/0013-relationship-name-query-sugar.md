@@ -1,6 +1,6 @@
 # RFC-0013: Relationship-name query & preload sugar
 
-**Status:** Implemented
+**Status:** Implemented — metadata and compilation re-based by [ADR-0017](../adr/0017-shared-relationships-table.md) (see [the amendment](#amendment-over-the-shared-table-adr-0017))
 **Depends on:** RFC-0010, RFC-0011, RFC-0012
 **Decision:** [ADR-0014](../adr/0014-relationship-name-query-sugar.md)
 
@@ -137,3 +137,25 @@ end
 Rewrite the demo controllers to use `with_related` (a post's comments, a user's
 posts, a group's members) and `includes_related` where it reads better. Confirm
 no `*Relationship` backing class name remains in `app/controllers`.
+
+## Amendment: over the shared table (ADR-0017)
+
+*2026-09-04, Linear ECS-15.* Same verbs, same signatures, same semantics.
+
+- **Metadata** is `{ name: :author, target_class_name: "User", unique: false }`
+  with `slot` (`"author"`) and `reader_name` (`:author_relationship`) derived.
+  There is no `backing_class_name` and no `foreign_key`: the backing class is
+  always the app's `Relationship`, the column always `target_id`.
+- **`with_related(:author, x)`** compiles to
+  `with_component(Relationship, prefix: :author, target_id: x.id)`; with no
+  target, `with_component(Relationship, prefix: :author)`. **`without_related`**
+  is `without_component(Relationship, prefix: :author)`. Both are slot-scoped, so
+  a Membership's `:user` row never answers a `:team` query.
+- **`includes_related(:author)`** preloads `author_relationship: :target`. The
+  nested-preload key for the target changed from the relationship name to
+  `target` — `preload(author_relationship: { target: :name })`.
+- **The entity-model scope is load-bearing** (ADR-0014, amended): Post and
+  Comment both relating `:author` share the table and the slot. The generated
+  SQL kept its shape, because `with_related` always rode `with_component`.
+- The note above about `includes_related` re-deriving the reader name is
+  resolved: `RelationshipMeta#reader_name` is the one derivation.

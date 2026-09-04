@@ -70,6 +70,23 @@ entities                    emails                        addresses
   DEFAULT ''`, a **unique index on `(entity_id, slot)`**, and a foreign key to
   `entities(id)` with `ON DELETE CASCADE`. `slot` is identity, not state: it is
   never delegated and never makes a virtual component dirty.
+- One more table is created at install and shared by every entity:
+
+  ```
+  relationships
+    id           UUID PK
+    entity_id    UUID FK ┐ UNIQUE         the owner (the Post)
+    slot         string  ┘                the relationship name ("author")
+    target_id    UUID FK, ON DELETE NULLIFY   the entity pointed at (the User)
+    owner_model  string                   the owner's entities.model ("posts")
+    exclusive    boolean                  written by `unique: true`
+    created_at, updated_at
+  INDEX  (target_id, slot)                            inverse lookups
+  UNIQUE (target_id, slot, owner_model) WHERE exclusive   has_one, DB-enforced
+  ```
+
+  Every `relates_to` is a row here. See §5 and
+  [ADR-0017](adr/0017-shared-relationships-table.md).
 - Component tables are named by the Rails plural of the component class.
 - `entities.model` is indexed; `User.all` compiles to
   `SELECT * FROM entities WHERE model = 'users'`.
@@ -182,23 +199,53 @@ user.state                    # => delegates to user.publish_state.state (bare)
 
 ## 5. Relationships
 
-Cross-entity links are ordinary components holding a UUID column. The gem
-provides no relationship machinery in v0.1.
+A cross-entity link is a labelled component whose one attribute is a target.
+All of them are rows in the shared `relationships` table (§2); the slot is the
+relationship name. Declaring one is pure Ruby — no table, no migration.
 
 ```ruby
-class Author < ApplicationComponent
-  belongs_to :author, class_name: "User", foreign_key: :author_id
+class Post < ApplicationEntity
+  relates_to :author, User
 end
+
+class Invoice < ApplicationEntity
+  relates_to :order, Order, unique: true   # at most one Invoice per Order
+end
+
+post.author = user          # checked: must be a User (InvalidRelationship otherwise)
+post.author                 # => the User, as its concrete subclass
+post.author_id              # => the User's id
+post.author_relationship    # => the backing Relationship row (slot "author")
+
+Post.with_related(:author, user)      # query by name, entity-model scoped
+Post.without_related(:author)
+Post.includes_related(:author)        # preload the row and its target
 ```
 
-```
-authors
-  entity_id  UUID UNIQUE   ← the Post that has this component
-  author_id  UUID          → the User being pointed at
-```
+- `relates_to :author, User` is `component Relationship, prefix: :author,
+  delegate: false` — the same slot mechanism as any labelled component (§4) —
+  plus the four accessors above, defined by the DSL. `Relationship` is the
+  application's one-line catalogue class including
+  `EcsRails::Catalogue::Relationship`, written by `ecs_rails:install`.
+- The target type is enforced in Ruby against the declared class; the database
+  enforces referential integrity against `entities`, never type.
+- Destroying the **owner** cascades and removes the link. Destroying the
+  **target** nullifies the link; the owner survives. Neither cascades to the
+  other entity.
+- `unique: true` stamps `exclusive` on the rows; the partial unique index then
+  rejects a second owner of the same type pointing at the same target under
+  the same name. One index, created at install, covers every exclusive
+  relationship the application will ever declare.
+- A link carries no data of its own. A link with data (a role, a position) is a
+  join entity carrying two `relates_to`.
+- The relationship name is reserved on the entity: a later component may not
+  delegate `author`, `author=`, `author_id` or `author_id=`, and no two
+  relationships share a name.
 
-See [ADR-0006](adr/0006-relationships-are-plain-components.md). A first-class
-relationship DSL is on the backlog, deliberately.
+See [ADR-0017](adr/0017-shared-relationships-table.md) (storage),
+[ADR-0013](adr/0013-relationship-dsl.md) (the API) and
+[ADR-0014](adr/0014-relationship-name-query-sugar.md) (query by name). The
+inverse side — `post.comments` — is [RFC-0015](rfc/0015-inverse-relationships.md).
 
 ---
 

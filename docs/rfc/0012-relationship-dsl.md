@@ -1,6 +1,6 @@
 # RFC-0012: Relationship DSL — relates_to
 
-**Status:** Implemented
+**Status:** Implemented — storage re-based by [ADR-0017](../adr/0017-shared-relationships-table.md) (see [the amendment](#amendment-the-shared-relationships-table-adr-0017))
 **Depends on:** RFC-0004, RFC-0005, RFC-0008
 **Decision:** [ADR-0013](../adr/0013-relationship-dsl.md)
 
@@ -134,3 +134,63 @@ Delete the demo's `authorship.rb`, `member_user.rb`, `member_group.rb`; rewrite
 (`post_authors`, `comment_authors`, `membership_users`, `membership_groups`).
 Update the index's nested preload to the new backing-reader name. Confirm the
 demo still serves and the query counts hold.
+
+## Amendment: the shared `relationships` table (ADR-0017)
+
+*2026-09-04, Linear ECS-15.* The API above is unchanged. What changed is
+everything under it: there is no backing class, no per-relationship table and
+no generator. The Rules and Generator sections describe ADR-0013's storage and
+are kept as history; the current rules are:
+
+- **`relates_to :author, User` is `component Relationship, prefix: :author,
+  delegate: false, target_class_name: "User", unique: false`.** The slot is the
+  relationship name; the reader `author_relationship` is the slot-scoped
+  `has_one` every labelled component gets (RFC-0014). The lazy reader presets
+  `slot = "author"` on a virtual.
+- **`Relationship` is the application's one-line catalogue class** including
+  `EcsRails::Catalogue::Relationship` (ADR-0018's shape), written by
+  `rails g ecs_rails:install` into the components directory, and found by name
+  through `EcsRails.config.relationship_class_name` (default `"Relationship"`).
+  `relates_to` without it raises a `NameError` that says what to run.
+- **The DSL defines `author`, `author=`, `author_id` and `author_id=` itself**,
+  forwarding to the reader's `target` / `target_id`. `delegate: false` keeps the
+  component's own `target` off the entity. `Post.create!(author: user)` and
+  `author_id:` route through them.
+- **The target type is checked on assignment**, by the component, against the
+  `target_class_name` slot option: `post.author = team` raises
+  `InvalidRelationship` (subclasses of the target are accepted). `belongs_to
+  class_name:` used to do this; with one generic `target` column the gem does,
+  and must (ADR-0017). `author_id=` is not type-checked.
+- **`owner_model` and `exclusive` are stamped in `before_save`**, from the
+  owning entity's `model` and the `unique` slot option — not preset on the
+  virtual, which would differ from the column defaults and make an untouched
+  virtual look dirty (RFC-0006).
+- **`unique: true`** (new) writes `exclusive = true`; the install-time partial
+  unique index rejects a second owner of the same model pointing at the same
+  target under the same slot — `ActiveRecord::RecordNotUnique` — at most one
+  Invoice per Order, with no index per relationship.
+- **The name is reserved.** `relates_to :author` claims `author`, `author=`,
+  `author_id`, `author_id=` through the DSL's `ecs_reserved_names` hook, so a
+  later bare component delegating any of them raises `DelegationConflict`; and
+  `relates_to` itself refuses a name whose `name` or `name_id` an existing
+  reader or delegated method owns.
+- **Deletion semantics are unchanged** and now enforced by two foreign keys on
+  one table: owner cascades, target nullifies. Two entity types relating the
+  same name to the same target share the table and the slot; only `owner_model`
+  (and the entity-model scope on queries) tells them apart.
+- **`Entity.components` lists `Relationship` once**; `component_declarations`
+  lists each relationship's slot. `includes_components(Relationship)` preloads
+  every relationship.
+- **`ecs_rails:relationship` is deleted.** `ecs_rails:upgrade` gains the data
+  move: it creates `relationships` if missing and copies every ADR-0013 backing
+  table — recognised by shape (`entity_id`, one `<name>_id`, timestamps) and
+  name (`<owner>_<names>`) — into it under the relationship's slot with the
+  owner's discriminator, then drops it. Irreversible, and written as `up`/`down`.
+- **The install migration is `ecs_rails_install`** (class `EcsRailsInstall`),
+  creating `entities` and `relationships`; previously `ecs_rails_create_entities`.
+
+**Demo verdict.** The forum's five relationships moved onto one table with one
+generated migration, and no controller, view or seed line changed except the two
+raw nested preloads, which name `target` instead of the relationship
+(`preload(author_relationship: { target: :name })`). See the
+[friction log](../friction-log.md).
