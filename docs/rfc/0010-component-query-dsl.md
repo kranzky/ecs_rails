@@ -1,6 +1,6 @@
 # RFC-0010: Component query DSL — with_component / without_component
 
-**Status:** Implemented
+**Status:** Implemented — extended by [RFC-0018](0018-component-query-conditions-and-ordering.md) (conditions beyond equality, ordering)
 **Depends on:** RFC-0001, RFC-0003
 **Decision:** [ADR-0011](../adr/0011-component-query-dsl.md)
 
@@ -110,8 +110,10 @@ end
 
 - **Preloading.** These filter; they do not load component data. Separate
   backlog item, composes on top.
-- **Non-equality conditions** (`count > 5`, ranges, `IN`). Hash equality only in
-  v1. A block or a relation argument is the likely later shape.
+- ~~**Non-equality conditions** (`count > 5`, ranges, `IN`). Hash equality only in
+  v1. A block or a relation argument is the likely later shape.~~ Shipped by
+  [RFC-0018](0018-component-query-conditions-and-ordering.md): a block and
+  `where`-style positional conditions.
 - **Conditions on `without_component`.** "Entities without a *matching* row" is
   ambiguous (no row at all? a row that fails to match?) and unneeded.
 - **Query optimisation** (architecture.md §7). `EXISTS` on an indexed
