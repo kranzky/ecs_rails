@@ -76,6 +76,47 @@ RSpec.describe EcsRails::Registry do
         .to eq [{ only: [:address] }]
     end
 
+    # RFC-0014 / ADR-0015: the declaration key is (entity, component, slot).
+    it "allows the same component on one entity under different slots" do
+      register(RegistrySpec::User, RegistrySpec::Email)
+      registry.register(entity_class: RegistrySpec::User, component_class: RegistrySpec::Email, slot: "work")
+
+      expect(registry.components_for(RegistrySpec::User).map(&:slot)).to eq ["", "work"]
+    end
+
+    it "rejects the same component in the same slot twice, naming the slot" do
+      registry.register(entity_class: RegistrySpec::User, component_class: RegistrySpec::Email, slot: "work")
+
+      expect do
+        registry.register(entity_class: RegistrySpec::User, component_class: RegistrySpec::Email, slot: :work)
+      end.to raise_error(EcsRails::DuplicateComponent, /User.*Email.*work/)
+    end
+
+    it "defaults the slot to the empty string and records slot options" do
+      declaration = registry.register(
+        entity_class: RegistrySpec::User, component_class: RegistrySpec::Email, slot_options: { states: [1] }
+      )
+
+      expect(declaration.slot).to eq ""
+      expect(declaration.prefix).to be_nil
+      expect(declaration.slot_options).to eq(states: [1])
+      expect(declaration.slot_options).to be_frozen
+    end
+
+    it "exposes a labelled slot as its prefix keyword" do
+      declaration = registry.register(entity_class: RegistrySpec::User, component_class: RegistrySpec::Email, slot: "work")
+
+      expect(declaration.prefix).to eq :work
+      expect(declaration.inspect).to include "Email[work]"
+    end
+
+    it "counts an entity once in entities_for however many slots it declares" do
+      register(RegistrySpec::User, RegistrySpec::Email)
+      registry.register(entity_class: RegistrySpec::User, component_class: RegistrySpec::Email, slot: "work")
+
+      expect(registry.entities_for(RegistrySpec::Email)).to eq [RegistrySpec::User]
+    end
+
     it "allows the same component on different entities" do
       register(RegistrySpec::Post, RegistrySpec::Likes)
       register(RegistrySpec::Comment, RegistrySpec::Likes)

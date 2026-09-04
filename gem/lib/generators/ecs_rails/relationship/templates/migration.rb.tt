@@ -15,12 +15,15 @@ class Create<%= backing_table_name.camelize %> < ActiveRecord::Migration[<%= mig
   def change
     create_table :<%= backing_table_name %>, id: :uuid, default: -> { "gen_random_uuid()" } do |t|
       t.uuid :entity_id, null: false
+      # A backing table is a component table, so it carries the slot column every
+      # component table has (RFC-0014). A relationship always uses the default "".
+      t.string :slot, null: false, default: ""
       t.uuid :<%= target_foreign_key %>, default: nil
       t.timestamps
     end
 
-    # ADR-0005: at most one relationship row per owner entity.
-    add_index :<%= backing_table_name %>, :entity_id, unique: true
+    # ADR-0005 / ADR-0015: at most one relationship row per owner entity (and slot).
+    add_index :<%= backing_table_name %>, [:entity_id, :slot], unique: true
 
     # Destroying the owner destroys the link, at the database level.
     add_foreign_key :<%= backing_table_name %>, :entities, column: :entity_id, on_delete: :cascade

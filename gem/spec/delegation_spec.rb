@@ -147,8 +147,7 @@ RSpec.describe "method delegation" do
 
     it "frees the reader namespace for a component named after a field" do
       # Email#address used to delegate as `address`, which is exactly the reader
-      # a component called Address would want. Prefixed, `address` is free.
-      stub_const("Address", Class.new(ApplicationComponent) { self.table_name = "avatars" })
+      # the Address component wants. Prefixed, `address` is free.
       stub_const("Solo", Class.new(ApplicationEntity))
       Solo.component Email
 
@@ -221,26 +220,25 @@ RSpec.describe "method delegation" do
     end
 
     describe "a label" do
-      # RFC-0014's slots will make `prefix: :business` mean something. Until
-      # then it must not be silently treated as truthy: that would generate
-      # unprefixed methods for a declaration whose author asked for a slot.
-      it "raises, naming RFC-0014" do
+      # A Symbol is RFC-0014's slot label: `prefix: :business` declares the
+      # component into slot "business" with reader `business_address` and
+      # delegation `business_address_line1`. That is spec/slots_spec.rb's
+      # subject; here it is enough to pin that the one `prefix:` keyword carries
+      # both meanings without ambiguity.
+      it "is a slot, prefixed with its own reader" do
         stub_const("Slotted", Class.new(ApplicationEntity))
+        Slotted.component Address, prefix: :business
 
-        expect { Slotted.component Email, prefix: :business }
-          .to raise_error(ArgumentError, /prefix:.*:business.*RFC-0014/m)
+        expect(Slotted.new).to respond_to(:business_address, :business_address_line1)
+        expect(Slotted.new).not_to respond_to(:address, :address_line1)
       end
 
-      it "leaves the class unchanged when it raises" do
+      it "rejects anything that is not a Boolean or a label" do
         stub_const("Slotted", Class.new(ApplicationEntity))
-        begin
-          Slotted.component Email, prefix: :business
-        rescue ArgumentError
-          # expected
-        end
 
+        expect { Slotted.component Email, prefix: 42 }
+          .to raise_error(ArgumentError, /prefix:.*RFC-0014.*42/m)
         expect(Slotted.new).not_to respond_to :email
-        expect(EcsRails.registry.components_for(Slotted)).to be_empty
       end
     end
   end

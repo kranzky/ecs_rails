@@ -88,6 +88,25 @@ end
 class PublishState < ApplicationComponent
 end
 
+# A naturally multi-role component (RFC-0014 / ADR-0015): a user has a postal
+# address and a business address, a supplier a remit-to address. One class, one
+# table, several slots. Not declared on the shared fixtures — spec/slots_spec.rb
+# declares it on throwaway entities so the preloading query counts here stay
+# what they are.
+#
+# `slot_option :country` is RFC-0014's slot configuration: the declaring entity
+# may pass `country: "NZ"` on the `component` line, and the instance reads it
+# back as `#country`. Unknown options raise at declaration time.
+class Address < ApplicationComponent
+  slot_option :country, default: "AU"
+
+  validates :postcode, format: { with: /\A\d{4}\z/, allow_nil: true }
+
+  def one_line
+    [line1, region, postcode, country].compact.join(", ")
+  end
+end
+
 # --- entities ----------------------------------------------------------------
 
 # The first real use of the gem's API (RFC-0004). Read it as a host app would

@@ -21,4 +21,9 @@ RSpec.describe "generator discovery" do
     expect(Rails::Generators.find_by_namespace("relationship", "ecs_rails"))
       .to eq(EcsRails::Generators::RelationshipGenerator)
   end
+
+  it "resolves ecs_rails:upgrade" do
+    expect(Rails::Generators.find_by_namespace("upgrade", "ecs_rails"))
+      .to eq(EcsRails::Generators::UpgradeGenerator)
+  end
 end

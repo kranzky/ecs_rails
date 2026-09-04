@@ -378,14 +378,13 @@ module EcsRails
     # created, so the message names `:author` (the relationship) rather than the
     # backing class, and no doubled const_set warning is printed.
     #
-    # Reuses the DSL's own reader/delegation resolution (#reader_name_for,
-    # #delegation_map — the entity-level names, prefixed per ADR-0016), so "what
-    # names does this entity already answer" is computed the one way the gem
-    # computes it everywhere else.
+    # Reuses the DSL's own reader/delegation resolution (Declaration#reader_name,
+    # #delegation_map_for — the entity-level names, prefixed per ADR-0016), so
+    # "what names does this entity already answer" is computed the one way the
+    # gem computes it everywhere else.
     def detect_relationship_collision!(name)
       taken = component_declarations.flat_map do |declaration|
-        component = declaration.component_class
-        [reader_name_for(component)] + delegation_map(component, declaration.options).keys
+        [declaration.reader_name] + delegation_map_for(declaration).keys
       end
 
       return unless taken.include?(name)

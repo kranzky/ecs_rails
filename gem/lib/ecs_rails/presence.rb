@@ -27,6 +27,11 @@ module EcsRails
   # This module is the entity side. The `<reader>?` predicate is generated per
   # component by the DSL, into generated_component_methods (see
   # EcsRails::DSL#define_component_predicate); it is just `has?(ThatComponent)`.
+  #
+  # Labelled slots (RFC-0014) add an optional `prefix:` to all three verbs —
+  # `add(PostalAddress, prefix: :business)` — and the per-slot predicate
+  # `user.business_address?`. Omitted, `prefix:` means the default slot, so
+  # every singular call reads exactly as before.
   module Presence
     # The entity side of presence: `add` / `has?` / `remove`.
     #
@@ -59,16 +64,22 @@ module EcsRails
       # @example Validation still applies
       #   user.add(Email)         # raises: Email#address is required
       #
+      # @example A labelled slot (RFC-0014)
+      #   user.add(PostalAddress, prefix: :business)
+      #   user.business_address?  # => true
+      #
       # @param component_class [Class<EcsRails::Component>] a component this
       #   entity declares
+      # @param prefix [Symbol, String, nil] the slot label; nil for the default slot
       # @return [EcsRails::Component] the persisted component instance
-      # @raise [EcsRails::InvalidComponent] if the entity does not declare it
+      # @raise [EcsRails::InvalidComponent] if the entity does not declare it in
+      #   that slot
       # @raise [ActiveRecord::RecordInvalid] if the component is invalid — you
       #   cannot add an empty required component (ADR-0009)
       # @see #has?
       # @see #remove
-      def add(component_class)
-        name = ecs_presence_reader(component_class)
+      def add(component_class, prefix: nil)
+        name = ecs_presence_reader(component_class, prefix)
 
         # The reader goes through RFC-0006's memo. When no row exists on this
         # instance it loads one (a SELECT) or builds a virtual; when a row does
@@ -104,12 +115,14 @@ module EcsRails
       #
       # @param component_class [Class<EcsRails::Component>] a component this
       #   entity declares
-      # @return [Boolean] whether a persisted row exists
-      # @raise [EcsRails::InvalidComponent] if the entity does not declare it
+      # @param prefix [Symbol, String, nil] the slot label; nil for the default slot
+      # @return [Boolean] whether a persisted row exists in that slot
+      # @raise [EcsRails::InvalidComponent] if the entity does not declare it in
+      #   that slot
       # @see #add
       # @see #remove
-      def has?(component_class)
-        name = ecs_presence_reader(component_class)
+      def has?(component_class, prefix: nil)
+        name = ecs_presence_reader(component_class, prefix)
 
         # Memo first: if this instance already loaded (and persisted) the
         # component, the answer is known without touching the database. A merely
@@ -121,8 +134,9 @@ module EcsRails
 
         # Bare existence check: no row is instantiated, so nothing is loaded and
         # nothing is dirtied. One query per component, as everywhere else in the
-        # gem (architecture.md §7 non-goal: query optimisation).
-        component_class.where(entity_id: id).exists?
+        # gem (architecture.md §7 non-goal: query optimisation). Slot-scoped, so
+        # a `business_address` row does not answer for `postal_address`.
+        component_class.where(entity_id: id, slot: prefix.to_s).exists?
       end
 
       # Destroys the row for `component_class` if present, and resets the reader
@@ -135,12 +149,14 @@ module EcsRails
       #
       # @param component_class [Class<EcsRails::Component>] a component this
       #   entity declares
+      # @param prefix [Symbol, String, nil] the slot label; nil for the default slot
       # @return [self] the entity, for chaining
-      # @raise [EcsRails::InvalidComponent] if the entity does not declare it
+      # @raise [EcsRails::InvalidComponent] if the entity does not declare it in
+      #   that slot
       # @see #add
       # @see #has?
-      def remove(component_class)
-        name = ecs_presence_reader(component_class)
+      def remove(component_class, prefix: nil)
+        name = ecs_presence_reader(component_class, prefix)
 
         # Reach the component through the reader so a present row is loaded with
         # its callbacks intact. `component.destroy` fires Lazy::Component's
@@ -155,21 +171,23 @@ module EcsRails
 
       private
 
-      # Resolves a declared component class to its reader name, or raises.
+      # Resolves a declared (component, slot) to its reader name, or raises.
       #
       # `add`/`has?`/`remove` accept only a component the entity actually
-      # declares (RFC-0009); anything else — an undeclared component, or a class
-      # that is not a component at all — is InvalidComponent, checked before any
-      # database work. The declared set already accounts for inheritance
-      # (DSL#components walks the ancestry), so a subclass sees its parents'
+      # declares (RFC-0009), in a slot it declares it under (RFC-0014); anything
+      # else — an undeclared component, an undeclared slot, or a class that is
+      # not a component at all — is InvalidComponent, checked before any
+      # database work. The lookup already accounts for inheritance
+      # (DSL#declaration_for walks the ancestry), so a subclass sees its parents'
       # components too.
-      def ecs_presence_reader(component_class)
-        unless self.class.components.include?(component_class)
-          raise InvalidComponent,
-                "#{component_class.inspect} is not a component of #{self.class.name}"
-        end
+      def ecs_presence_reader(component_class, prefix)
+        declaration =
+          component_class.is_a?(Class) && self.class.declaration_for(component_class, prefix: prefix)
+        return declaration.reader_name if declaration
 
-        component_class.model_name.singular.to_sym
+        where = prefix.nil? ? "" : " in slot #{prefix.to_s.inspect} (prefix: :#{prefix})"
+        raise InvalidComponent,
+              "#{component_class.inspect} is not a component of #{self.class.name}#{where}"
       end
     end
   end

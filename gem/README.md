@@ -48,6 +48,20 @@ Delegated methods carry the component's name — `user.email_address`,
 `user.name_first` — so two components can share an attribute without a clash.
 `component PublishState, prefix: false` opts a declaration back to bare names.
 
+A component can be declared more than once, under labels — a *slot*:
+
+```ruby
+class User < ApplicationEntity
+  component Address                      # user.address, user.address_line1
+  component Address, prefix: :business   # user.business_address, user.business_address_line1
+  component Phone,   prefix: :mobile     # user.mobile_phone
+end
+
+user.business_address.line1 = "1 St Georges Tce"
+user.save!                               # one row per slot, in one `addresses` table
+User.with_component(Address, prefix: :business, region: "WA")
+```
+
 Every v0.1 capability, working today:
 
 ```ruby
@@ -121,7 +135,7 @@ Set `DATABASE_URL` to point the suite at a different database.
 | RubyGems gem | `ecs_on_rails` |
 | Ruby module | `EcsRails` |
 | `require` | `ecs_rails` |
-| Generators | `ecs_rails:install`, `:component`, `:relationship` |
+| Generators | `ecs_rails:install`, `:component`, `:relationship`, `:upgrade` |
 
 Only the published gem name differs. RubyGems collapses `-`, `_` and case when
 comparing names, so `ecs-rails`, `ecs_rails` and `ecsrails` are one name — and

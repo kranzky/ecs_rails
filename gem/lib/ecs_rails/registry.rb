@@ -20,7 +20,9 @@ module EcsRails
   # nothing here stores a Class: entries are keyed by class *name*, and names are
   # resolved back to live constants via #constantize at read time.
   class Registry
-    # One `component Foo` declaration on one entity class.
+    # One `component Foo` declaration on one entity class — under one slot
+    # (RFC-0014 / ADR-0015): the same component declared twice under different
+    # labels is two Declarations.
     #
     # A value object over *names*. #entity_class / #component_class resolve on
     # every call, so a Declaration handed out before a reload still resolves to
@@ -30,20 +32,48 @@ module EcsRails
       #   @return [String] the declaring entity's class name
       # @!attribute [r] component_class_name
       #   @return [String] the declared component's class name
+      # @!attribute [r] slot
+      #   @return [String] the slot label; `""` is the default (singular) slot
       # @!attribute [r] options
       #   @return [Hash] the frozen delegation options: `only:`/`except:` as
-      #     symbol arrays, and `prefix: false` for bare delegation (ADR-0016).
-      #     `{}` means everything delegated, reader-prefixed.
-      attr_reader :entity_class_name, :component_class_name, :options
+      #     symbol arrays, `prefix: false` for bare delegation (ADR-0016), and
+      #     `delegate: false` for none (RFC-0014). `{}` means everything
+      #     delegated, reader-prefixed.
+      # @!attribute [r] slot_options
+      #   @return [Hash{Symbol => Object}] the frozen per-slot options the
+      #     declaration passed through to the component (RFC-0014, e.g.
+      #     `states: %w[...]`); see {EcsRails::Slots::Component#slot_options}
+      attr_reader :entity_class_name, :component_class_name, :slot, :options, :slot_options
 
       # @param entity_class_name [String] the declaring entity's class name
       # @param component_class_name [String] the declared component's class name
-      # @param options [Hash] `only:`/`except:`/`prefix:` delegation options
-      def initialize(entity_class_name:, component_class_name:, options: {})
+      # @param slot [String] the slot label, `""` for the default slot
+      # @param options [Hash] `only:`/`except:`/`prefix:`/`delegate:` delegation options
+      # @param slot_options [Hash] per-slot options passed through to the component
+      def initialize(entity_class_name:, component_class_name:, slot: "", options: {}, slot_options: {})
         @entity_class_name = entity_class_name
         @component_class_name = component_class_name
+        @slot = slot.to_s.dup.freeze
         @options = options.dup.freeze
+        @slot_options = slot_options.dup.freeze
         freeze
+      end
+
+      # The entity reader this declaration generates — `postal_address` for the
+      # default slot, `business_address` for slot `"business"`. Derived by
+      # {EcsRails::Slots::Component::ClassMethods#ecs_reader_name} so the
+      # component instance and the declaration cannot disagree.
+      #
+      # @return [Symbol]
+      def reader_name
+        component_class.ecs_reader_name(slot)
+      end
+
+      # @return [Symbol, nil] the slot as the `prefix:` keyword the DSL was given,
+      #   or nil for the default slot — the form {EcsRails::Presence::Entity#has?}
+      #   and {EcsRails::DSL#declaration_for} take
+      def prefix
+        slot.empty? ? nil : slot.to_sym
       end
 
       # Resolved live, so a reloaded constant is picked up.
@@ -64,24 +94,28 @@ module EcsRails
 
       # @param other [Object]
       # @return [Boolean] true if both declare the same component on the same
-      #   entity with the same options
+      #   entity, in the same slot, with the same options
       def ==(other)
         other.is_a?(Declaration) &&
           entity_class_name == other.entity_class_name &&
           component_class_name == other.component_class_name &&
-          options == other.options
+          slot == other.slot &&
+          options == other.options &&
+          slot_options == other.slot_options
       end
       alias eql? ==
 
       # @return [Integer] a hash consistent with {#==}, so Declarations work as
       #   Hash keys and in Sets
       def hash
-        [self.class, entity_class_name, component_class_name, options].hash
+        [self.class, entity_class_name, component_class_name, slot, options, slot_options].hash
       end
 
-      # @return [String] e.g. `#<...Declaration User => Email {}>`
+      # @return [String] e.g. `#<...Declaration User => Email {}>` or
+      #   `#<...Declaration User => PostalAddress[business] {}>`
       def inspect
-        "#<#{self.class} #{entity_class_name} => #{component_class_name} #{options.inspect}>"
+        label = slot.empty? ? "" : "[#{slot}]"
+        "#<#{self.class} #{entity_class_name} => #{component_class_name}#{label} #{options.inspect}>"
       end
     end
 
@@ -91,33 +125,41 @@ module EcsRails
 
     # Records one declaration. Returns the Declaration.
     #
-    # Raises DuplicateComponent if this entity already declares this component —
-    # per ADR-0005 a component appears at most once per entity, and RFC-0004
-    # relies on the raise to catch a doubled `component` line at class-load time.
+    # Raises DuplicateComponent if this entity already declares this component
+    # in this slot — per ADR-0005 as generalised by ADR-0015, a component appears
+    # at most once per (entity, slot), and RFC-0004 relies on the raise to catch
+    # a doubled `component` line at class-load time. The same component under a
+    # different slot is a distinct declaration.
     #
     # @param entity_class [Class<EcsRails::Entity>] the declaring entity
     # @param component_class [Class<EcsRails::Component>] the declared component
-    # @param options [Hash] `only:`/`except:`/`prefix:` delegation options
+    # @param slot [String, Symbol] the slot label; `""` for the default slot
+    # @param options [Hash] `only:`/`except:`/`prefix:`/`delegate:` delegation options
+    # @param slot_options [Hash] per-slot options passed through to the component
     # @return [Declaration] the recorded declaration
     # @raise [EcsRails::DuplicateComponent] if this entity already declares this
-    #   component (ADR-0005)
+    #   component in this slot (ADR-0005 / ADR-0015)
     # @raise [ArgumentError] if either class is anonymous, since the registry
     #   keys entries by class name
-    def register(entity_class:, component_class:, options: {})
+    def register(entity_class:, component_class:, slot: "", options: {}, slot_options: {})
       entity_name = name_for(entity_class)
       component_name = name_for(component_class)
+      slot = slot.to_s
 
       declarations = (@declarations[entity_name] ||= [])
 
-      if declarations.any? { |declaration| declaration.component_class_name == component_name }
+      if declarations.any? { |d| d.component_class_name == component_name && d.slot == slot }
+        where = slot.empty? ? "" : " in slot #{slot.inspect} (prefix: :#{slot})"
         raise DuplicateComponent,
-              "#{entity_name} already declares #{component_name}"
+              "#{entity_name} already declares #{component_name}#{where}"
       end
 
       declaration = Declaration.new(
         entity_class_name: entity_name,
         component_class_name: component_name,
-        options: options
+        slot: slot,
+        options: options,
+        slot_options: slot_options
       )
       declarations << declaration
       declaration
@@ -142,7 +184,8 @@ module EcsRails
       declarations ? declarations.dup : []
     end
 
-    # Every entity class declaring this component, as live class objects.
+    # Every entity class declaring this component, as live class objects. An
+    # entity declaring it under two slots appears once.
     #
     # @param component_class [Class<EcsRails::Component>] the component
     # @return [Array<Class<EcsRails::Entity>>] the entities composed from it
@@ -154,7 +197,7 @@ module EcsRails
         declarations.each do |declaration|
           entities << declaration.entity_class if declaration.component_class_name == component_name
         end
-      end
+      end.uniq
     end
 
     # Resets the registry. Used between tests and by the Railtie's `to_prepare`.
