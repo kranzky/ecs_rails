@@ -8,6 +8,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Component queries beyond equality, and ordering** (RFC-0018).
+  `with_component` takes a block run on the component's relation
+  (`{ where("amount_cents < ?", 5000) }`, `{ tagged("ruby") }`,
+  `{ matching(q) }`) and `where`-style positional conditions
+  (`with_component(Rating, "stars >= ?", 4)`), all inside the same correlated
+  `EXISTS`. New `order_by_component(Money, :amount_cents, :desc, prefix:
+  :price)` orders by a component column through a correlated scalar subquery —
+  no join, no duplicate rows — with the column defaulting to the component's
+  primary attribute and entities lacking the row sorting last.
+
 - **Inverse relationships** (RFC-0015): `has_many :comments, via: :post` and
   `has_one :invoice, via: :order` on the parent expand to native `has_many
   :through` over the shared `relationships` table — a real `CollectionProxy` of

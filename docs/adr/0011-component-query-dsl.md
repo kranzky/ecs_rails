@@ -1,6 +1,6 @@
 # ADR-0011: Component query DSL — with_component / without_component
 
-**Status:** Accepted
+**Status:** Accepted — amended 2026-09-04 by [RFC-0018](../rfc/0018-component-query-conditions-and-ordering.md): `with_component` takes a block and `where`-style conditions inside the same `EXISTS`; ordering by a component column is a separate mechanism, a correlated scalar subquery in `ORDER BY`, because `EXISTS` cannot sort
 **Date:** 2026-07-19
 **Surfaced by:** the demo (docs/friction-log.md — "all published posts")
 

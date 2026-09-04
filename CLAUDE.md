@@ -127,6 +127,10 @@ bundle exec rspec                   # component specs are placeholders
   `catalogue_*` tables in the suite. Generator specs must never generate a
   component whose file a catalogue class already owns (Thor would prompt; the
   helper now fails instead of hanging).
+- **Querying** (RFC-0010/0018): `with_component` compiles to one correlated
+  `EXISTS` per call; a block runs as the component's relation; positional
+  args are `where`-style. Ordering is `order_by_component`, a scalar subquery
+  in `ORDER BY` — never a join. Both keep the entity-model scope.
 - **Conflicts raise at declaration time** (ADR-0004). Never a silent winner.
 - **Presence is explicit** (ADR-0009): markers persist via `add`/`remove`.
   Markers are `marker :moderator` (RFC-0016): slots of the app's `Marker`

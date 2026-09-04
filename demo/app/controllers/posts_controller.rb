@@ -2,13 +2,17 @@
 
 class PostsController < ApplicationController
   def index
-    # Preload the components the index renders (RFC-0011), plus the nested
-    # author-name hop through the :author relationship (RFC-0012): the row in
-    # the shared relationships table, its target, the target's Name. Turns an
-    # N+1 into a bounded query count.
-    @posts = Post.published
-                 .includes_components(Text, Counter)
-                 .preload(author_relationship: { target: :name })
+    # Search and sort are the query DSL beyond equality (RFC-0018): a block on
+    # with_component for the search, a scalar-subquery ORDER BY for "most
+    # liked". Then preload the components the index renders (RFC-0011), plus the
+    # nested author-name hop through the :author relationship (RFC-0012). Turns
+    # an N+1 into a bounded query count.
+    @query = params[:q].to_s.strip.first(80)
+    @sort = params[:sort] == "likes" ? "likes" : "newest"
+    posts = Post.published.searching(@query)
+    posts = posts.most_liked if @sort == "likes"
+    @posts = posts.includes_components(Text, Counter)
+                  .preload(author_relationship: { target: :name })
   end
 
   def show
@@ -35,6 +39,7 @@ class PostsController < ApplicationController
     assign(post, post_params)
 
     if post.save
+      post.search_vector.reindex!(post.title, post.body)
       redirect_to post, notice: post.published? ? "Post published." : "Draft saved."
     else
       @post = post
@@ -53,6 +58,7 @@ class PostsController < ApplicationController
     assign(post, post_params)
 
     if post.save
+      post.search_vector.reindex!(post.title, post.body)
       redirect_to post, notice: post.published? ? "Post published." : "Draft updated."
     else
       @post = post

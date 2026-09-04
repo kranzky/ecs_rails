@@ -178,6 +178,13 @@
       "humanMinutes": 5,
       "aiMinutes": 90,
       "costs": []
+    },
+    {
+      "date": "2026-09-04",
+      "summary": "Component queries beyond equality and ordering per RFC-0018 (Linear ECS-5). `with_component` now takes a block instance_exec'd on the component's relation (`{ where(\"amount_cents < ?\", 5000) }`, `{ matching(q) }`, any component scope) and `where`-style positional conditions (`\"stars >= ?\", 4`), all inside the same correlated EXISTS \u2014 one clause per call, entity-model scope untouched, a block that returns anything but the component's relation raises. New `order_by_component(Component, column = primary, :asc/:desc, prefix:, nulls: :last)` orders by a component column through a correlated scalar subquery in ORDER BY (no join, no aliasing, no duplicate rows); column defaults to the component's primary attribute, is validated against real columns since it is interpolated, and entities without the row sort last. Demo: the forum's posts index gained a search box (`with_component(SearchVector) { matching(q) }`) fed by an entity-blind `Demo::Indexer` over every entity's Text slots, and a \"most liked\" sort; verified over HTTP. 834 examples green, YARD 100%. Docs: RFC-0018, RFC-0010/ADR-0011 amendments, docs index, backlog row shipped, CHANGELOG, READMEs, CLAUDE.md, friction log.",
+      "humanMinutes": 3,
+      "aiMinutes": 45,
+      "costs": []
     }
   ]
 }

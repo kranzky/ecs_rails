@@ -654,3 +654,50 @@ from strings for exactly this reason. Fixed in the gem the same hour: the
 child is inferred or named, resolved at query time, and the pair is validated
 on first use and at boot under `eager_load`. Verdict: 🟢 once the trap was out
 of the way, and worth a bold line in CLAUDE.md so nobody puts it back.
+
+## Search and sort (ECS-5)
+
+Two things the forum's index could not do before RFC-0018: filter a component
+by anything but equality, and order by a component's value. The marketplace
+listing needs both ("under $50, four stars up, cheapest first"), so the forum
+took them for a walk first.
+
+### 🟢 A search box is one block — 2026-09-04
+
+**What happened.** `Post.published.with_component(SearchVector) { matching(q) }`
+was the whole search feature on the query side: the block runs as the
+component's relation, so the catalogue's own `matching` scope is the condition,
+and it lands inside the same correlated `EXISTS` the equality form uses — one
+clause, no join, entity-model scope intact. The feed is a fifteen-line
+`Demo::Indexer` that never names an entity class: it walks the `texts` table,
+finds each entity's concrete class (ADR-0008), and rebuilds the SearchVector
+for any that declare it. That is the "S" in ECS in the demo, beside the
+geocoder the marketplace will add.
+
+**Verdict.** 🟢 Positional `where`-style args (`"stars >= ?", 4`) exist for the
+one-liner case, but the block is the shape that reads. A block that returns
+something other than the component's relation raises rather than silently
+dropping the condition — the mistake I made first, returning `SearchVector.all`
+from a stubbed block.
+
+### 🟢 "Most liked" needed its own verb — 2026-09-04
+
+**What happened.** `EXISTS` cannot sort. The first instinct, a `LEFT JOIN` per
+component, needs an alias per call and changes what `count` means once two
+are chained. A correlated scalar subquery in `ORDER BY` needs none of that:
+
+```sql
+ORDER BY (SELECT "counters"."count" FROM "counters"
+          WHERE "counters"."slot" = 'likes' AND "counters"."entity_id" = "entities"."id"
+          LIMIT 1) DESC NULLS LAST, "entities"."created_at" DESC
+```
+
+`Post.published.most_liked` is `reorder(nil).order_by_component(Counter,
+prefix: :likes, direction: :desc).order(created_at: :desc)`; the column is
+omitted because Counter declares `primary :count`. Posts with no Counter row
+sort last in either direction, which is what "most liked" and "least liked"
+both mean.
+
+**Verdict.** 🟢 One verb, composes with everything, and the primary-attribute
+decision (ECS-17) paid again: `order_by_component(Counter, prefix: :likes)`
+says exactly what the page does.

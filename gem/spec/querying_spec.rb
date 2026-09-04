@@ -205,4 +205,202 @@ RSpec.describe "component query DSL" do
       expect { Post.without_component(String) }.to raise_error(EcsRails::InvalidComponent)
     end
   end
+
+  # --- beyond equality (RFC-0018) ---------------------------------------------
+  #
+  # The block runs as the component's own relation; positional args are
+  # `where`-style. Both land inside the same correlated EXISTS, so the
+  # entity-model scope and the no-duplicates property are unchanged.
+  describe "with_component beyond equality" do
+    def group_with_title(entity, title)
+      entity.group.title = title
+      entity.save!
+      entity
+    end
+
+    it "filters with a block run on the component relation" do
+      a = group_with_title(User.create!, "alpha")
+      group_with_title(User.create!, "beta")
+
+      expect(User.with_component(Group) { where("title < ?", "b") }).to contain_exactly(a)
+    end
+
+    it "accepts where.not and chained refinements in the block" do
+      a = group_with_title(User.create!, "alpha")
+      b = group_with_title(User.create!, "beta")
+
+      expect(User.with_component(Group) { where.not(title: "alpha") }).to contain_exactly(b)
+      expect(User.with_component(Group) { where.not(title: nil).where("title LIKE ?", "a%") }).to contain_exactly(a)
+    end
+
+    it "lets the block use the component's own scopes and class methods" do
+      stub_const("TitledGroup", Class.new(Group) do
+        self.table_name = "groups"
+        scope :starting_with, ->(letter) { where("title LIKE ?", "#{letter}%") }
+      end)
+      a = group_with_title(User.create!, "alpha")
+      group_with_title(User.create!, "beta")
+
+      expect(User.with_component(TitledGroup) { starting_with("a") }).to contain_exactly(a)
+    end
+
+    it "accepts where-style positional conditions with binds" do
+      a = group_with_title(User.create!, "alpha")
+      group_with_title(User.create!, "beta")
+
+      expect(User.with_component(Group, "title < ?", "b")).to contain_exactly(a)
+      expect(User.with_component(Group, ["title < ?", "b"])).to contain_exactly(a)
+    end
+
+    it "combines equality, positional and block conditions" do
+      a = group_with_title(User.create!, "alpha")
+      a.group.update!(description: "d")
+      group_with_title(User.create!, "alpha")
+
+      expect(User.with_component(Group, "title LIKE ?", "a%", description: "d") { where.not(title: nil) })
+        .to contain_exactly(a)
+    end
+
+    it "keeps the slot scoping under prefix: with a block" do
+      stub_const("Customer", Class.new(ApplicationEntity))
+      Customer.component Address
+      Customer.component Address, prefix: :business
+      c = Customer.create!(business_address_region: "WA", address_region: "NSW")
+      Customer.create!(address_region: "WA")
+
+      expect(Customer.with_component(Address, prefix: :business) { where(region: "WA") }).to contain_exactly(c)
+    end
+
+    it "still compiles to a single correlated EXISTS with the entity-model scope" do
+      sql = User.with_component(Group) { where("title < ?", "b") }.to_sql
+
+      aggregate_failures do
+        expect(sql).to include('"entities"."model" = \'users\'')
+        expect(sql.scan(/EXISTS/).size).to eq 1
+        expect(sql).to match(/"groups"\."entity_id"\s*=\s*"entities"\."id"/i)
+        expect(sql).to include("title < 'b'")
+      end
+    end
+
+    it "sanitises positional binds" do
+      group_with_title(User.create!, "alpha")
+
+      expect(User.with_component(Group, "title = ?", "x'); DROP TABLE users; --")).to be_empty
+    end
+
+    it "rejects a block that does not return a relation of the component" do
+      expect { User.with_component(Group) { 42 }.to_a }.to raise_error(ArgumentError, /must return a relation of Group/)
+      expect { User.with_component(Group) { Email.all }.to_a }.to raise_error(ArgumentError, /relation of Group/)
+    end
+  end
+
+  # --- ordering by a component column (RFC-0018) -------------------------------
+  #
+  # EXISTS cannot sort. order_by_component adds a correlated scalar subquery to
+  # ORDER BY: no join, no alias, no duplicate rows, composes with everything.
+  describe "order_by_component" do
+    def user_titled(title)
+      u = User.create!
+      u.group.title = title if title
+      u.save!
+      u
+    end
+
+    it "orders ascending by a component column" do
+      b = user_titled("beta")
+      a = user_titled("alpha")
+
+      expect(User.order_by_component(Group, :title)).to eq [a, b]
+    end
+
+    it "orders descending" do
+      b = user_titled("beta")
+      a = user_titled("alpha")
+
+      expect(User.order_by_component(Group, :title, :desc)).to eq [b, a]
+      expect(User.order_by_component(Group, :title, direction: :desc)).to eq [b, a]
+    end
+
+    it "puts entities without the row last, whatever the direction" do
+      none = user_titled(nil)
+      a = user_titled("alpha")
+      b = user_titled("beta")
+
+      expect(User.order_by_component(Group, :title)).to eq [a, b, none]
+      expect(User.order_by_component(Group, :title, :desc)).to eq [b, a, none]
+      expect(User.order_by_component(Group, :title, nulls: :first)).to eq [none, a, b]
+    end
+
+    it "defaults the column to the component's primary attribute" do
+      stub_const("Article", Class.new(ApplicationEntity))
+      Article.component Counter, prefix: :likes
+      low = Article.create!(likes: 1)
+      high = Article.create!(likes: 9)
+
+      expect(Article.order_by_component(Counter, prefix: :likes, direction: :desc)).to eq [high, low]
+    end
+
+    it "demands a column when the component declares no primary attribute" do
+      expect { User.order_by_component(Group) }.to raise_error(ArgumentError, /no primary attribute/)
+    end
+
+    it "orders by the given slot, not another" do
+      stub_const("Customer", Class.new(ApplicationEntity))
+      Customer.component Address
+      Customer.component Address, prefix: :business
+      x = Customer.create!(address_region: "A", business_address_region: "Z")
+      y = Customer.create!(address_region: "Z", business_address_region: "A")
+
+      expect(Customer.order_by_component(Address, :region, prefix: :business)).to eq [y, x]
+      expect(Customer.order_by_component(Address, :region)).to eq [x, y]
+    end
+
+    it "composes with with_component and ordinary ActiveRecord" do
+      a = user_titled("alpha")
+      user_titled("beta")
+      c = user_titled("gamma")
+      a.email.update!(address: "a@x.com")
+      c.email.update!(address: "c@x.com")
+
+      expect(User.with_component(Email).order_by_component(Group, :title, :desc).limit(2)).to eq [c, a]
+      expect(User.with_component(Email).order_by_component(Group, :title).count).to eq 2
+    end
+
+    it "chains a second component order as a tiebreak" do
+      a1 = user_titled("alpha")
+      a1.email.update!(address: "b@x.com")
+      a2 = user_titled("alpha")
+      a2.email.update!(address: "a@x.com")
+
+      expect(User.order_by_component(Group, :title).order_by_component(Email, :address)).to eq [a2, a1]
+    end
+
+    it "keeps the entity-model scope and does not duplicate rows" do
+      user_titled("alpha")
+      post = Post.create!
+      post.name.first = "x"
+      post.save!
+      sql = User.order_by_component(Group, :title).to_sql
+
+      aggregate_failures do
+        expect(sql).to include('"entities"."model" = \'users\'')
+        expect(sql).to match(/ORDER BY \(SELECT "groups"\."title" FROM "groups" WHERE .*LIMIT 1\) ASC NULLS LAST/m)
+        expect(User.order_by_component(Group, :title).to_a.size).to eq User.count
+      end
+    end
+
+    it "rejects an unknown column, since it is interpolated into SQL" do
+      expect { User.order_by_component(Group, :nope) }.to raise_error(ArgumentError, /no column :nope/)
+      expect { User.order_by_component(Group, "title; DROP TABLE users") }.to raise_error(ArgumentError, /no column/)
+    end
+
+    it "rejects a bad direction or nulls option" do
+      expect { User.order_by_component(Group, :title, :sideways) }.to raise_error(ArgumentError, /direction/)
+      expect { User.order_by_component(Group, :title, nulls: :middle) }.to raise_error(ArgumentError, /nulls/)
+    end
+
+    it "rejects a non-component" do
+      expect { User.order_by_component(String, :x) }.to raise_error(EcsRails::InvalidComponent)
+    end
+  end
 end
