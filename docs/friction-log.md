@@ -618,10 +618,14 @@ marketplace multiplies the problem sixfold:
    (a `Title` component's reader would clash, as it should). This is the one
    the forum would use on every line.
 
-Option 3 is my recommendation; it is a small change in `delegation_map` (a
-component-declared `primary` attribute gains a second, slot-named entry) and it
-needs a decision, not a patch. Logged here; the marketplace design's decision
-list should pick it up.
+Option 3 was my recommendation, and **the user agreed the same day.** Built as
+`primary :value` on the component (RFC-0014's primary-attribute amendment) and
+applied to the forum in the same PR: `post.title`, `post.body`, `post.likes`,
+`user.bio`, `group.name` / `description` / `rules`. Every `_value`, `.value` and
+`.to_s` in the controllers, views and seed went away; `simple_format @post.body`
+just works. `post.title_text` is still the component, for presence, errors and
+the reader path. Verdict after the change: 🟢 — the forum reads like the Rails
+app it replaced, one declaration line per field.
 
 ### 🟡 `allow_nil` on a format validator makes a blank field "invalid" — 2026-09-04
 

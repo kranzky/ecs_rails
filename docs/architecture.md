@@ -202,6 +202,12 @@ user.state                    # => delegates to user.publish_state.state (bare)
   reader (`business_address_line1`). `delegate: false` keeps the reader and
   predicate only. Extra keywords are per-slot options the component declared
   with `slot_option` (`component State, prefix: :order, states: %w[...]`).
+- A component may declare a **primary attribute** (`primary :value`); a
+  labelled slot of it then also delegates the bare slot name —
+  `component Text, prefix: :title` gives `post.title` / `post.title=` →
+  `title_text.value`, beside `post.title_text` (the component) and
+  `post.title_text_value`. The slot name is the field name
+  ([RFC-0014](rfc/0014-plural-components.md), primary-attribute amendment).
 - `marker :moderator` ([RFC-0016](rfc/0016-markers.md)) is `component Marker,
   prefix: :moderator, delegate: false` plus the bare `moderator?` predicate and
   a Boolean `moderator=`; `add`/`has?`/`remove` take the Symbol. Presence is

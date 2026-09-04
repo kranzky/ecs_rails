@@ -60,6 +60,10 @@ end
 - **Naming.** Never a Ruby core constant (`CalendarDate`, not `Date`).
   `Address`, not `PostalAddress`: ADR-0016 freed the short name and the slot
   reader rule needs it (`billing_address`).
+- **Single-attribute components declare a primary attribute** (`Text` →
+  `value`, `Counter` → `count`, …), so a labelled slot also answers the bare
+  slot name: `post.title`, `post.likes`. See RFC-0014's primary-attribute
+  amendment.
 - **The catalogue carries no third-party dependencies.** Validation is regex and
   enum. `Password` needs `bcrypt` in the *application*, as `has_secure_password`
   always has; `Image` gains `has_one_attached :file` only when Active Storage is

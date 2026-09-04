@@ -91,7 +91,9 @@ bundle exec rspec                   # component specs are placeholders
   `user.email_address`, `user.email_send_welcome_email`. Uniform for
   attributes and verbs; reach an ugly verb through the reader or rename it.
   `prefix: false` opts one declaration back to bare names. `only:`/`except:`
-  name the component's methods, never the prefixed name. `relates_to` is bare
+  name the component's methods, never the prefixed name. A component with a
+  `primary :value` also gives a labelled slot the bare slot name
+  (`post.title` → `title_text.value`); prefer it in app code. `relates_to` is bare
   so `post.author` keeps its shape. Flat mass assignment
   (`User.create!(name_first: ...)`) falls out of this and is pinned by spec.
 - **Slots** (RFC-0014 / ADR-0015): `component Address, prefix: :business` is a
