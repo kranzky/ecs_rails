@@ -26,6 +26,13 @@ is ordinary ActiveRecord.
 
 ### A Component
 
+- Is, by default, one of the **catalogue** — a standard component that ships in
+  the gem and whose table is created by the install migration. After
+  `rails g ecs_rails:install` and one `db:migrate`, composing entities,
+  relationships and markers from the catalogue requires no further migration.
+  See [ADR-0018](adr/0018-catalogue-in-the-gem.md) and
+  [RFC-0017](rfc/0017-catalogue.md). A bespoke component with its own table
+  remains possible (`rails g ecs_rails:component`).
 - Owns exactly one database table.
 - Belongs to exactly one entity, via a non-null `entity_id` UUID FK.
 - Appears **at most once per `(entity, slot)`**, enforced by a unique index on
@@ -267,7 +274,11 @@ inverse side — `post.comments` — is [RFC-0015](rfc/0015-inverse-relationship
 
 ---
 
-## 6. Scope of v0.1
+## 6. Scope of v0.1 (historical)
+
+> Retired 2026-09-04. v0.1 shipped; the section is kept as a record of the
+> hypothesis it tested. v2's claim is the invariant above: no migration after
+> install ([ADR-0018](adr/0018-catalogue-in-the-gem.md)).
 
 The v0.1 milestone tests one hypothesis: **is modelling a real Rails app out of
 components actually pleasant?** Everything not needed to answer that is out.

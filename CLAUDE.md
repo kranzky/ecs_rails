@@ -105,6 +105,15 @@ bundle exec rspec                   # component specs are placeholders
   assignment; `unique: true` writes `exclusive` for the partial unique index.
   Nested preloads name `target`, not the relationship. There is no relationship
   generator any more.
+- **The catalogue** (ADR-0018 / RFC-0017): `lib/ecs_rails/catalogue/*.rb`,
+  one module per component extending `Catalogue::Definition` with `table`,
+  `set`, `schema do |t|` and `included do`. The test schema builds every
+  catalogue table from those declarations (`Catalogue.create_tables`); the
+  install/upgrade generators render the same declarations. Three collide with
+  core fixtures (`emails`, `names`, `addresses`) and are `Catalogue*` classes on
+  `catalogue_*` tables in the suite. Generator specs must never generate a
+  component whose file a catalogue class already owns (Thor would prompt; the
+  helper now fails instead of hanging).
 - **Conflicts raise at declaration time** (ADR-0004). Never a silent winner.
 - **Presence is explicit** (ADR-0009): markers persist via `add`/`remove`.
   Markers are `marker :moderator` (RFC-0016): slots of the app's `Marker`
