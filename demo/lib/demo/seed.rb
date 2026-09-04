@@ -50,8 +50,8 @@ module Demo
     # one create! per entity, and only the dirtied components get rows.
     def user(first, last, email, bio: nil, moderator: false, admin: false)
       u = User.create!(name_first: first, name_last: last, email_address: email, bio_text: bio)
-      u.add(Moderator) if moderator
-      u.add(Administrator) if admin
+      u.add(:moderator) if moderator
+      u.add(:administrator) if admin
       u
     end
 

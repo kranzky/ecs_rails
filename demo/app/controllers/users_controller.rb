@@ -2,7 +2,9 @@
 
 class UsersController < ApplicationController
   def index
-    @users = User.all.includes_components(Name, Email, Avatar, Moderator, Administrator)
+    # includes_components(Marker) preloads every marker slot, so the badges'
+    # `moderator?` / `administrator?` cost no queries on the list.
+    @users = User.all.includes_components(Name, Email, Avatar, Marker)
   end
 
   def show

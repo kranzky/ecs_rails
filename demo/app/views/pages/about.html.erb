@@ -32,8 +32,10 @@ end</code></pre>
       <p class="prose" style="margin-bottom:0">The <span class="badge badge--mod">Moderator</span>
          and <span class="badge badge--admin">★ Admin</span> badges on
          <%= link_to "People", users_path %> are marker components. A user
-         <em>is</em> a moderator exactly when the row exists —
-         <code>user.add(Moderator)</code>, <code>user.moderator?</code>. No STI.</p>
+         <em>is</em> a moderator exactly when the row exists — declared with
+         <code>marker :moderator</code>, set with <code>user.add(:moderator)</code>,
+         asked with <code>user.moderator?</code>. One <code>markers</code> table for
+         every marker. No STI.</p>
     </div>
     <div class="card">
       <h3 class="section-title">Lazy by default</h3>
