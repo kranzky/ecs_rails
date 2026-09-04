@@ -28,7 +28,7 @@
     </div>
     <div class="field">
       <%= f.label "user[bio]", "Bio" %>
-      <%= f.text_area "user[bio]", class: "textarea", rows: 3, maxlength: 300, value: @user.bio_text.value %>
+      <%= f.text_area "user[bio]", class: "textarea", rows: 3, maxlength: 300, value: @user.bio %>
     </div>
     <div class="btn-row">
       <%= f.submit "Add person", class: "btn btn--primary" %>

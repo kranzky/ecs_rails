@@ -49,25 +49,24 @@ module Demo
     # Flat mass assignment through the prefixed delegated writers (ADR-0016):
     # one create! per entity, and only the dirtied components get rows.
     def user(first, last, email, bio: nil, moderator: false, admin: false)
-      u = User.create!(name_given: first, name_family: last, email_address: email, bio_text_value: bio)
+      u = User.create!(name_given: first, name_family: last, email_address: email, bio: bio)
       u.add(:moderator) if moderator
       u.add(:administrator) if admin
       u
     end
 
     def post(author, title, body, state)
-      Post.create!(title_text_value: title, body_text_value: body, author: author,
-                   publish_state_status: state, likes_counter_count: rand(0..12))
+      Post.create!(title: title, body: body, author: author, publish_state_status: state, likes: rand(0..12))
     end
 
     def comment(post, author, text)
-      Comment.create!(body_text_value: text, author: author, post: post, likes_counter_count: rand(0..5))
+      Comment.create!(body: text, author: author, post: post, likes: rand(0..5))
     end
 
     # Three Texts under three slots — name, description, rules — one row each
     # in `texts`, through the prefixed delegated writers.
     def group(name, description, rules: nil)
-      Group.create!(name_text_value: name, description_text_value: description, rules_text_value: rules)
+      Group.create!(name: name, description: description, rules: rules)
     end
 
     def membership(user, group, role)

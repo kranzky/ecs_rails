@@ -27,9 +27,9 @@ class GroupsController < ApplicationController
     # routes each key to its component (ADR-0016). `.presence` keeps a blank
     # description at its nil default, so no Description row is written for it.
     group = Group.new(
-      name_text_value: cap(group_params[:name], 80),
-      description_text_value: cap(group_params[:description], 300).presence,
-      rules_text_value: cap(group_params[:rules], 500).presence
+      name: cap(group_params[:name], 80),
+      description: cap(group_params[:description], 300).presence,
+      rules: cap(group_params[:rules], 500).presence
     )
 
     if group.save

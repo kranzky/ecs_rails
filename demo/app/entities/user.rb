@@ -6,7 +6,7 @@ class User < ApplicationEntity
   component Name                     # user.name_given, user.name_family, user.name.initials
   component Email                    # user.email_address, user.email_verified
   component Image, prefix: :avatar   # user.avatar_image.url
-  component Text,  prefix: :bio      # user.bio_text (a Text under slot "bio")
+  component Text,  prefix: :bio      # user.bio (the String), user.bio_text (the Text)
   # Markers (RFC-0016): a user IS a moderator exactly when the (user, "moderator")
   # row exists in `markers`. user.add(:moderator), user.moderator?, user.remove.
   marker :moderator

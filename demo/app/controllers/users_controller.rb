@@ -28,7 +28,7 @@ class UsersController < ApplicationController
       name_given: cap(user_params[:first], 50),
       name_family: cap(user_params[:last], 50),
       email_address: cap(user_params[:email], 100),
-      bio_text_value: cap(user_params[:bio], 300).presence
+      bio: cap(user_params[:bio], 300).presence
     )
 
     if user.save

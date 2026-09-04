@@ -18,9 +18,9 @@
     <% @posts.each do |post| %>
       <article class="card card-link post-card">
         <%= link_to post do %>
-          <h2><%= post.title_text %></h2>
+          <h2><%= post.title %></h2>
         <% end %>
-        <p class="post-card__excerpt"><%= truncate(post.body_text.to_s, length: 140) %></p>
+        <p class="post-card__excerpt"><%= truncate(post.body.to_s, length: 140) %></p>
         <div class="meta" style="margin-top:.85rem">
           <%= byline post.author %>
           <span class="dot"></span>

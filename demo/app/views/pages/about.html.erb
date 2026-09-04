@@ -13,10 +13,10 @@
        composed from <strong>catalogue</strong> components — standard parts that
        ship with the gem, each under a <em>slot</em> that names its role:</p>
     <pre style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:1rem;overflow:auto"><code>class Post &lt; ApplicationEntity
-  component Text,    prefix: :title                               # post.title_text
-  component Text,    prefix: :body                                # post.body_text
+  component Text,    prefix: :title                               # post.title
+  component Text,    prefix: :body                                # post.body
   component State,   prefix: :publish, states: %w[draft published] # post.publish_state
-  component Counter, prefix: :likes                               # post.likes_counter
+  component Counter, prefix: :likes                               # post.likes
   relates_to :author, User                                        # post.author
 end</code></pre>
     <p class="prose" style="margin-bottom:0">This whole board was written
@@ -24,7 +24,9 @@ end</code></pre>
        <code>db:migrate</code>, and never needed another migration: the
        <code>db/migrate</code> directory holds exactly one file. A post's title, its
        body and a group's rules all live in one <code>texts</code> table; what tells
-       them apart is the slot.</p>
+       them apart is the slot. And because <code>Text</code> declares <code>value</code>
+       as its primary attribute, <code>post.title</code> is the string and
+       <code>post.title_text</code> the component behind it.</p>
   </div>
 
   <div class="grid grid--2">
@@ -42,7 +44,7 @@ end</code></pre>
       <h3 class="section-title">Lazy by default</h3>
       <p class="prose" style="margin-bottom:0">A component costs nothing until a
          value differs from its default — no row, no query. A new person with no
-         bio has no row in <code>texts</code>, yet <code>user.bio_text</code> still
+         bio has no row in <code>texts</code>, yet <code>user.bio</code> still
          works.</p>
     </div>
     <div class="card">
@@ -57,7 +59,7 @@ end</code></pre>
       <p class="prose" style="margin-bottom:0">A <%= link_to "group", groups_path %> has a
          name, a description <em>and</em> house rules — the same <code>Text</code>
          component declared three times under three slots. Same table, one row
-         per slot, read as <code>group.rules_text</code>.</p>
+         per slot, read as <code>group.rules</code>.</p>
     </div>
     <div class="card">
       <h3 class="section-title">Relationships & join entities</h3>

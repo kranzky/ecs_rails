@@ -37,7 +37,7 @@ module ApplicationHelper
   end
 
   def likes_count(entity)
-    entity.likes_counter.count
+    entity.likes
   end
 
   # --- demo reset countdown -------------------------------------------------

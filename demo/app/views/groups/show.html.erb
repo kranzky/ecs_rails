@@ -1,13 +1,13 @@
-<% content_for :title, @group.name_text %>
+<% content_for :title, @group.name %>
 <%= link_to "← Back to groups", groups_path, class: "back" %>
 
 <div class="card">
-  <h1 style="margin:0 0 .3rem"><%= @group.name_text %></h1>
-  <p style="color:var(--muted);margin:0"><%= @group.description_text %></p>
-  <% if @group.rules_text.value.present? %>
+  <h1 style="margin:0 0 .3rem"><%= @group.name %></h1>
+  <p style="color:var(--muted);margin:0"><%= @group.description %></p>
+  <% if @group.rules.present? %>
     <hr class="divider">
     <h3 class="section-title">House rules</h3>
-    <p class="prose" style="margin:0;color:var(--muted)"><%= simple_format @group.rules_text.to_s %></p>
+    <p class="prose" style="margin:0;color:var(--muted)"><%= simple_format @group.rules %></p>
   <% end %>
 </div>
 
