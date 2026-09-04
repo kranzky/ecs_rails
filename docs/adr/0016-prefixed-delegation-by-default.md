@@ -1,6 +1,6 @@
 # ADR-0016: Delegation is component-prefixed by default
 
-**Status:** Accepted
+**Status:** Accepted — implemented 2026-09-04 (Linear ECS-12)
 **Date:** 2026-07-28
 **Amends:** [ADR-0004](0004-delegation-conflicts-raise.md); resolves the
 delegated-name-shape open question in [RFC-0014](../rfc/0014-plural-components.md),
@@ -95,3 +95,33 @@ judges the bare form clearer and unambiguous.
 - **Best paired with the delegation seam of RFC-0014.** Both change the same
   generated-methods module, so the prefixing default should land with — or just
   before — plural components.
+
+## Implementation notes (2026-09-04, ECS-12)
+
+Decisions taken while implementing, recorded here because the ADR left them
+open or implied them without saying so:
+
+1. **The prefix is uniform: behaviour is prefixed exactly as attributes are.**
+   The alternative — prefix attributes only, leave verbs bare — reads better
+   for `user.send_welcome_email` but needs a heuristic for what counts as an
+   attribute and reopens the verb collisions this ADR exists to close. Decided
+   for uniform. An ugly prefixed verb is reached through the reader
+   (`user.email.send_welcome_email`) or renamed on the component.
+2. **`prefix: true` is accepted as the explicit default** and is not recorded in
+   the registry, so a plain `component Email` compares equal before and after
+   this ADR. `prefix: false` is recorded, so conflict detection re-derives the
+   same bare names for a sibling or a subclass.
+3. **A Symbol raises until RFC-0014 lands.** `prefix: :business` is the slot
+   label; treating it as truthy today would silently generate unprefixed
+   methods for a declaration whose author asked for a slot.
+4. **`only:`/`except:` name the component's methods**, not the entity-level
+   name. `except: [:group_title]` is the natural mistake and raises the usual
+   unknown-name error.
+5. **`relates_to` is bare** (`prefix: false` on the backing component), so
+   `post.author` keeps its shape.
+6. **Flat mass assignment falls out** and is pinned — `User.create!(name_first:
+   "Ada", email_address: "a@b.com")` — including Rails multiparameter form
+   fields, which the issue suspected would not route. They do.
+
+The demo verdict is in [RFC-0005's amendment](../rfc/0005-method-delegation.md#amendment-reader-prefixed-names-adr-0016)
+and the [friction log](../friction-log.md).

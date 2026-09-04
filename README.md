@@ -3,10 +3,16 @@
 An Entity–Component–System reimagining of ActiveRecord that stays idiomatic to
 Ruby on Rails.
 
-> **v0.1 — working, not yet published to RubyGems.** The full v0.1 API is
-> implemented and tested (468 examples), with a companion bulletin-board app
-> built entirely on it. Publishing is a deliberate later step. See the
-> [v0.1 retrospective](docs/retrospective-v0.1.md).
+> **Published as [`ecs_on_rails`](https://rubygems.org/gems/ecs_on_rails)
+> (0.2.2).** The v0.1 API is implemented and tested on real PostgreSQL, and the
+> companion bulletin board runs live at
+> [ecs-rails.kranzky.com](https://ecs-rails.kranzky.com). See the
+> [v0.1 retrospective](docs/retrospective-v0.1.md) and the launch post,
+> ["Composing Rails"](docs/blog/composing-rails.md). **v2 is under way** on
+> `main`: *zero migrations after install* —
+> [ADR-0017](docs/adr/0017-shared-relationships-table.md),
+> [ADR-0018](docs/adr/0018-catalogue-in-the-gem.md) — tracked in Linear team
+> ECS and released once, as 0.3.0.
 
 ## The idea
 
@@ -33,11 +39,13 @@ end
 ```ruby
 user = User.create!            # one row in `entities`, no component rows
 user.email                     # => #<Email> — virtual, not persisted
-user.email.address = "a@b.com"
+user.email_address = "a@b.com" # delegated to the Email component, prefixed
 user.save!                     # now `emails` gets a row
 
-user.send_welcome_email        # delegated to the Email component
+user.email.send_welcome_email  # behaviour lives on the component
 Email.where(verified: false)   # components are queried directly
+
+User.create!(name_first: "Ada", email_address: "a@b.com")  # flat keys route too
 ```
 
 Components are **lazy**: if every attribute equals its default, no row exists.
@@ -57,7 +65,7 @@ Email.pending.find_each(&:send_welcome_email)
 |---|---|
 | **[`docs/`](docs/)** | The specification. Architecture, ADRs, RFCs, backlog. |
 | **[`gem/`](gem/)** | The `ecs_rails` gem. |
-| **[`demo/`](demo/)** | A bulletin board built with it, via `path: "../gem"`. |
+| **[`demo/`](demo/)** | A bulletin board built with it, via `path: "../gem"` during a build; pinned to the published gem at each release. |
 
 The demo is built **alongside** the gem, not after it. If a feature feels
 awkward in the demo, that's the signal the API is wrong. See

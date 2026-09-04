@@ -411,3 +411,45 @@ ordinary Rails — and the gem carried the state naturally:
 
 No API friction; logged as evidence the component model handles a real
 state-bearing feature without ceremony.
+
+---
+
+## v2 build
+
+The zero-migrations build ([ADR-0017](adr/0017-shared-relationships-table.md),
+[ADR-0018](adr/0018-catalogue-in-the-gem.md)) runs the same loop against the
+forum before the marketplace exists: each gem change is applied to the demo the
+day it lands, and the verdict is recorded here.
+
+### 🟢 Prefixed delegation reads fine in real views — 2026-09-04
+
+[ADR-0016](adr/0016-prefixed-delegation-by-default.md) applied to the forum
+(Linear ECS-12). `post.title_text`, `post.body_text`, `user.email_address`,
+`user.name_first`, `group.description_text`, `membership.role_name` replaced the
+reader-chained forms in every view and helper. None of them read worse than
+`post.title.text` did; several read better in ERB because there is one fewer
+dot to scan. `except: [:text]` is gone from `Post` and `Comment`.
+
+`PublishState` was the one component where the prefix was redundant
+(`post.publish_state_state`), and `prefix: false` did exactly what the ADR said
+it would: `post.state`, `post.publish!` sets `self.state`. The verb case came up
+once — `Likes#increment!` — and `post.likes.increment!` was the obvious
+spelling, so no rename was needed and `likes_increment!` is never written.
+
+**Flat mass assignment was the pleasant surprise.** Every controller `create`
+collapsed from four or five reader-chained assignments into one `new(...)` with
+prefixed keys, and the seed went from ~40 lines of `x.component.attr = ...` to
+one `create!` per entity. `post: post` and `author: author` route too, because
+`relates_to` stays bare.
+
+### 🟡 `""` is not the default, so a blank form field writes a row — 2026-09-04
+
+The old controllers wrote a bio only `if user_params[:bio].present?`. Flat mass
+assignment made it tempting to pass `bio_text: cap(params[:bio], 300)` straight
+through — and a blank field then arrives as `""`, which differs from the column
+default (`nil`), dirties the `Bio` component and writes a row holding an empty
+string. Caught by checking `bio.persisted?` after the request; fixed with
+`.presence`. This is the lazy rule ([RFC-0006](rfc/0006-lazy-components.md))
+being exactly as strict as documented, not a gem bug — but it is the kind of
+thing a form-facing developer will hit on day one, and worth a line in the
+guide when there is one.

@@ -131,20 +131,40 @@ and [RFC-0007](rfc/0007-validation-error-merging.md).
 class User < ApplicationEntity
   component Name
   component Email
+  component PublishState, prefix: false
 end
 
-user.address            # => delegates to user.email.address
-user.send_welcome_email # => delegates to user.email.send_welcome_email
+user.email_address            # => delegates to user.email.address
+user.email_send_welcome_email # => delegates to user.email.send_welcome_email
+user.name_first               # => delegates to user.name.first
+user.state                    # => delegates to user.publish_state.state (bare)
 ```
 
 - The `component` DSL generates delegating methods on the entity class for each
   of the component's public instance methods and attribute accessors.
+- **Delegated names are prefixed with the component's reader:**
+  `#{reader}_#{method}`. The rule is uniform — attributes and behaviour alike —
+  so two components can never collide on a shared attribute, and a reader is
+  never shadowed by a delegated method. A verb that reads badly prefixed is
+  reached through the reader (`user.email.send_welcome_email`) or renamed on
+  the component. See [ADR-0016](adr/0016-prefixed-delegation-by-default.md).
+- `prefix: false` restores bare delegation for one declaration, where the prefix
+  would be redundant (`post.state`, not `post.publish_state_state`). A
+  relationship's backing component is always bare, so `post.author` keeps its
+  shape ([ADR-0013](adr/0013-relationship-dsl.md)).
+- `only:` / `except:` name the **component's** methods (`except: [:title]`),
+  never the prefixed entity-level name.
 - Delegation is generated **at declaration time**, into a module included in the
   entity class — not via `method_missing`.
-- If two components on the same entity expose the same method name, the
-  `component` DSL **raises immediately** at class-load time. There is no silent
-  winner. See [ADR-0004](adr/0004-delegation-conflicts-raise.md).
-- Conflicts are resolved explicitly: `component Group, except: [:title]`.
+- If two components on the same entity would expose the same entity-level name,
+  the `component` DSL **raises immediately** at class-load time. There is no
+  silent winner. See [ADR-0004](adr/0004-delegation-conflicts-raise.md). With
+  the prefix this takes two bare components (`prefix: false`), so it is a
+  backstop, not a routine hurdle.
+- Because the prefixed writers exist, ActiveRecord's mass assignment routes a
+  flat hash for free: `User.create!(name_first: "Ada", email_address:
+  "a@b.com")` dirties and persists exactly those components. Rails
+  multiparameter form fields (`date_select`) route the same way.
 
 ---
 
