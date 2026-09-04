@@ -521,3 +521,25 @@ the target's `Name` too, and RFC-0013 leaves that second hop to a raw
 app code. Small, and arguably clearer, but it is a spelling a developer has to
 learn. If ECS-17 finds itself writing it often, `includes_related(:author,
 components: [Name])` would be the ergonomic fix; noted, not built.
+
+### 🟢 Two marker files, two tables, two migrations → two lines — 2026-09-04
+
+[RFC-0016](rfc/0016-markers.md) applied to the forum (Linear ECS-16). `Moderator`
+and `Administrator` were each a component file, a placeholder spec, a table and
+a migration. They are now
+
+```ruby
+class User < ApplicationEntity
+  marker :moderator
+  marker :administrator
+end
+```
+
+`rails g ecs_rails:upgrade` found both empty tables, wrote one migration that
+created `markers`, copied the rows across under `moderator` / `administrator`,
+and dropped them; every badge survived. Controllers call `user.add(:moderator)`
+/ `user.remove(:moderator)`; the views' `user.moderator?` and the promote /
+demote buttons did not change at all. The People page preloads
+`includes_components(Marker)` and its badges cost no further queries — `has?`
+now trusts a loaded has_one, present or absent, the way any association cache
+is trusted.

@@ -87,6 +87,20 @@ entities                    emails                        addresses
 
   Every `relates_to` is a row here. See §5 and
   [ADR-0017](adr/0017-shared-relationships-table.md).
+- And one for markers, likewise created at install and shared:
+
+  ```
+  markers
+    id         UUID PK
+    entity_id  UUID FK ┐ UNIQUE, ON DELETE CASCADE
+    slot       string  ┘  the marker name ("moderator")
+    created_at, updated_at
+  ```
+
+  `marker :moderator` is `component Marker, prefix: :moderator`; a user *is* a
+  moderator exactly when the row exists. See
+  [ADR-0018](adr/0018-catalogue-in-the-gem.md) §4 and
+  [RFC-0016](rfc/0016-markers.md).
 - Component tables are named by the Rails plural of the component class.
 - `entities.model` is indexed; `User.all` compiles to
   `SELECT * FROM entities WHERE model = 'users'`.
@@ -181,6 +195,10 @@ user.state                    # => delegates to user.publish_state.state (bare)
   reader (`business_address_line1`). `delegate: false` keeps the reader and
   predicate only. Extra keywords are per-slot options the component declared
   with `slot_option` (`component State, prefix: :order, states: %w[...]`).
+- `marker :moderator` ([RFC-0016](rfc/0016-markers.md)) is `component Marker,
+  prefix: :moderator, delegate: false` plus the bare `moderator?` predicate and
+  a Boolean `moderator=`; `add`/`has?`/`remove` take the Symbol. Presence is
+  [ADR-0009](adr/0009-component-presence.md)'s, unchanged.
 - `only:` / `except:` name the **component's** methods (`except: [:title]`),
   never the prefixed entity-level name.
 - Delegation is generated **at declaration time**, into a module included in the

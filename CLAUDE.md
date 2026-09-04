@@ -107,6 +107,10 @@ bundle exec rspec                   # component specs are placeholders
   generator any more.
 - **Conflicts raise at declaration time** (ADR-0004). Never a silent winner.
 - **Presence is explicit** (ADR-0009): markers persist via `add`/`remove`.
+  Markers are `marker :moderator` (RFC-0016): slots of the app's `Marker`
+  class on one `markers` table, `add(:moderator)`, `user.moderator?`,
+  `with_marker`. The `Marker`/`Relationship` classes are the first catalogue
+  entries; `ecs_rails:install` writes them.
 - **Reload safety**: the registry and relationship metadata store class
   *names*, never Class objects. Keep it that way.
 - **The DSL reads private ActiveRecord internals** in two places, pinned by

@@ -150,6 +150,13 @@
       "humanMinutes": 5,
       "aiMinutes": 75,
       "costs": []
+    },
+    {
+      "date": "2026-09-04",
+      "summary": "Implemented markers on one shared table per ADR-0018 \u00a74, written up as RFC-0016 (Linear ECS-16). Gem: `marker :moderator` is `component Marker, prefix: :moderator, delegate: false` plus a bare `moderator?` predicate and a Boolean `moderator=` writer (so a checkbox routes through flat mass assignment); `add`/`has?`/`remove` accept the marker name as a Symbol; `User.with_marker`/`without_marker` are slot-scoped sugar over the component verbs; marker names reserve their predicate and writer so components and relationships cannot take them, and `relates_to` now also checks the writer. `Marker` is the app's one-line class including the new `EcsRails::Catalogue::Marker` concern (the second catalogue entry after Relationship), written by install and named by `config.marker_class_name`; the install migration creates `markers`; `ecs_rails:upgrade` gains a third job that creates the table and moves every empty per-marker table into it. `has?` now answers from a loaded has_one, present or absent, so `includes_components(Marker)` makes a page of badges free. 708 examples green (was 672), YARD 100%. Demo: Moderator and Administrator component files, specs, tables and migrations replaced by two `marker` lines; one generated migration moved the rows; controllers use `add(:moderator)`; views unchanged; verified by booting and promoting/demoting through the UI. Also filed Linear ECS-21 (component-driven UI: catalogue components shipping display and form partials) at the user's request, with a backlog entry, and closed ECS-15 after its merge. Docs: RFC-0016, ADR-0018 \u00a74 and ADR-0009 notes, architecture \u00a72/\u00a74, docs index, backlog, CHANGELOG, READMEs, CLAUDE.md, friction log.",
+      "humanMinutes": 5,
+      "aiMinutes": 55,
+      "costs": []
     }
   ]
 }

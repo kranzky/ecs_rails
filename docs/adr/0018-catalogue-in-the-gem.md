@@ -114,6 +114,11 @@ normalised per shape, that promotion is a copy, not a redesign.
 
 ### 4. Markers are slots of one `Marker` component, declared with `marker`
 
+> **Implemented 2026-09-04** (Linear ECS-16, [RFC-0016](../rfc/0016-markers.md)),
+> with one addition: `user.moderator = true` / `false` as a Boolean writer, so a
+> checkbox routes through flat mass assignment. `Relationship` (§5) landed the
+> same week (ECS-15); the rest of the catalogue is ECS-9.
+
 ```ruby
 class User < ApplicationEntity
   marker :moderator          # slot "moderator" on the markers table

@@ -4,8 +4,8 @@
 **Date:** 2026-07-18
 **Surfaced by:** the demo (docs/friction-log.md)
 
-> **Amended 2026-09-02.** [ADR-0018](0018-catalogue-in-the-gem.md) §4 adds a
-> `marker :moderator` declaration. This ADR rejected a `marker` keyword because it
+> **Amended 2026-09-02, implemented 2026-09-04 ([RFC-0016](../rfc/0016-markers.md)).**
+> [ADR-0018](0018-catalogue-in-the-gem.md) §4 adds a `marker :moderator` declaration. This ADR rejected a `marker` keyword because it
 > would fork the model into two concepts; that reason no longer applies once
 > markers are slots of one `Marker` catalogue component, because the keyword is
 > sugar for `component Marker, prefix: :moderator` that restores the bare
