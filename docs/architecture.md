@@ -272,6 +272,14 @@ Post.includes_related(:author)        # preload the row and its target
 - The relationship name is reserved on the entity: a later component may not
   delegate `author`, `author=`, `author_id` or `author_id=`, and no two
   relationships share a name.
+- **The parent side** is `has_many :comments, via: :post` /
+  `has_one :invoice, via: :order` ([RFC-0015](rfc/0015-inverse-relationships.md)):
+  native `has_many :through` over the same table, scoped by slot and
+  `owner_model`, returning the child class (inferred from the reader, or
+  named). Validated on first use and at boot under `eager_load`, never at
+  class-load time. `has_one` requires the child's `unique: true`. `dependent:`
+  applies to the link rows. `entity.referrers` lists every row pointing at an
+  entity, whatever its name.
 
 See [ADR-0017](adr/0017-shared-relationships-table.md) (storage),
 [ADR-0013](adr/0013-relationship-dsl.md) (the API) and

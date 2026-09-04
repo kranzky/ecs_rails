@@ -110,7 +110,14 @@ bundle exec rspec                   # component specs are placeholders
   `config.relationship_class_name`. Target type is checked in Ruby on
   assignment; `unique: true` writes `exclusive` for the partial unique index.
   Nested preloads name `target`, not the relationship. There is no relationship
-  generator any more.
+  generator any more. The parent side is `has_many :comments, via: :post` /
+  `has_one :invoice, via: :order` (RFC-0015): native has_many :through over
+  the same table. **Never take the child as a constant in an autoloaded app**
+  (circular load: parent → child → `relates_to` → half-defined parent); the
+  child is inferred or named, `owner_model` is read in the scope lambda, and
+  the pair is validated on first use plus at boot under eager_load. `build`
+  links on parent save, `<<`/`create!` immediately; `dependent:` is for link
+  rows; `has_one` needs the child's `unique: true`.
 - **The catalogue** (ADR-0018 / RFC-0017): `lib/ecs_rails/catalogue/*.rb`,
   one module per component extending `Catalogue::Definition` with `table`,
   `set`, `schema do |t|` and `included do`. The test schema builds every

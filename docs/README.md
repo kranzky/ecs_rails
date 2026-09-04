@@ -61,7 +61,7 @@ Each RFC is one commit. Each commit compiles and passes tests.
 | [0012](rfc/0012-relationship-dsl.md) | Relationship DSL (relates_to) — on the shared table since [ADR-0017](adr/0017-shared-relationships-table.md) | 0004, 0005, 0008 ✅ |
 | [0013](rfc/0013-relationship-name-query-sugar.md) | Relationship query sugar (with_related/includes_related) | 0010, 0011, 0012 ✅ |
 | [0014](rfc/0014-plural-components.md) | Labelled (plural) components (`prefix:` / slot, `slot_option`, `ecs_rails:upgrade`) | 0004, 0005, 0006, 0009, 0010 ✅ |
-| [0015](rfc/0015-inverse-relationships.md) | Inverse relationships (`has_many` / `has_one` over the shared table) | 0012, 0013, 0014, ADR-0017 · proposed |
+| [0015](rfc/0015-inverse-relationships.md) | Inverse relationships (`has_many` / `has_one` over the shared table, `referrers`) | 0012, 0013, 0014, ADR-0017 ✅ |
 | [0016](rfc/0016-markers.md) | Markers on a shared table (`marker :moderator`, `with_marker`) | 0009, 0014, ADR-0018 §4 ✅ |
 | [0017](rfc/0017-catalogue.md) | The catalogue: 25 standard components as gem concerns, install creates every table, `ecs_rails:upgrade` diffs | 0012, 0014, 0016, ADR-0018 ✅ |
 

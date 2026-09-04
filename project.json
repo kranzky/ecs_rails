@@ -171,6 +171,13 @@
       "humanMinutes": 5,
       "aiMinutes": 80,
       "costs": []
+    },
+    {
+      "date": "2026-09-04",
+      "summary": "Implemented inverse relationships per RFC-0015 (Linear ECS-6): `has_many :comments, via: :post` and `has_one :invoice, via: :order` on the parent expand to native has_many :through over the shared relationships table \u2014 a link association of Relationship rows keyed on target_id scoped by slot and owner_model, then a through with class_name so the collection is of the child class (ADR-0008 resolution verified by a spike first) \u2014 giving a real CollectionProxy, `<<`, `create!`, scopes, the component query DSL chained on, and `includes(:comments)` in three queries. `dependent: :destroy`/`:delete_all` removes link rows; `has_one` uses a has_one link and requires the child's `unique: true`; `create_x!` flushes the join record Rails leaves for the owner's save; `entity.referrers` is the wildcard. The first demo cut took the child as a constant and every page 500'd \u2014 a circular autoload (Group \u2192 Membership \u2192 relates_to :group \u2192 half-defined Group), the reason Rails uses class-name strings \u2014 so the gem holds the child by name (inferred from the reader or given), reads owner_model inside the scope lambda at query time, validates the pair once on first use, and the Railtie validates every entity at boot under eager_load; passing a component class still raises immediately. Names are reserved against later components, markers and relationships. Demo: Post/User/Group gained inverses and three controllers use the collections; verified end to end. 813 examples green, YARD 100%. Docs: RFC-0015 amendment (incl. the lazy-validation rationale), architecture \u00a75, docs index, backlog, CHANGELOG, READMEs, CLAUDE.md, friction log.",
+      "humanMinutes": 5,
+      "aiMinutes": 90,
+      "costs": []
     }
   ]
 }

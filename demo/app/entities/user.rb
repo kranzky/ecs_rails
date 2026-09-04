@@ -11,4 +11,8 @@ class User < ApplicationEntity
   # row exists in `markers`. user.add(:moderator), user.moderator?, user.remove.
   marker :moderator
   marker :administrator
+  # The parent side of three relationships (RFC-0015).
+  has_many :posts,       via: :author   # user.posts
+  has_many :comments,    via: :author   # user.comments
+  has_many :memberships, via: :user     # user.memberships
 end

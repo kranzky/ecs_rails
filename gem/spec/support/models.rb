@@ -178,6 +178,17 @@ class Membership < ApplicationEntity
   relates_to :team, Team
 end
 
+# The parent side (RFC-0015): a user reads back the posts and memberships that
+# relate to it; a team its memberships. Declared after the children exist.
+class User
+  has_many :posts, via: :author             # the child is inferred: Post
+  has_many :memberships, via: :user
+end
+
+class Team
+  has_many :memberships, via: :team
+end
+
 # A relationship component (ADR-0006) whose association name collides with its
 # own reader: reader for `component Sponsor` is `sponsor`, and `belongs_to
 # :sponsor` also defines `sponsor`. Declaring it used to overwrite the reader

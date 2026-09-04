@@ -7,4 +7,5 @@ class Group < ApplicationEntity
   component Text, prefix: :name          # group.name
   component Text, prefix: :description   # group.description
   component Text, prefix: :rules         # group.rules — the house rules
+  has_many :memberships, via: :group, dependent: :destroy   # group.memberships
 end

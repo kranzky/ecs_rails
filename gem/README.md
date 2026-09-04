@@ -91,6 +91,15 @@ class Invoice < ApplicationEntity
   relates_to :order, Order, unique: true    # at most one Invoice per Order, DB-enforced
 end
 
+class User < ApplicationEntity
+  has_many :posts, via: :author             # the parent side: a real collection of Posts
+end
+
+class Order < ApplicationEntity
+  has_one :invoice, via: :order             # needs the child's unique: true
+end
+
+user.posts.create!(title: "Hello")
 Post.with_related(:author, user).includes_related(:author)
 ```
 

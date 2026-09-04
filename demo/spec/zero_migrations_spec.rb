@@ -44,7 +44,7 @@ RSpec.describe "zero migrations after install" do
       expect(post.likes).to be >= 0
       expect(Comment.with_related(:post, Post.published.last).count).to be >= 0
       expect(User.with_marker(:moderator).count).to eq 2
-      expect(Group.first.rules).to be_present
+      expect(Group.with_component(Text, prefix: :rules).first.rules).to be_present
       expect(Membership.first.role_name).to be_present
       expect(Text.distinct.pluck(:slot).sort).to eq %w[bio body description name rules title]
     end
