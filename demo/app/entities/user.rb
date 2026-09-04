@@ -9,6 +9,13 @@ class User < ApplicationEntity
   component Text,  prefix: :bio      # user.bio (the String), user.bio_text (the Text)
   # Markers (RFC-0016): a user IS a moderator exactly when the (user, "moderator")
   # row exists in `markers`. user.add(:moderator), user.moderator?, user.remove.
+  # Two Address slots and two Phone slots: fixed, named roles — the plural
+  # components case (RFC-0014). Same tables as the companies' addresses and
+  # phones; the slot tells them apart.
+  component Address, prefix: :shipping    # user.shipping_address
+  component Address, prefix: :billing     # user.billing_address
+  component Phone,   prefix: :mobile      # user.mobile_phone
+  component Phone,   prefix: :work        # user.work_phone
   marker :moderator
   marker :administrator
   # The parent side of three relationships (RFC-0015).
@@ -17,4 +24,6 @@ class User < ApplicationEntity
   has_many :memberships, via: :user     # user.memberships
   has_many :employments, via: :user     # user.employments — the seller side, same user
   has_many :reviews,     via: :author   # user.reviews
+  has_one  :basket,      via: :customer # user.basket — the child's unique: true makes this a has_one
+  has_many :orders,      via: :customer # user.orders
 end

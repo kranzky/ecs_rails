@@ -27,6 +27,16 @@
     <div class="article__body prose" style="margin-top:1.25rem"><%= simple_format @product.body %></div>
   <% end %>
 
+  <% if @product.listed? && @product.in_stock? %>
+    <hr class="divider">
+    <%= form_with url: basket_items_path, method: :post, class: "btn-row" do |f| %>
+      <%= f.hidden_field "basket_item[product_id]", value: @product.id %>
+      <%= f.select "basket_item[user_id]", options_for_select(@authors.map { |u| [display_name(u), u.id] }), {}, class: "select", style: "width:auto" %>
+      <%= f.number_field "basket_item[quantity]", value: 1, min: 1, max: [@product.stock, 99].min, class: "input", style: "width:4.5rem" %>
+      <%= f.submit "Add to basket", class: "btn btn--primary" %>
+    <% end %>
+  <% end %>
+
   <% if @company %>
     <hr class="divider">
     <h3 class="section-title">Manage this listing</h3>

@@ -65,6 +65,17 @@ module ApplicationHelper
     end
   end
 
+  def order_badge(order)
+    klass = { "paid" => "badge--pub", "shipped" => "badge--mod", "delivered" => "badge--pub", "cancelled" => "badge--draft" }[order.status]
+    content_tag(:span, order.status.capitalize, class: "badge #{klass}")
+  end
+
+  # An Address component as lines, or a dash when the slot is virtual.
+  def address_block(address)
+    lines = address.lines
+    lines.empty? ? content_tag(:span, "—", style: "color:var(--faint)") : safe_join(lines, tag.br)
+  end
+
   # A company's logo if it has one, else its initial in a chip.
   def logo_for(company, klass: "avatar")
     url = company.logo_image_url

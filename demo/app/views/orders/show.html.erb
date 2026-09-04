@@ -1,0 +1,54 @@
+<% content_for :title, @order.order_number %>
+<%= link_to "← All orders", user_orders_path(@order.customer), class: "back" %>
+
+<div class="card">
+  <div class="btn-row" style="justify-content:space-between">
+    <span class="btn-row">
+      <h1 style="margin:0;font-size:1.5rem"><%= @order.order_number %></h1>
+      <%= order_badge @order %>
+    </span>
+    <span class="btn-row">
+      <% @order.next_states.each do |to| %>
+        <%= button_to "Mark #{to}", transition_order_path(@order, to: to), method: :patch,
+              class: "btn btn--sm #{to == 'cancelled' ? 'btn--danger' : 'btn--primary'}", form_class: "inline" %>
+      <% end %>
+      <% if @invoice %><%= link_to "Invoice #{@invoice.invoice_number}", @invoice, class: "btn btn--sm btn--ghost" %><% end %>
+    </span>
+  </div>
+  <div class="meta" style="margin-top:.4rem">
+    <%= byline @order.customer %><span class="dot"></span><%= @order.created_at.strftime("%-d %b %Y, %H:%M") %>
+  </div>
+
+  <hr class="divider">
+  <table class="table">
+    <thead><tr><th>Item</th><th class="num">Unit price</th><th class="num">Qty</th><th class="num">Line</th></tr></thead>
+    <tbody>
+      <% @items.each do |item| %>
+        <tr>
+          <td><%= item.title %> <span class="hint" style="display:inline">(<%= link_to "live listing", item.product %>)</span></td>
+          <td class="num"><%= price_tag item.unit_price_money %></td>
+          <td class="num"><%= item.quantity %></td>
+          <td class="num price"><%= price_tag item.line_total %></td>
+        </tr>
+      <% end %>
+    </tbody>
+    <tfoot><tr><td colspan="3" style="text-align:right;color:var(--muted)">Total</td><td class="num price" style="font-size:1.2rem"><%= price_tag @order.total_money %></td></tr></tfoot>
+  </table>
+  <p class="hint">Unit prices and titles are snapshots — copies of the product's <code>Money</code> and <code>Text</code> at checkout — so a later price change leaves this order alone.</p>
+
+  <hr class="divider">
+  <div class="grid grid--2">
+    <div><h3 class="section-title">Ships to</h3><p class="contact"><%= address_block @order.shipping_address %></p></div>
+    <div><h3 class="section-title">Billed to</h3><p class="contact"><%= address_block @order.billing_address %></p></div>
+  </div>
+
+  <% if @order.fulfilment_state.transitions.any? %>
+    <hr class="divider">
+    <h3 class="section-title">History — the State component's transitions log</h3>
+    <ul class="meta" style="display:block;margin:0;padding-left:1.1rem">
+      <% @order.fulfilment_state.transitions.each do |t| %>
+        <li><%= t["from"] || "—" %> → <strong><%= t["to"] %></strong> <span style="color:var(--faint)">(<%= t["event"] %>, <%= Time.zone.parse(t["at"]).strftime("%H:%M:%S") %>)</span></li>
+      <% end %>
+    </ul>
+  <% end %>
+</div>

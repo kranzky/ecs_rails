@@ -69,7 +69,8 @@ RSpec.describe "marketplace" do
         expect(policies["staff"].can?(:manage_products)).to be false
         expect(policies["owner"].can?(:manage_employees)).to be true
         expect(policies["manager"].can?(:manage_employees)).to be false
-        expect(Demo::CompanyPolicy.new(User.first, Company.last).employee?).to be false
+        katherine = User.with_component(Name, given: "Katherine").first
+        expect(Demo::CompanyPolicy.new(katherine, company).employee?).to be false
       end
     end
 
