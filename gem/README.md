@@ -117,6 +117,8 @@ User.with_marker(:moderator)
 # Query by composition — avoids AR's .with (CTEs); scopes to the entity model.
 Post.with_component(PublishState, state: "published")
 User.without_component(Avatar)
+Product.with_component(Money, prefix: :price) { where("amount_cents < ?", 5000) }
+Product.order_by_component(Rating, :stars, :desc)   # sort by a component's value
 
 # Preload to bound the query count on a list view.
 Post.with_component(PublishState).includes_components(Title, Body, Likes)
