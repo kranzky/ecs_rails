@@ -8,6 +8,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Markers on one shared table** (ADR-0018 §4, RFC-0016). `marker :moderator`
+  declares a marker as slot "moderator" of the app's `Marker` component
+  (`EcsRails::Catalogue::Marker`, one-line class written by install), with the
+  bare `user.moderator?` predicate, a Boolean `user.moderator = true` writer,
+  `add(:moderator)` / `has?` / `remove` by name, and `User.with_marker(:moderator)`
+  / `without_marker`. No table per marker; a zero-attribute component on its own
+  table still works. `EcsRails.config.marker_class_name` names the class.
+  `ecs_rails:upgrade` gains a third job that creates `markers` and moves every
+  empty per-marker table into it.
+
 - **One shared `relationships` table** (ADR-0017). Every `relates_to` is now a
   row in a table created at install, under a slot named for the relationship;
   declaring a relationship needs no migration. The public API is unchanged

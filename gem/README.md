@@ -20,7 +20,7 @@ class User < ApplicationEntity
   component Name
   component Email
   component Avatar
-  component Moderator          # a marker: no data, presence is the meaning
+  marker :moderator            # a marker: no data, presence is the meaning
 end
 
 class Email < ApplicationComponent
@@ -84,8 +84,9 @@ Every v0.1 capability, working today:
 user.avatar.persisted?                       # => false, costs no INSERT
 
 # Presence / markers — a user IS a moderator when the row exists.
-user.add(Moderator); user.moderator?         # => true
-user.remove(Moderator)
+user.add(:moderator); user.moderator?        # => true
+user.remove(:moderator)
+User.with_marker(:moderator)
 
 # Query by composition — avoids AR's .with (CTEs); scopes to the entity model.
 Post.with_component(PublishState, state: "published")

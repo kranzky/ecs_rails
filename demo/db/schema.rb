@@ -10,18 +10,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_04_040850) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_04_042520) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
-
-  create_table "administrators", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.uuid "entity_id", null: false
-    t.string "slot", default: "", null: false
-    t.datetime "updated_at", null: false
-    t.index ["entity_id", "slot"], name: "index_administrators_on_entity_id_and_slot", unique: true
-  end
 
   create_table "avatars", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -84,12 +76,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_04_040850) do
     t.index ["entity_id", "slot"], name: "index_likes_on_entity_id_and_slot", unique: true
   end
 
-  create_table "moderators", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+  create_table "markers", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.uuid "entity_id", null: false
     t.string "slot", default: "", null: false
     t.datetime "updated_at", null: false
-    t.index ["entity_id", "slot"], name: "index_moderators_on_entity_id_and_slot", unique: true
+    t.index ["entity_id", "slot"], name: "index_markers_on_entity_id_and_slot", unique: true
   end
 
   create_table "names", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -142,14 +134,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_04_040850) do
     t.index ["entity_id", "slot"], name: "index_titles_on_entity_id_and_slot", unique: true
   end
 
-  add_foreign_key "administrators", "entities", on_delete: :cascade
   add_foreign_key "avatars", "entities", on_delete: :cascade
   add_foreign_key "bios", "entities", on_delete: :cascade
   add_foreign_key "bodies", "entities", on_delete: :cascade
   add_foreign_key "descriptions", "entities", on_delete: :cascade
   add_foreign_key "emails", "entities", on_delete: :cascade
   add_foreign_key "likes", "entities", on_delete: :cascade
-  add_foreign_key "moderators", "entities", on_delete: :cascade
+  add_foreign_key "markers", "entities", on_delete: :cascade
   add_foreign_key "names", "entities", on_delete: :cascade
   add_foreign_key "publish_states", "entities", on_delete: :cascade
   add_foreign_key "relationships", "entities", column: "target_id", on_delete: :nullify

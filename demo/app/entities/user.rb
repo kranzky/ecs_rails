@@ -5,10 +5,11 @@ class User < ApplicationEntity
   component Email
   component Avatar
   component Bio
-  # Marker components (ADR-0009): a user IS a moderator/administrator exactly
-  # when the row exists. Set presence with user.add(Moderator) / user.remove,
-  # ask with user.moderator?. The lazy save cascade never persists these on its
-  # own — they have no state to dirty — so presence must be explicit.
-  component Moderator
-  component Administrator
+  # Markers (ADR-0009 / RFC-0016): a user IS a moderator/administrator exactly
+  # when the row exists — one `markers` table, slot = the marker name. Set
+  # presence with user.add(:moderator) / user.remove(:moderator), ask with
+  # user.moderator?. The lazy save cascade never persists these on its own —
+  # they have no state to dirty — so presence must be explicit.
+  marker :moderator
+  marker :administrator
 end

@@ -13,11 +13,13 @@ require "ecs_rails/presence"
 require "ecs_rails/validations"
 require "ecs_rails/dsl"
 require "ecs_rails/relationships"
+require "ecs_rails/markers"
 require "ecs_rails/querying"
 require "ecs_rails/preloading"
 require "ecs_rails/entity"
 require "ecs_rails/component"
 require "ecs_rails/catalogue/relationship"
+require "ecs_rails/catalogue/marker"
 
 # ECS Rails — an Entity-Component-System reimagining of ActiveRecord.
 #

@@ -1,17 +1,18 @@
 # frozen_string_literal: true
 
-# The marker component (RFC-0009) as a UI action: a user IS a moderator exactly
-# when the Moderator row exists. Promote = add, demote = remove.
+# A marker (RFC-0009 / RFC-0016) as a UI action: a user IS a moderator exactly
+# when the (user, "moderator") row exists in `markers`. Promote = add, demote =
+# remove.
 class Users::ModeratorsController < ApplicationController
   def create
     user = User.find(params[:user_id])
-    user.add(Moderator)
+    user.add(:moderator)
     redirect_to user, notice: "#{name_of(user)} is now a moderator."
   end
 
   def destroy
     user = User.find(params[:user_id])
-    user.remove(Moderator)
+    user.remove(:moderator)
     redirect_to user, notice: "#{name_of(user)} is no longer a moderator."
   end
 

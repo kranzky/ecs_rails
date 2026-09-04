@@ -24,6 +24,12 @@ class Relationship < ApplicationComponent
   include EcsRails::Catalogue::Relationship
 end
 
+# The one catalogue component every `marker` is a row of (ADR-0018 §4). Again
+# the one-line class install writes; found by EcsRails.config.marker_class_name.
+class Marker < ApplicationComponent
+  include EcsRails::Catalogue::Marker
+end
+
 class Email < ApplicationComponent
   validates :address, presence: true, format: { with: /@/, message: "is invalid" }
 

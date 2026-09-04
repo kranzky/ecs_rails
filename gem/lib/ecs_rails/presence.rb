@@ -32,6 +32,10 @@ module EcsRails
   # `add(PostalAddress, prefix: :business)` — and the per-slot predicate
   # `user.business_address?`. Omitted, `prefix:` means the default slot, so
   # every singular call reads exactly as before.
+  #
+  # Markers (ADR-0018 §4) add a Symbol form: `add(:moderator)` / `has?` /
+  # `remove` name a marker declared with `marker :moderator`, which is the
+  # `Marker` component in slot "moderator". `user.moderator?` is that `has?`.
   module Presence
     # The entity side of presence: `add` / `has?` / `remove`.
     #
@@ -68,9 +72,14 @@ module EcsRails
       #   user.add(PostalAddress, prefix: :business)
       #   user.business_address?  # => true
       #
-      # @param component_class [Class<EcsRails::Component>] a component this
-      #   entity declares
-      # @param prefix [Symbol, String, nil] the slot label; nil for the default slot
+      # @example A marker, by name (ADR-0018 §4)
+      #   user.add(:moderator)
+      #   user.moderator?         # => true
+      #
+      # @param component_class [Class<EcsRails::Component>, Symbol] a component
+      #   this entity declares, or the name of a marker it declares
+      # @param prefix [Symbol, String, nil] the slot label; nil for the default
+      #   slot. Not accepted with a marker name.
       # @return [EcsRails::Component] the persisted component instance
       # @raise [EcsRails::InvalidComponent] if the entity does not declare it in
       #   that slot
@@ -79,7 +88,7 @@ module EcsRails
       # @see #has?
       # @see #remove
       def add(component_class, prefix: nil)
-        name = ecs_presence_reader(component_class, prefix)
+        name = ecs_presence_declaration(component_class, prefix).reader_name
 
         # The reader goes through RFC-0006's memo. When no row exists on this
         # instance it loads one (a SELECT) or builds a virtual; when a row does
@@ -113,8 +122,8 @@ module EcsRails
       #   user.has?(Moderator)  # => true
       #   user.moderator?       # => the same question, generated per component
       #
-      # @param component_class [Class<EcsRails::Component>] a component this
-      #   entity declares
+      # @param component_class [Class<EcsRails::Component>, Symbol] a component
+      #   this entity declares, or the name of a marker it declares
       # @param prefix [Symbol, String, nil] the slot label; nil for the default slot
       # @return [Boolean] whether a persisted row exists in that slot
       # @raise [EcsRails::InvalidComponent] if the entity does not declare it in
@@ -122,21 +131,31 @@ module EcsRails
       # @see #add
       # @see #remove
       def has?(component_class, prefix: nil)
-        name = ecs_presence_reader(component_class, prefix)
+        declaration = ecs_presence_declaration(component_class, prefix)
+        name = declaration.reader_name
 
         # Memo first: if this instance already loaded (and persisted) the
-        # component, the answer is known without touching the database. A merely
-        # virtual memo entry is *not* proof of absence — a row could have been
-        # written elsewhere — so it falls through to the existence check rather
-        # than answering false from memory.
+        # component, the answer is known without touching the database.
         cached = @ecs_components&.[](name)
         return true if cached&.persisted?
+
+        # Then the has_one itself. Once ActiveRecord has loaded it — by a
+        # preload (`includes_components(Marker)` on a list view) or by an earlier
+        # read through the reader — its target is authoritative for this
+        # instance, present or absent, exactly as any association cache is; a
+        # row written elsewhere since is stale until `reload`, as it would be
+        # for `user.email`. This is what makes a page of marker badges cost no
+        # queries after one preload (RFC-0016). A virtual memo entry alone does
+        # not decide it: `remove` on an absent marker leaves one behind without
+        # loading anything, and the association says so.
+        association = association(name)
+        return !association.target.nil? if association.loaded?
 
         # Bare existence check: no row is instantiated, so nothing is loaded and
         # nothing is dirtied. One query per component, as everywhere else in the
         # gem (architecture.md §7 non-goal: query optimisation). Slot-scoped, so
         # a `business_address` row does not answer for `postal_address`.
-        component_class.where(entity_id: id, slot: prefix.to_s).exists?
+        declaration.component_class.where(entity_id: id, slot: declaration.slot).exists?
       end
 
       # Destroys the row for `component_class` if present, and resets the reader
@@ -147,8 +166,8 @@ module EcsRails
       #   user.remove(Moderator)  # DELETEs the row; no-op if there was none
       #   user.moderator          # => #<Moderator> — virtual again, not nil
       #
-      # @param component_class [Class<EcsRails::Component>] a component this
-      #   entity declares
+      # @param component_class [Class<EcsRails::Component>, Symbol] a component
+      #   this entity declares, or the name of a marker it declares
       # @param prefix [Symbol, String, nil] the slot label; nil for the default slot
       # @return [self] the entity, for chaining
       # @raise [EcsRails::InvalidComponent] if the entity does not declare it in
@@ -156,7 +175,7 @@ module EcsRails
       # @see #add
       # @see #has?
       def remove(component_class, prefix: nil)
-        name = ecs_presence_reader(component_class, prefix)
+        name = ecs_presence_declaration(component_class, prefix).reader_name
 
         # Reach the component through the reader so a present row is loaded with
         # its callbacks intact. `component.destroy` fires Lazy::Component's
@@ -171,19 +190,35 @@ module EcsRails
 
       private
 
-      # Resolves a declared (component, slot) to its reader name, or raises.
+      # Resolves a declared (component, slot) — or a marker name — to its
+      # declaration, or raises.
       #
       # `add`/`has?`/`remove` accept only a component the entity actually
-      # declares (RFC-0009), in a slot it declares it under (RFC-0014); anything
-      # else — an undeclared component, an undeclared slot, or a class that is
-      # not a component at all — is InvalidComponent, checked before any
+      # declares (RFC-0009), in a slot it declares it under (RFC-0014), or the
+      # Symbol name of a marker it declares (ADR-0018 §4); anything else — an
+      # undeclared component, an undeclared slot, an unknown marker, or a class
+      # that is not a component at all — is InvalidComponent, checked before any
       # database work. The lookup already accounts for inheritance
       # (DSL#declaration_for walks the ancestry), so a subclass sees its parents'
       # components too.
-      def ecs_presence_reader(component_class, prefix)
+      def ecs_presence_declaration(component_class, prefix)
+        if component_class.is_a?(Symbol) || component_class.is_a?(String)
+          raise ArgumentError, "a marker name takes no prefix: (got #{prefix.inspect})" unless prefix.nil?
+
+          declaration = self.class.marker?(component_class) &&
+                        self.class.declaration_for(EcsRails.config.marker_class_name.constantize,
+                                                   prefix: component_class)
+          return declaration if declaration
+
+          known = self.class.marker_names
+          raise InvalidComponent,
+                ":#{component_class} is not a marker of #{self.class.name}. #{self.class.name} marks: " \
+                "#{known.empty? ? 'none' : known.map { |n| ":#{n}" }.join(', ')}."
+        end
+
         declaration =
           component_class.is_a?(Class) && self.class.declaration_for(component_class, prefix: prefix)
-        return declaration.reader_name if declaration
+        return declaration if declaration
 
         where = prefix.nil? ? "" : " in slot #{prefix.to_s.inspect} (prefix: :#{prefix})"
         raise InvalidComponent,

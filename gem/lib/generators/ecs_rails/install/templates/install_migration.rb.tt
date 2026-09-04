@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
 # The ECS Rails install migration: the single `entities` table every entity
-# shares, and the single `relationships` table every `relates_to` is a row of.
-# See docs/architecture.md §2, docs/adr/0002-single-entities-table.md and
-# docs/adr/0017-shared-relationships-table.md.
+# shares, the single `relationships` table every `relates_to` is a row of, and
+# the single `markers` table every `marker` is a row of. See
+# docs/architecture.md §2, docs/adr/0002-single-entities-table.md,
+# docs/adr/0017-shared-relationships-table.md and
+# docs/adr/0018-catalogue-in-the-gem.md §4.
 class EcsRailsInstall < ActiveRecord::Migration[<%= migration_version %>]
   def change
     # gen_random_uuid() lives in pgcrypto on PostgreSQL < 13; enabling it is
@@ -50,5 +52,16 @@ class EcsRailsInstall < ActiveRecord::Migration[<%= migration_version %>]
     # the owner survives with the link cleared — never cascading to the owner.
     add_foreign_key :relationships, :entities, column: :entity_id, on_delete: :cascade
     add_foreign_key :relationships, :entities, column: :target_id, on_delete: :nullify
+
+    # Every marker in the application is a row here (ADR-0018 §4): a user IS a
+    # moderator exactly when the (entity_id, "moderator") row exists. No state,
+    # only presence. Declaring `marker :moderator` needs no migration.
+    create_table :markers, id: :uuid, default: -> { "gen_random_uuid()" } do |t|
+      t.uuid   :entity_id, null: false
+      t.string :slot,      null: false, default: ""
+      t.timestamps
+    end
+    add_index :markers, [:entity_id, :slot], unique: true
+    add_foreign_key :markers, :entities, column: :entity_id, on_delete: :cascade
   end
 end

@@ -138,4 +138,17 @@ ActiveRecord::Schema.define do
                                                              name: "index_relationships_exclusive"
   add_foreign_key :relationships, :entities, column: :entity_id, on_delete: :cascade
   add_foreign_key :relationships, :entities, column: :target_id, on_delete: :nullify
+
+  # --- the shared markers table (ADR-0018 §4) ----------------------------------
+  #
+  # Every `marker :name` is a row here; the slot is the marker name. The
+  # `moderators` table above stays: it is an ordinary zero-attribute component
+  # (ADR-0009's original shape), which the presence spec still exercises.
+  create_table :markers, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid   :entity_id, null: false
+    t.string :slot,      null: false, default: ""
+    t.timestamps
+  end
+  add_index :markers, %i[entity_id slot], unique: true
+  add_foreign_key :markers, :entities, column: :entity_id, on_delete: :cascade
 end

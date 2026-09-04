@@ -14,9 +14,10 @@ module EcsRails
   # rather than separately settable — ADR-0010 deliberately exposes one path,
   # not two.
   #
-  # `relationship_class_name` IS read at runtime — by `relates_to`, on every
-  # call, so a reloaded constant is picked up. It exists for the one app whose
-  # domain already has a `Relationship`; everyone else leaves the default.
+  # `relationship_class_name` and `marker_class_name` ARE read at runtime — by
+  # `relates_to` and `marker`, on every call, so a reloaded constant is picked
+  # up. They exist for the one app whose domain already has a `Relationship` or
+  # a `Marker`; everyone else leaves the defaults.
   # @example Restoring the pre-ADR-0010 single-directory layout
   #   # config/initializers/ecs_rails.rb
   #   EcsRails.configure { |config| config.entities_path = "app/models" }
@@ -36,9 +37,17 @@ module EcsRails
     # @return [String] the class name, resolved by `constantize` at each use
     attr_accessor :relationship_class_name
 
+    # The host app's catalogue component that backs every `marker`
+    # (EcsRails::Catalogue::Marker, ADR-0018 §4). `rails g ecs_rails:install`
+    # writes it as `Marker`; rename here only if that constant is taken.
+    #
+    # @return [String] the class name, resolved by `constantize` at each use
+    attr_accessor :marker_class_name
+
     def initialize
       @entities_path = "app/entities"
       @relationship_class_name = "Relationship"
+      @marker_class_name = "Marker"
     end
 
     # Components live in a `components` subdirectory of the entities path. The
