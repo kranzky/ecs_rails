@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
+# A group is three Texts under three slots — one `texts` table, three rows at
+# most — and nothing else. An organisation's name is Text under slot "name"
+# (ADR-0018 §5); a person's is the Name component.
 class Group < ApplicationEntity
-  component Name                          # group.name_first
-  component Description                   # group.description_text — what the group is
-  # The same component again, in a labelled slot (RFC-0014 / ADR-0015): one
-  # `descriptions` table, two rows per group at most, told apart by `slot`.
-  # Reader `rules_description`, delegation `rules_description_text`.
-  component Description, prefix: :rules   # group.rules_description_text — the house rules
+  component Text, prefix: :name          # group.name_text
+  component Text, prefix: :description   # group.description_text
+  component Text, prefix: :rules         # group.rules_text — the house rules
 end

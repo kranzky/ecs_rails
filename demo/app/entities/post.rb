@@ -1,36 +1,31 @@
 # frozen_string_literal: true
 
+# A post: two Texts, a State, a Counter and an author — all catalogue
+# components under slots, one row each in the shared tables. No migration.
 class Post < ApplicationEntity
-  # Delegation is reader-prefixed (ADR-0016): post.title_text, post.body_text.
-  # Title and Body both carry a `text` column; before ADR-0016 that was a
-  # DelegationConflict resolved with `except: [:text]`, which dropped the
-  # delegation altogether. Now both coexist and neither needs an option.
-  component Title
-  component Body
-  # The prefix would be redundant here — post.publish_state_state — so opt out
-  # and take the bare name: post.state.
-  component PublishState, prefix: false
-  component Likes               # post.likes_count; post.likes.increment! for the verb
-  relates_to :author, User      # post.author => User; no component file
+  component Text,    prefix: :title                              # post.title_text
+  component Text,    prefix: :body                               # post.body_text
+  component State,   prefix: :publish, states: %w[draft published] # post.publish_state.status
+  component Counter, prefix: :likes                              # post.likes_counter.count
+  relates_to :author, User                                       # post.author => User
 
-  # "All published posts", via the query DSL (RFC-0010). with_component applies
-  # the entity-model scope and compiles to a correlated EXISTS, so a PublishState
-  # shared with another entity type cannot leak in. See docs/friction-log.md.
+  # "All published posts", via the query DSL (RFC-0010): the State rows in slot
+  # "publish" whose status is published, scoped to posts. Compiles to a
+  # correlated EXISTS, so a State on another entity type cannot leak in.
   def self.published
-    with_component(PublishState, state: "published").order(created_at: :desc)
+    with_component(State, prefix: :publish, status: "published").order(created_at: :desc)
   end
 
   def published?
-    state == "published"
+    publish_state.in?(:published)
   end
 
   def draft?
     !published?
   end
 
-  # Behaviour on the entity: flip the PublishState component and persist.
+  # Behaviour on the entity: the State component's transition, logged.
   def publish!
-    self.state = "published"
-    save!
+    publish_state.transition!(:published, event: "publish")
   end
 end

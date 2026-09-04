@@ -7,7 +7,7 @@ class PostsController < ApplicationController
     # the shared relationships table, its target, the target's Name. Turns an
     # N+1 into a bounded query count.
     @posts = Post.published
-                 .includes_components(Title, Body, Likes)
+                 .includes_components(Text, Counter)
                  .preload(author_relationship: { target: :name })
   end
 
@@ -17,7 +17,7 @@ class PostsController < ApplicationController
     # The author name is a two-hop preload (kept explicit, an RFC-0013 non-goal).
     @comments = Comment
                 .with_related(:post, @post)
-                .includes_components(Body, Likes)
+                .includes_components(Text, Counter)
                 .preload(author_relationship: { target: :name })
                 .order(created_at: :asc)
     @comment = Comment.new
@@ -26,14 +26,13 @@ class PostsController < ApplicationController
 
   def new
     @post = Post.new
-    @post.state = "published" # default the checkbox to checked
+    @post.publish_state.status = "published" # default the checkbox to checked
     @authors = User.all
   end
 
   def create
     post = Post.new
     assign(post, post_params)
-    post.likes_count = 0
 
     if post.save
       redirect_to post, notice: post.published? ? "Post published." : "Draft saved."
@@ -74,10 +73,10 @@ class PostsController < ApplicationController
   # Shared by create and update. The publish checkbox always submits (check_box
   # renders a hidden "0"), so its key is always present on a form post.
   def assign(post, attrs)
-    post.title_text = cap(attrs[:title], 120) if attrs.key?(:title)
-    post.body_text = cap(attrs[:body], 5000) if attrs.key?(:body)
+    post.title_text_value = cap(attrs[:title], 120) if attrs.key?(:title)
+    post.body_text_value = cap(attrs[:body], 5000) if attrs.key?(:body)
     post.author = User.find(attrs[:author_id]) if attrs[:author_id].present?
-    post.state = attrs[:publish] == "1" ? "published" : "draft" if attrs.key?(:publish)
+    post.publish_state.status = attrs[:publish] == "1" ? "published" : "draft" if attrs.key?(:publish)
   end
 
   def post_params

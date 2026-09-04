@@ -2,9 +2,9 @@
 
 class GroupsController < ApplicationController
   def index
-    # includes_components(Description) preloads BOTH slots (the plain
-    # description and the :rules one), one query each.
-    @groups = Group.all.includes_components(Name, Description)
+    # includes_components(Text) preloads all three Text slots (name,
+    # description, rules), one query each.
+    @groups = Group.all.includes_components(Text)
   end
 
   def show
@@ -27,9 +27,9 @@ class GroupsController < ApplicationController
     # routes each key to its component (ADR-0016). `.presence` keeps a blank
     # description at its nil default, so no Description row is written for it.
     group = Group.new(
-      name_first: cap(group_params[:name], 80),
-      description_text: cap(group_params[:description], 300).presence,
-      rules_description_text: cap(group_params[:rules], 500).presence
+      name_text_value: cap(group_params[:name], 80),
+      description_text_value: cap(group_params[:description], 300).presence,
+      rules_text_value: cap(group_params[:rules], 500).presence
     )
 
     if group.save

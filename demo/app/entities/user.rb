@@ -1,15 +1,14 @@
 # frozen_string_literal: true
 
+# A person. Every component here is from the catalogue (ADR-0018); the table
+# for each already exists, so this class needed no migration.
 class User < ApplicationEntity
-  component Name
-  component Email
-  component Avatar
-  component Bio
-  # Markers (ADR-0009 / RFC-0016): a user IS a moderator/administrator exactly
-  # when the row exists — one `markers` table, slot = the marker name. Set
-  # presence with user.add(:moderator) / user.remove(:moderator), ask with
-  # user.moderator?. The lazy save cascade never persists these on its own —
-  # they have no state to dirty — so presence must be explicit.
+  component Name                     # user.name_given, user.name_family, user.name.initials
+  component Email                    # user.email_address, user.email_verified
+  component Image, prefix: :avatar   # user.avatar_image.url
+  component Text,  prefix: :bio      # user.bio_text (a Text under slot "bio")
+  # Markers (RFC-0016): a user IS a moderator exactly when the (user, "moderator")
+  # row exists in `markers`. user.add(:moderator), user.moderator?, user.remove.
   marker :moderator
   marker :administrator
 end

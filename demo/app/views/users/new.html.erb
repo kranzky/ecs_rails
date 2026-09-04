@@ -14,11 +14,11 @@
     <div class="grid grid--2">
       <div class="field">
         <%= f.label "user[first]", "First name" %>
-        <%= f.text_field "user[first]", class: "input", maxlength: 50, value: @user.name_first %>
+        <%= f.text_field "user[first]", class: "input", maxlength: 50, value: @user.name_given %>
       </div>
       <div class="field">
         <%= f.label "user[last]", "Last name" %>
-        <%= f.text_field "user[last]", class: "input", maxlength: 50, value: @user.name_last %>
+        <%= f.text_field "user[last]", class: "input", maxlength: 50, value: @user.name_family %>
       </div>
     </div>
     <div class="field">
@@ -28,7 +28,7 @@
     </div>
     <div class="field">
       <%= f.label "user[bio]", "Bio" %>
-      <%= f.text_area "user[bio]", class: "textarea", rows: 3, maxlength: 300, value: @user.bio_text %>
+      <%= f.text_area "user[bio]", class: "textarea", rows: 3, maxlength: 300, value: @user.bio_text.value %>
     </div>
     <div class="btn-row">
       <%= f.submit "Add person", class: "btn btn--primary" %>

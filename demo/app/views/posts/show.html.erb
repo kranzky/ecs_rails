@@ -32,7 +32,7 @@
   <% end %>
 
   <div class="article__body prose" style="margin-top:1.25rem">
-    <%= simple_format @post.body_text %>
+    <%= simple_format @post.body_text.to_s %>
   </div>
 
   <hr class="divider">
@@ -60,7 +60,7 @@
                 <span class="dot"></span>
                 <%= time_ago_in_words(comment.created_at) %> ago
               </div>
-              <p><%= simple_format comment.body_text %></p>
+              <p><%= simple_format comment.body_text.to_s %></p>
               <%= button_to comment_like_path(comment), class: "btn btn--sm btn--like btn--ghost" do %>
                 ♥ <span class="count"><%= likes_count(comment) %></span>
               <% end %>

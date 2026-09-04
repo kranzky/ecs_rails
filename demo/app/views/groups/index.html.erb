@@ -11,7 +11,7 @@
 <div class="grid grid--2">
   <% @groups.each do |group| %>
     <%= link_to group, class: "card card-link" do %>
-      <h2 style="font-size:1.15rem;margin:0 0 .3rem"><%= group.name_first %></h2>
+      <h2 style="font-size:1.15rem;margin:0 0 .3rem"><%= group.name_text %></h2>
       <p style="color:var(--muted);margin:0"><%= group.description_text %></p>
     <% end %>
   <% end %>

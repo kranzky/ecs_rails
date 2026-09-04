@@ -3,7 +3,7 @@
 class Comments::LikesController < ApplicationController
   def create
     comment = Comment.find(params[:comment_id])
-    comment.likes.increment!
+    comment.likes_counter.increment!
     redirect_back fallback_location: comment.post || root_path, notice: "Liked."
   end
 end

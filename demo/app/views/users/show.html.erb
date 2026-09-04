@@ -15,7 +15,7 @@
     </div>
   </div>
 
-  <% if @user.bio_text.present? %>
+  <% if @user.bio_text.value.present? %>
     <p class="prose" style="margin:1rem 0 0;color:var(--muted)"><%= @user.bio_text %></p>
   <% end %>
 
@@ -37,7 +37,7 @@
 </div>
 
 <section style="margin-top:2rem">
-  <h2 class="section-title">Posts by <%= @user.name_first %> · <%= @posts.size %></h2>
+  <h2 class="section-title">Posts by <%= @user.name_given %> · <%= @posts.size %></h2>
   <% if @posts.empty? %>
     <div class="empty">No posts yet.</div>
   <% else %>

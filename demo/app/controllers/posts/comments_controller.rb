@@ -7,7 +7,7 @@ class Posts::CommentsController < ApplicationController
 
     # Flat mass assignment (ADR-0016). `post:` is a relationship writer, which
     # relates_to leaves bare on purpose; the rest are prefixed component keys.
-    comment = Comment.new(body_text: cap(params.dig(:comment, :body), 2000), post: post, likes_count: 0)
+    comment = Comment.new(body_text_value: cap(params.dig(:comment, :body), 2000), post: post)
     comment.author = User.find(params[:comment][:author_id]) if params.dig(:comment, :author_id).present?
 
     if comment.save
