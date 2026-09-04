@@ -1,0 +1,29 @@
+<% content_for :title, @invoice.invoice_number %>
+<%= link_to "← Back to order #{@order.order_number}", @order, class: "back" %>
+
+<div class="card">
+  <div class="btn-row" style="justify-content:space-between;align-items:flex-start">
+    <div>
+      <h1 style="margin:0;font-size:1.5rem">Invoice <%= @invoice.invoice_number %></h1>
+      <div class="meta">Issued <%= @invoice.issued_at&.strftime("%-d %b %Y, %H:%M") %><span class="dot"></span>for order <%= link_to @order.order_number, @order %></div>
+    </div>
+    <span class="badge badge--pub">Paid</span>
+  </div>
+
+  <hr class="divider">
+  <div class="grid grid--2">
+    <div><h3 class="section-title">Billed to</h3><p class="contact"><%= byline @order.customer %><br><%= address_block @invoice.billing_address %></p></div>
+    <div><h3 class="section-title">Total</h3><p class="price" style="font-size:1.6rem;margin:0"><%= price_tag @invoice.total_money %></p></div>
+  </div>
+
+  <hr class="divider">
+  <table class="table">
+    <thead><tr><th>Item</th><th class="num">Unit price</th><th class="num">Qty</th><th class="num">Line</th></tr></thead>
+    <tbody>
+      <% @items.each do |item| %>
+        <tr><td><%= item.title %></td><td class="num"><%= price_tag item.unit_price_money %></td><td class="num"><%= item.quantity %></td><td class="num price"><%= price_tag item.line_total %></td></tr>
+      <% end %>
+    </tbody>
+  </table>
+  <p class="hint">An invoice is its own entity — number, total, issue time and billing address are all copies — and <code>order.invoice</code> is a <code>has_one</code> because the invoice's <code>relates_to :order</code> is <code>unique: true</code>.</p>
+</div>

@@ -43,13 +43,14 @@ module Demo
       end
 
       marketplace(ada: ada, grace: grace, alan: alan, katherine: katherine)
+      commerce(ada: ada, grace: grace, alan: alan)
 
       Demo::Indexer.call
 
       "#{User.count} users, #{Post.count} posts (#{Post.published.count} published), " \
         "#{Comment.count} comments, #{Group.count} groups, #{Membership.count} memberships, " \
         "#{Company.count} companies, #{Product.count} products (#{Product.listed.count} listed), " \
-        "#{Review.count} reviews"
+        "#{Review.count} reviews, #{Order.count} orders, #{Invoice.count} invoices"
     end
 
     # The marketplace (ECS-22). Ada owns a company AND reviews products from the
@@ -102,6 +103,31 @@ module Demo
        [created[10], grace, 5, "She checked the machine's numbers by hand; now you can too."]].each do |product, author, stars, text|
         review(product, author, stars, text)
       end
+    end
+
+    # Baskets, checkout and orders (ECS-23). Ada's slots are filled and she has
+    # placed an order through the real Checkout system; Alan has a basket.
+    def commerce(ada:, grace:, alan:)
+      ada.shipping_address.assign_attributes(line1: "12 Ada Lovelace Ln", locality: "Perth", region: "WA", postcode: "6000", country: "AU")
+      ada.billing_address.assign_attributes(line1: "PO Box 1815", locality: "Perth", region: "WA", postcode: "6001", country: "AU")
+      ada.mobile_phone.e164 = "+61412345678"
+      ada.save!
+      grace.shipping_address.assign_attributes(line1: "1 Nanosecond Way", locality: "Arlington", region: "VA", postcode: "22201", country: "US")
+      grace.work_phone.e164 = "+17035550199"
+      grace.save!
+
+      wire  = Product.with_component(Identifier, prefix: :sku, value: "NS-1").first
+      paper = Product.with_component(Identifier, prefix: :sku, value: "TP-OCN").first
+      gears = Product.with_component(Identifier, prefix: :sku, value: "AE-G40").first
+
+      basket = ada.create_basket!
+      BasketItem.create!(basket: basket, product: wire, quantity: 20)
+      BasketItem.create!(basket: basket, product: paper, quantity: 1)
+      Demo::Checkout.call(basket: basket, card_number: "4242424242424242",
+                          shipping: ada.shipping_address.attributes, billing: ada.billing_address.attributes)
+
+      alan_basket = alan.create_basket!
+      BasketItem.create!(basket: alan_basket, product: gears, quantity: 2)
     end
 
     def company(name, description, email:, address:, phone: nil)

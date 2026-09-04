@@ -40,6 +40,26 @@ class UsersController < ApplicationController
     end
   end
 
+  # The contact slots: two addresses, two phones. Each field routes to its
+  # slot's component through assign_attributes on the reader; blank fields are
+  # nil so an untouched slot stays virtual (no row).
+  def update
+    user = User.find(params[:id])
+    contact = params.fetch(:contact, {})
+    %w[shipping billing].each do |slot|
+      attrs = contact.fetch(slot, {}).permit(*Demo::Checkout::ADDRESS_FIELDS).to_h.transform_values { |v| cap(v, 80).presence }
+      user.public_send("#{slot}_address").assign_attributes(attrs)
+    end
+    user.mobile_phone.e164 = cap(contact[:mobile], 16).presence if contact.key?(:mobile)
+    user.work_phone.e164 = cap(contact[:work], 16).presence if contact.key?(:work)
+
+    if user.save
+      redirect_to user, notice: "Contact details saved."
+    else
+      redirect_to user, alert: user.errors.full_messages.to_sentence
+    end
+  end
+
   private
 
   def user_params

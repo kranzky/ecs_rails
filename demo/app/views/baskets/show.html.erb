@@ -1,0 +1,44 @@
+<% content_for :title, "#{display_name(@user)}'s basket" %>
+<%= link_to "← Back to market", products_path, class: "back" %>
+
+<div class="page-head page-head--row">
+  <div>
+    <h1><%= display_name @user %>'s basket</h1>
+    <p>A <code>Basket</code> is one per user (<code>relates_to :customer, User, unique: true</code>); each line is a <code>BasketItem</code> join entity with a quantity.</p>
+  </div>
+  <%= link_to "Orders", user_orders_path(@user), class: "btn btn--ghost" %>
+</div>
+
+<% if @items.empty? %>
+  <div class="empty">
+    <p>Nothing in the basket yet.</p>
+    <%= link_to "Browse the market", products_path, class: "btn btn--primary" %>
+  </div>
+<% else %>
+  <div class="card">
+    <table class="table">
+      <thead><tr><th>Product</th><th>Unit price</th><th>Qty</th><th class="num">Line total</th><th></th></tr></thead>
+      <tbody>
+        <% @items.each do |item| %>
+          <tr>
+            <td><%= link_to item.product.title, item.product %></td>
+            <td class="num"><%= price_tag item.product.price_money %></td>
+            <td>
+              <%= form_with url: user_basket_item_path(@user, item), method: :patch, class: "inline btn-row" do |f| %>
+                <%= f.number_field "basket_item[quantity]", value: item.quantity, min: 1, max: 99, class: "input", style: "width:4.5rem;padding:.35rem .5rem" %>
+                <%= f.submit "Update", class: "btn btn--sm btn--ghost" %>
+              <% end %>
+            </td>
+            <td class="num price"><%= price_tag item.line_total %></td>
+            <td class="num"><%= button_to "Remove", user_basket_item_path(@user, item), method: :delete, class: "btn btn--sm btn--ghost btn--danger", form_class: "inline" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+      <tfoot><tr><td colspan="3" style="text-align:right;color:var(--muted)">Total</td><td class="num price" style="font-size:1.2rem"><%= price_tag @total %></td><td></td></tr></tfoot>
+    </table>
+    <hr class="divider">
+    <div class="btn-row" style="justify-content:flex-end">
+      <%= link_to "Checkout", new_user_checkout_path(@user), class: "btn btn--primary" %>
+    </div>
+  </div>
+<% end %>

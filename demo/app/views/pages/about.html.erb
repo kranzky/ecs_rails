@@ -100,6 +100,20 @@ end</code></pre>
   </div>
 
   <div class="card">
+    <h3 class="section-title">Checkout: a system over components, and copies not links</h3>
+    <p class="prose" style="margin-bottom:0"><code>Demo::Checkout</code> is a plain Ruby object
+       that turns a <code>Basket</code> into a paid <code>Order</code> with an
+       <code>Invoice</code> in one transaction: it copies the customer's
+       <code>shipping</code> and <code>billing</code> Address slots and each product's
+       <code>Money</code> onto the order lines — snapshots, never links, so a later
+       price edit leaves history alone — totals them with <code>Money#+</code>
+       (which refuses to mix currencies), charges a simulated gateway, and lets the
+       <code>State</code> component transition itself to <code>paid</code>. A declined
+       card raises, and the whole thing rolls back. What the gem does <em>not</em>
+       give a system — scheduling, idempotency, retries — is on the backlog, on purpose.</p>
+  </div>
+
+  <div class="card">
     <h3 class="section-title">Validation merges onto the entity</h3>
     <p class="prose" style="margin-bottom:0">The <code>Email</code> component
        validates its address; the error surfaces as

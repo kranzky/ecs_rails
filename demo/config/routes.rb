@@ -16,11 +16,22 @@ Rails.application.routes.draw do
     resource :like, only: :create, module: :comments
   end
 
-  resources :users, only: %i[index show new create] do
+  resources :users, only: %i[index show new create update] do
     # Marker components as first-class UI actions: promote/demote via add/remove.
     resource :moderator,     only: %i[create destroy], module: :users
     resource :administrator, only: %i[create destroy], module: :users
+    # The marketplace (ECS-23): a user's basket, checkout and orders. No
+    # sessions — the user in the path is the customer.
+    resource  :basket,       only: :show
+    resources :basket_items, only: %i[update destroy]
+    resource  :checkout,     only: %i[new create]
+    resources :orders,       only: :index
   end
+  resources :basket_items, only: :create
+  resources :orders, only: :show do
+    member { patch :transition }
+  end
+  resources :invoices, only: :show
 
   resources :groups, only: %i[index show new create] do
     resources :memberships, only: %i[create destroy], module: :groups

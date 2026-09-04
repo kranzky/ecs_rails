@@ -315,3 +315,11 @@ kbd, code { font-family: var(--mono); font-size: .88em; background: var(--surfac
 .contact { margin: 0; color: var(--muted); font-size: .95rem; }
 .contact dt { float: left; clear: left; width: 5.5rem; color: var(--faint); font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; line-height: 1.9; }
 .contact dd { margin: 0 0 .35rem 5.5rem; }
+
+/* --- tables (basket, orders, invoices) ------------------------------------- */
+
+.table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+.table th { text-align: left; font-size: .76rem; text-transform: uppercase; letter-spacing: .05em; color: var(--faint); padding: .4rem .5rem; border-bottom: 1px solid var(--border); }
+.table td { padding: .6rem .5rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.table tfoot td { border-bottom: 0; padding-top: .8rem; }
+.table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }

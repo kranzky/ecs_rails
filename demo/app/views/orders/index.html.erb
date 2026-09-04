@@ -1,0 +1,29 @@
+<% content_for :title, "#{display_name(@user)}'s orders" %>
+<%= link_to "← Back to #{display_name(@user)}", @user, class: "back" %>
+
+<div class="page-head page-head--row">
+  <div>
+    <h1>Orders for <%= display_name @user %></h1>
+    <p><code>user.orders</code> — the inverse of the order's <code>relates_to :customer</code>.</p>
+  </div>
+  <%= link_to "Basket", user_basket_path(@user), class: "btn btn--ghost" %>
+</div>
+
+<% if @orders.empty? %>
+  <div class="empty">No orders yet.</div>
+<% else %>
+  <div class="stack stack--tight">
+    <% @orders.each do |order| %>
+      <%= link_to order, class: "card card-link" do %>
+        <div class="btn-row" style="justify-content:space-between">
+          <strong style="color:var(--text)"><%= order.order_number %></strong>
+          <span class="btn-row">
+            <span class="price"><%= price_tag order.total_money %></span>
+            <%= order_badge order %>
+          </span>
+        </div>
+        <div class="meta" style="margin-top:.3rem"><%= order.created_at.strftime("%-d %b %Y, %H:%M") %></div>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

@@ -1,0 +1,40 @@
+<% content_for :title, "Checkout" %>
+<%= link_to "← Back to basket", user_basket_path(@user), class: "back" %>
+
+<div class="page-head">
+  <h1>Checkout — <%= price_tag @total %></h1>
+  <p>Addresses are prefilled from <%= display_name @user %>'s <code>shipping</code> and <code>billing</code> Address slots and copied onto the order. Payment is simulated; card <code>4000 0000 0000 0002</code> declines and rolls the whole checkout back.</p>
+</div>
+
+<%= form_with url: user_checkout_path(@user), method: :post do |f| %>
+  <div class="grid grid--2">
+    <% %w[shipping billing].each do |slot| %>
+      <% address = @user.public_send("#{slot}_address") %>
+      <div class="card">
+        <h3 class="section-title"><%= slot.capitalize %> address</h3>
+        <% [["line1", "Line 1"], ["line2", "Line 2"], ["locality", "City"], ["region", "Region"], ["postcode", "Postcode"], ["country", "Country (2 letters)"]].each do |field, label| %>
+          <div class="field">
+            <%= f.label "checkout[#{slot}][#{field}]", label %>
+            <%= f.text_field "checkout[#{slot}][#{field}]", value: address.public_send(field), class: "input", maxlength: (field == "country" ? 2 : 80) %>
+          </div>
+        <% end %>
+        <% if slot == "billing" %>
+          <label class="check"><%= f.check_box "checkout[same_billing]" %> Same as shipping</label>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="card" style="margin-top:1rem">
+    <h3 class="section-title">Payment</h3>
+    <div class="field">
+      <%= f.label "checkout[card_number]", "Card number" %>
+      <%= f.text_field "checkout[card_number]", value: "4242 4242 4242 4242", class: "input", maxlength: 24, inputmode: "numeric" %>
+      <p class="hint">Any 12–19 digits succeed except 4000 0000 0000 0002.</p>
+    </div>
+    <div class="btn-row">
+      <%= f.submit "Place order", class: "btn btn--primary" %>
+      <%= link_to "Cancel", user_basket_path(@user), class: "btn btn--ghost" %>
+    </div>
+  </div>
+<% end %>
