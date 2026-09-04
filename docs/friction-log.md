@@ -492,3 +492,32 @@ regenerated from the chain; `db:migrate` on an empty database loads
 trimmed by hand to the 17 real tables, the stale tables dropped, and
 `schema.rb` re-dumped. Worth knowing for ECS-17, whose whole point is that
 `db/migrate` holds one file.
+
+### 🟢 Five relationships, one table, one generated migration — 2026-09-04
+
+[ADR-0017](adr/0017-shared-relationships-table.md) applied to the forum (Linear
+ECS-15). `rails g ecs_rails:upgrade` found the five ADR-0013 backing tables
+(`post_authors`, `comment_authors`, `comment_posts`, `membership_users`,
+`membership_groups`), wrote one migration that created `relationships`, copied
+every row across under its relationship name and owner model, and dropped them.
+It ran in under a second on the seeded database; every post kept its author,
+every comment its post, every membership its user and group. The install
+generator's one-line `Relationship` class was copied into
+`app/entities/components/`.
+
+**Nothing in the entities, views, seed or controllers changed** apart from the
+two raw nested preloads, which now name `target` instead of the relationship
+(`preload(author_relationship: { target: :name })`). `post.author`,
+`Membership.with_related(:group, @group)`, `Post.create!(author: user)` — all as
+before. The demo's `db/migrate` is one file shorter in spirit: no new
+relationship will ever add one.
+
+### 🟡 A nested preload has to know the column is `target` — 2026-09-04
+
+`includes_related(:author)` preloads the row and its target, but the demo wants
+the target's `Name` too, and RFC-0013 leaves that second hop to a raw
+`preload`. Under ADR-0013 that read `{ author: :name }`; now it reads
+`{ target: :name }` — the one place the shared table's generic column leaks into
+app code. Small, and arguably clearer, but it is a spelling a developer has to
+learn. If ECS-17 finds itself writing it often, `includes_related(:author,
+components: [Name])` would be the ergonomic fix; noted, not built.

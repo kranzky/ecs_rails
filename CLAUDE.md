@@ -97,6 +97,14 @@ bundle exec rspec                   # component specs are placeholders
   is identity: never delegated, never dirt. Per-slot options are declared on
   the component with `slot_option` and passed as extra keywords on `component`.
   `rails g ecs_rails:upgrade` brings an older schema forward.
+- **Relationships share one table** (ADR-0017): `relates_to :author, User` is
+  `component Relationship, prefix: :author, delegate: false` plus four
+  hand-defined accessors; the app's `Relationship` class includes
+  `EcsRails::Catalogue::Relationship` and is found via
+  `config.relationship_class_name`. Target type is checked in Ruby on
+  assignment; `unique: true` writes `exclusive` for the partial unique index.
+  Nested preloads name `target`, not the relationship. There is no relationship
+  generator any more.
 - **Conflicts raise at declaration time** (ADR-0004). Never a silent winner.
 - **Presence is explicit** (ADR-0009): markers persist via `add`/`remove`.
 - **Reload safety**: the registry and relationship metadata store class
