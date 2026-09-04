@@ -15,4 +15,6 @@ class User < ApplicationEntity
   has_many :posts,       via: :author   # user.posts
   has_many :comments,    via: :author   # user.comments
   has_many :memberships, via: :user     # user.memberships
+  has_many :employments, via: :user     # user.employments — the seller side, same user
+  has_many :reviews,     via: :author   # user.reviews
 end

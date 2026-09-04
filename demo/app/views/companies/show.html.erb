@@ -1,0 +1,64 @@
+<% content_for :title, @company.name %>
+<%= link_to "← Back to sellers", companies_path, class: "back" %>
+
+<div class="card">
+  <div class="profile">
+    <%= logo_for @company, klass: "avatar avatar--lg" %>
+    <div class="profile__meta">
+      <h1 class="profile__name"><%= @company.name %></h1>
+      <p style="margin:.2rem 0 0;color:var(--muted)"><%= @company.description %></p>
+    </div>
+  </div>
+
+  <hr class="divider">
+  <h3 class="section-title">Contact — Email, Phone and Address components</h3>
+  <dl class="contact">
+    <dt>Email</dt><dd><%= @company.email_address %></dd>
+    <dt>Phone</dt><dd><%= @company.phone.to_s.presence || "—" %></dd>
+    <dt>Address</dt><dd><%= safe_join(@company.address.lines, tag.br) %></dd>
+  </dl>
+</div>
+
+<section style="margin-top:2rem">
+  <h2 class="section-title">People · <%= @staff.size %></h2>
+  <div class="card">
+    <p class="hint" style="margin:0 0 .75rem">Each row is an <code>Employment</code> — the same join-entity shape as a group membership, carrying the same <code>Role</code> component. Every one of these people also shops here.</p>
+    <% @staff.each do |e| %>
+      <div class="comment" style="align-items:center">
+        <%= avatar_for e.user %>
+        <div class="comment__body" style="display:flex;align-items:center;gap:.6rem">
+          <%= link_to display_name(e.user), e.user, style: "color:var(--text);font-weight:600" %>
+          <span class="badge <%= 'badge--mod' if e.role_name == 'owner' %>"><%= e.role_name %></span>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</section>
+
+<section style="margin-top:2rem">
+  <div class="page-head page-head--row" style="margin-bottom:.75rem">
+    <h2 class="section-title" style="margin:0">Products · <%= @products.size %></h2>
+    <%= link_to "New product", new_product_path(company_id: @company.id), class: "btn btn--sm btn--primary" %>
+  </div>
+  <% if @products.empty? %>
+    <div class="empty">Nothing listed yet.</div>
+  <% else %>
+    <div class="stack stack--tight">
+      <% @products.each do |product| %>
+        <%= link_to product, class: "card card-link #{'is-draft' if product.draft?}" do %>
+          <div class="btn-row" style="justify-content:space-between;align-items:baseline">
+            <strong style="color:var(--text)"><%= product.title %></strong>
+            <span class="btn-row">
+              <span class="price"><%= price_tag product.price_money %></span>
+              <%= listing_badge product %>
+            </span>
+          </div>
+          <div class="meta" style="margin-top:.3rem">
+            <%= stars_for product.rating_stars %><span class="dot"></span>
+            <span class="count"><%= product.stock %> in stock</span>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+</section>

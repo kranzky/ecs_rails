@@ -1,0 +1,4 @@
+<% content_for :title, "Edit #{@product.title}" %>
+<%= link_to "← Back to product", @product, class: "back" %>
+<div class="page-head"><h1>Edit product</h1></div>
+<%= render "form", url: product_path(@product), method: :patch, submit_label: "Save changes", cancel_path: product_path(@product) %>

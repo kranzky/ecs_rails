@@ -292,3 +292,26 @@ kbd, code { font-family: var(--mono); font-size: .88em; background: var(--surfac
 .site-footer__links { display: inline-flex; align-items: center; gap: .6rem; }
 .site-footer__links a { color: var(--muted); font-weight: 550; }
 .site-footer__links a:hover { color: var(--brand); }
+
+/* --- marketplace ---------------------------------------------------------- */
+
+.filters { display: grid; gap: .75rem; grid-template-columns: 1fr; margin: 0 0 1.25rem; }
+@media (min-width: 620px) { .filters { grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto; align-items: end; } }
+.filters .field { margin: 0; }
+.filters .field label { font-size: .78rem; color: var(--faint); text-transform: uppercase; letter-spacing: .05em; }
+
+@media (min-width: 620px) { .grid--3 { grid-template-columns: 1fr 1fr 1fr; } }
+.product-card { display: flex; flex-direction: column; gap: .35rem; }
+.product-card h2 { margin: 0; font-size: 1.05rem; }
+.product-card h2 a { color: var(--text); }
+.product-card__price { font-size: 1.25rem; font-weight: 700; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.product-card__foot { margin-top: auto; padding-top: .5rem; }
+.price { font-weight: 700; font-variant-numeric: tabular-nums; }
+.stars { color: var(--warn); letter-spacing: .05em; font-size: .95rem; }
+.stars--none { color: var(--faint); letter-spacing: 0; font-size: .85rem; }
+.tag { display: inline-block; font-size: .74rem; font-weight: 600; padding: .1rem .5rem; border-radius: 999px;
+       background: var(--brand-soft); color: var(--brand); }
+.out-of-stock { color: var(--danger); font-weight: 600; font-size: .85rem; }
+.contact { margin: 0; color: var(--muted); font-size: .95rem; }
+.contact dt { float: left; clear: left; width: 5.5rem; color: var(--faint); font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; line-height: 1.9; }
+.contact dd { margin: 0 0 .35rem 5.5rem; }

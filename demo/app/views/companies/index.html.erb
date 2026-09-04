@@ -1,0 +1,21 @@
+<% content_for :title, "Sellers" %>
+
+<div class="page-head">
+  <h1>Sellers</h1>
+  <p>Companies list products; the people who work at them are the same people who shop here.</p>
+</div>
+
+<div class="grid grid--2">
+  <% @companies.each do |company| %>
+    <%= link_to company, class: "card card-link" do %>
+      <div class="profile">
+        <%= logo_for company, klass: "avatar avatar--lg" %>
+        <div class="profile__meta">
+          <h2 class="profile__name" style="font-size:1.15rem"><%= company.name %></h2>
+          <div class="meta"><%= company.address.locality %><% if company.address.country.present? %>, <%= company.address.country %><% end %></div>
+          <p style="margin:.4rem 0 0;color:var(--muted);font-size:.93rem"><%= company.description %></p>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+</div>
