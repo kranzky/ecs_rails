@@ -28,8 +28,12 @@ is ordinary ActiveRecord.
 
 - Owns exactly one database table.
 - Belongs to exactly one entity, via a non-null `entity_id` UUID FK.
-- Appears **at most once** per entity, enforced by a unique index on
-  `entity_id`. See [ADR-0005](adr/0005-one-component-per-entity.md).
+- Appears **at most once per `(entity, slot)`**, enforced by a unique index on
+  `(entity_id, slot)`. A singular component is slot `""`; a *labelled* one
+  (`component Address, prefix: :business`) is slot `"business"`, a singleton
+  with its own reader. Multiplicity comes from naming slots, never from an
+  anonymous collection. See [ADR-0005](adr/0005-one-component-per-entity.md)
+  and [ADR-0015](adr/0015-plural-components-via-slot.md).
 - May have **no database row**. A component with no row is *virtual*.
 - Has a default value for every attribute. A virtual component reports those
   defaults.
@@ -52,17 +56,20 @@ is ordinary ActiveRecord.
 ## 2. Schema
 
 ```
-entities                    emails                     names
-  id         UUID PK          id         UUID PK         id         UUID PK
-  model      string           entity_id  UUID FK UNIQUE  entity_id  UUID FK UNIQUE
-  created_at datetime         address    string          first      string
-                              verified   boolean         last       string
-                              created_at                 created_at
-                              updated_at                 updated_at
+entities                    emails                        addresses
+  id         UUID PK          id         UUID PK            id         UUID PK
+  model      string           entity_id  UUID FK ┐          entity_id  UUID FK ┐
+  created_at datetime         slot       string  ┘ UNIQUE   slot       string  ┘ UNIQUE
+                              address    string             line1      string
+                              verified   boolean            region     string
+                              created_at                    created_at
+                              updated_at                    updated_at
 ```
 
-- Every component table has `entity_id UUID NOT NULL` with a **unique index**
-  and a foreign key to `entities(id)` with `ON DELETE CASCADE`.
+- Every component table has `entity_id UUID NOT NULL`, `slot string NOT NULL
+  DEFAULT ''`, a **unique index on `(entity_id, slot)`**, and a foreign key to
+  `entities(id)` with `ON DELETE CASCADE`. `slot` is identity, not state: it is
+  never delegated and never makes a virtual component dirty.
 - Component tables are named by the Rails plural of the component class.
 - `entities.model` is indexed; `User.all` compiles to
   `SELECT * FROM entities WHERE model = 'users'`.
@@ -152,6 +159,11 @@ user.state                    # => delegates to user.publish_state.state (bare)
   would be redundant (`post.state`, not `post.publish_state_state`). A
   relationship's backing component is always bare, so `post.author` keeps its
   shape ([ADR-0013](adr/0013-relationship-dsl.md)).
+- `prefix: :label` declares a **slot** ([RFC-0014](rfc/0014-plural-components.md)):
+  reader `label_singular` (`business_address`), delegation prefixed with that
+  reader (`business_address_line1`). `delegate: false` keeps the reader and
+  predicate only. Extra keywords are per-slot options the component declared
+  with `slot_option` (`component State, prefix: :order, states: %w[...]`).
 - `only:` / `except:` name the **component's** methods (`except: [:title]`),
   never the prefixed entity-level name.
 - Delegation is generated **at declaration time**, into a module included in the

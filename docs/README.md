@@ -60,7 +60,7 @@ Each RFC is one commit. Each commit compiles and passes tests.
 | [0011](rfc/0011-component-preloading.md) | Component preloading (includes_components) | 0004, 0006 ✅ |
 | [0012](rfc/0012-relationship-dsl.md) | Relationship DSL (relates_to) | 0004, 0005, 0008 ✅ |
 | [0013](rfc/0013-relationship-name-query-sugar.md) | Relationship query sugar (with_related/includes_related) | 0010, 0011, 0012 ✅ |
-| [0014](rfc/0014-plural-components.md) | Labelled (plural) components (`prefix:` / slot) | 0004, 0005, 0006, 0009, 0010 · proposed |
+| [0014](rfc/0014-plural-components.md) | Labelled (plural) components (`prefix:` / slot, `slot_option`, `ecs_rails:upgrade`) | 0004, 0005, 0006, 0009, 0010 ✅ |
 | [0015](rfc/0015-inverse-relationships.md) | Inverse relationships (`has_many` / `has_one` over the shared table) | 0012, 0013, 0014, ADR-0017 · proposed |
 
 RFC-0001 and 0002 are independent and can be built in parallel.
