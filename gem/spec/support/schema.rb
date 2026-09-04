@@ -106,72 +106,36 @@ ActiveRecord::Schema.define do
     add_foreign_key table, :entities, column: :entity_id, on_delete: :cascade
   end
 
-  # --- relationship backing tables (RFC-0012 / ADR-0013) ---------------------
+  # Tables ADR-0013 used and ADR-0017 retired. A database built by an earlier
+  # schema.rb still has them, and the upgrade generator's specs inspect the
+  # catalog, so they are dropped explicitly rather than left to linger.
+  %i[post_authors comment_authors membership_users membership_teams reloadable_authors].each do |table|
+    drop_table table, if_exists: true
+  end
+
+  # --- the shared relationships table (ADR-0017) ------------------------------
   #
-  # These are what `relates_to` generates. Each is a component table on the
-  # owner side (entity_id: not-null, unique, ON DELETE CASCADE — a post has at
-  # most one author, and destroying the post destroys the link), plus a target
-  # column whose FK is ON DELETE **NULLIFY**: destroying the target entity (the
-  # User) nullifies the link, it does not cascade to the owner (the Post). That
-  # nullify-not-cascade asymmetry is the load-bearing behaviour ADR-0013
-  # specifies, and it is asserted against the real database in
-  # spec/relationships_spec.rb.
-  #
-  # `post_authors` backs `Post.relates_to :author, User`.
-  create_table :post_authors, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid :entity_id, null: false
-    t.string :slot,     null: false, default: ""
-    t.uuid :author_id, default: nil
+  # Every `relates_to` in every entity is a row here; the slot is the
+  # relationship name. Replaces the per-relationship backing tables ADR-0013
+  # generated (post_authors, comment_authors, membership_users, ...). The two
+  # foreign keys are asymmetric on purpose: destroying the owner (entity_id)
+  # CASCADES and takes the link with it; destroying the target NULLIFIES, so the
+  # owner survives with the link cleared. `owner_model` mirrors the owner's
+  # entities.model so the exclusivity index is per owner type; `exclusive` is
+  # what `relates_to ..., unique: true` writes, and the partial unique index is
+  # what enforces it — at most one Invoice per Order — with no index of its own.
+  create_table :relationships, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid    :entity_id,   null: false
+    t.string  :slot,        null: false, default: ""
+    t.uuid    :target_id,   default: nil
+    t.string  :owner_model, null: false
+    t.boolean :exclusive,   null: false, default: false
     t.timestamps
   end
-
-  # `comment_authors` backs `Comment.relates_to :author, User` — a SECOND entity
-  # relating `:author` to the same target, so the RFC-0013 no-cross-entity-leak
-  # test is real: `Post.with_related(:author, ada)` must not return a Comment.
-  create_table :comment_authors, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid :entity_id, null: false
-    t.string :slot,     null: false, default: ""
-    t.uuid :author_id, default: nil
-    t.timestamps
-  end
-
-  # `membership_users` / `membership_teams` back the join-entity `Membership`,
-  # which carries two relationships — the many-to-many pattern (ADR-0005).
-  create_table :membership_users, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid :entity_id, null: false
-    t.string :slot,     null: false, default: ""
-    t.uuid :user_id,   default: nil
-    t.timestamps
-  end
-
-  create_table :membership_teams, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid :entity_id, null: false
-    t.string :slot,     null: false, default: ""
-    t.uuid :team_id,   default: nil
-    t.timestamps
-  end
-
-  # Backs the reload-safety scenario in spec/relationships_spec.rb, which
-  # declares `relates_to :author, User` on a throwaway `Reloadable` entity (whose
-  # owner-scoped table name is therefore `reloadable_authors`) and reads through
-  # it after a simulated class reload.
-  create_table :reloadable_authors, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid :entity_id, null: false
-    t.string :slot,     null: false, default: ""
-    t.uuid :author_id, default: nil
-    t.timestamps
-  end
-
-  {
-    post_authors: :author_id,
-    comment_authors: :author_id,
-    membership_users: :user_id,
-    membership_teams: :team_id,
-    reloadable_authors: :author_id
-  }.each do |table, target|
-    add_index table, %i[entity_id slot], unique: true
-    add_foreign_key table, :entities, column: :entity_id, on_delete: :cascade
-    add_index table, target
-    add_foreign_key table, :entities, column: target, on_delete: :nullify
-  end
+  add_index :relationships, %i[entity_id slot], unique: true
+  add_index :relationships, %i[target_id slot]
+  add_index :relationships, %i[target_id slot owner_model], unique: true, where: "exclusive",
+                                                             name: "index_relationships_exclusive"
+  add_foreign_key :relationships, :entities, column: :entity_id, on_delete: :cascade
+  add_foreign_key :relationships, :entities, column: :target_id, on_delete: :nullify
 end

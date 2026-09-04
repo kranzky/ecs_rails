@@ -62,6 +62,21 @@ user.save!                               # one row per slot, in one `addresses` 
 User.with_component(Address, prefix: :business, region: "WA")
 ```
 
+Cross-entity links are rows in one `relationships` table, created at install,
+so declaring one is pure Ruby:
+
+```ruby
+class Post < ApplicationEntity
+  relates_to :author, User                  # post.author, post.author=, post.author_id
+end
+
+class Invoice < ApplicationEntity
+  relates_to :order, Order, unique: true    # at most one Invoice per Order, DB-enforced
+end
+
+Post.with_related(:author, user).includes_related(:author)
+```
+
 Every v0.1 capability, working today:
 
 ```ruby
@@ -135,7 +150,7 @@ Set `DATABASE_URL` to point the suite at a different database.
 | RubyGems gem | `ecs_on_rails` |
 | Ruby module | `EcsRails` |
 | `require` | `ecs_rails` |
-| Generators | `ecs_rails:install`, `:component`, `:relationship`, `:upgrade` |
+| Generators | `ecs_rails:install`, `:component`, `:upgrade` |
 
 Only the published gem name differs. RubyGems collapses `-`, `_` and case when
 comparing names, so `ecs-rails`, `ecs_rails` and `ecsrails` are one name — and

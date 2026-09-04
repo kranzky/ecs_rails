@@ -5,15 +5,16 @@ require_relative "generator_helper"
 # RFC-0008: `rails g ecs_rails:install`.
 #
 # The emitted migration must match the shape of spec/support/schema.rb's
-# `entities` table, which is itself docs/architecture.md §2.
+# `entities` and `relationships` tables, which are themselves
+# docs/architecture.md §2 (ADR-0002, ADR-0017).
 RSpec.describe EcsRails::Generators::InstallGenerator, type: :generator do
   describe "the migration" do
-    subject(:contents) { migration("ecs_rails_create_entities") }
+    subject(:contents) { migration("ecs_rails_install") }
 
     before { run_generator }
 
     it "is generated" do
-      expect(migration_paths("ecs_rails_create_entities").size).to eq(1)
+      expect(migration_paths("ecs_rails_install").size).to eq(1)
     end
 
     it "enables pgcrypto" do
@@ -36,20 +37,75 @@ RSpec.describe EcsRails::Generators::InstallGenerator, type: :generator do
 
     # architecture.md §1: an entity is written once and never changes.
     #
-    # Asserts on the column declaration, not on the word: the migration's own
-    # comment explains why updated_at is absent, and so mentions it.
-    it "does not declare an updated_at column" do
-      expect(contents).not_to match(/^\s*t\.\w+ :updated_at/)
+    # Asserts on the column declaration inside the entities block, not on the
+    # word: the migration's own comment explains why updated_at is absent, and
+    # the relationships table further down legitimately has timestamps.
+    def entities_block
+      contents[/create_table :entities.*?^    end$/m]
     end
 
-    it "does not use t.timestamps, which would add updated_at" do
-      expect(contents).not_to match(/t\.timestamps/)
+    it "does not declare an updated_at column on entities" do
+      expect(entities_block).not_to match(/^\s*t\.\w+ :updated_at/)
+    end
+
+    it "does not use t.timestamps on entities, which would add updated_at" do
+      expect(entities_block).not_to match(/t\.timestamps/)
     end
 
     it "targets the running ActiveRecord version" do
       expect(contents).to match(
-        /class EcsRailsCreateEntities < ActiveRecord::Migration\[\d+\.\d+\]/
+        /class EcsRailsInstall < ActiveRecord::Migration\[\d+\.\d+\]/
       )
+    end
+
+    # ADR-0017: the shared relationships table is part of install, so a
+    # `relates_to` never needs a migration.
+    describe "the relationships table" do
+      it "is created with the ADR-0017 columns" do
+        aggregate_failures do
+          expect(contents).to match(/create_table :relationships, id: :uuid/)
+          expect(contents).to match(/t\.uuid\s+:entity_id,\s+null: false/)
+          expect(contents).to match(/t\.string\s+:slot,\s+null: false, default: ""/)
+          expect(contents).to match(/t\.uuid\s+:target_id/)
+          expect(contents).to match(/t\.string\s+:owner_model, null: false/)
+          expect(contents).to match(/t\.boolean :exclusive,\s+null: false, default: false/)
+        end
+      end
+
+      it "makes (entity_id, slot) unique and indexes (target_id, slot)" do
+        aggregate_failures do
+          expect(contents).to match(/add_index :relationships, \[:entity_id, :slot\], unique: true/)
+          expect(contents).to match(/add_index :relationships, \[:target_id, :slot\]$/m)
+        end
+      end
+
+      it "adds the partial unique index that enforces unique: true" do
+        expect(contents).to match(
+          /add_index :relationships, \[:target_id, :slot, :owner_model\], unique: true, where: "exclusive"/
+        )
+      end
+
+      it "cascades on the owner and nullifies on the target" do
+        aggregate_failures do
+          expect(contents).to match(/column: :entity_id, on_delete: :cascade/)
+          expect(contents).to match(/column: :target_id, on_delete: :nullify/)
+        end
+      end
+    end
+  end
+
+  # ADR-0017 / ADR-0018: the one-line catalogue class every relates_to is a row of.
+  describe "the Relationship component" do
+    before { run_generator }
+
+    it "is created under app/entities/components" do
+      expect(file("app/entities/components/relationship.rb"))
+        .to match(/class Relationship < ApplicationComponent/)
+    end
+
+    it "includes the gem's concern" do
+      expect(file("app/entities/components/relationship.rb"))
+        .to match(/include EcsRails::Catalogue::Relationship/)
     end
   end
 

@@ -574,6 +574,10 @@ module EcsRails
         end
       end
 
+      # Names reserved outside the declarations — a relationship's `author` /
+      # `author=` (EcsRails::Relationships), which no declaration delegates.
+      ecs_reserved_names.each { |name, owner| owners[name] ||= owner }
+
       # Sort so the reader (`title`) is reported before its writer (`title=`) —
       # "title" < "title=" — giving the tidier message and except: hint.
       clash = delegated.keys.select { |name| owners.key?(name) }.min_by(&:to_s)
@@ -581,6 +585,16 @@ module EcsRails
 
       raise DelegationConflict,
             delegation_conflict_message(component_class, slot, owners[clash], clash, delegated[clash])
+    end
+
+    # Entity-level names something other than a component declaration has
+    # claimed, mapped to a description of the claimant. Empty here; extended by
+    # EcsRails::Relationships (extended after this module, so its override wins
+    # and calls `super`) with each relationship's four accessors. Conflict and
+    # reader-collision detection fold these in, so `relates_to :author` and a
+    # later bare `component Author` cannot both own `#author`.
+    def ecs_reserved_names
+      {}
     end
 
     # A component reader (`post.author`) is structural — it is how you reach the
@@ -623,7 +637,7 @@ module EcsRails
               reader_collision_message(component_class, slot, clash, delegated[clash])
       end
 
-      taken = readers + siblings.flat_map { |d| delegation_map_for(d).keys }
+      taken = readers + siblings.flat_map { |d| delegation_map_for(d).keys } + ecs_reserved_names.keys
       return unless taken.include?(reader)
 
       raise DelegationConflict,
@@ -654,12 +668,15 @@ module EcsRails
 
     # The message ADR-0004 specifies: the method, both components, the entity,
     # and the exact `except:` line that resolves it. The `except:` hint names
-    # the component's own method (`:title`), not the entity-level name.
-    def delegation_conflict_message(new_component, slot, existing_component, method, component_method)
+    # the component's own method (`:title`), not the entity-level name. The
+    # existing owner is a component class, or a description such as
+    # "relates_to :author" when a relationship reserved the name.
+    def delegation_conflict_message(new_component, slot, existing_owner, method, component_method)
       attribute = component_method.to_s.chomp("=").to_sym
       reader = reader_name_for(new_component, slot)
+      owner = existing_owner.is_a?(Module) ? existing_owner.name : existing_owner
 
-      "##{method} is defined by both #{existing_component.name} and " \
+      "##{method} is defined by both #{owner} and " \
         "#{new_component.name} on #{name}. " \
         "Disambiguate with `component #{new_component.name}, except: [:#{attribute}]` " \
         "or call #{model_name.singular}.#{reader}.#{attribute} directly."

@@ -14,41 +14,55 @@ module EcsRails
   module Generators
     # `rails g ecs_rails:upgrade`
     #
-    # Brings an existing application's component tables up to the gem's current
-    # schema, in one migration. ADR-0018 makes this the *only* migration a user
-    # ever runs after `ecs_rails:install`; its first job (RFC-0014 / ADR-0015) is
-    # the slot column:
+    # Brings an existing application's schema up to the gem's current one.
+    # ADR-0018 makes this the *only* migration a user ever runs after
+    # `ecs_rails:install`. It has two jobs today, each its own migration file so
+    # that a later gem version can add a third without renaming either:
     #
-    #   add_column   :emails, :slot, :string, null: false, default: ""
-    #   remove_index :emails, column: :entity_id, unique: true
-    #   add_index    :emails, [:entity_id, :slot], unique: true
+    # 1. **Slots** (RFC-0014 / ADR-0015) — for every component table without a
+    #    `slot` column:
     #
-    # for every component table that lacks one. Safe on shipped data: every
-    # existing row is the single `slot = ""`, so the new composite index admits
-    # exactly the rows the old one did.
+    #      add_column   :emails, :slot, :string, null: false, default: ""
+    #      remove_index :emails, column: :entity_id, unique: true
+    #      add_index    :emails, [:entity_id, :slot], unique: true
     #
-    # Component tables are found by inspecting the database, not the registry:
-    # a generator runs before the app's classes are loaded, and the registry
-    # would miss a component whose entity is never referenced. Any table with an
-    # `entity_id` column is a component table (architecture.md §2) — including
-    # `relates_to` backing tables, which are components too. When every table is
-    # already current, nothing is written and the generator says so.
+    #    Safe on shipped data: every existing row is the single `slot = ""`, so
+    #    the new composite index admits exactly the rows the old one did.
+    #
+    # 2. **Shared relationships** (ADR-0017) — creates the `relationships` table
+    #    if it is missing, and moves every pre-0.3 per-relationship backing table
+    #    (`post_authors`, `membership_users`, ...) into it: each row becomes a
+    #    row with `slot` = the relationship name, `target_id` = the old
+    #    `<name>_id`, `owner_model` = the owner's discriminator; the old table is
+    #    then dropped. Irreversible, and written as `up`/`down` to say so.
+    #
+    # Tables are found by inspecting the database, not the registry: a generator
+    # runs before the app's classes are loaded, and the registry would miss a
+    # component whose entity is never referenced. Any table with an `entity_id`
+    # column is a component table (architecture.md §2). A backing table is
+    # recognised by its shape — entity_id, exactly one other `<name>_id` uuid
+    # column, timestamps, nothing else — and its ADR-0013 name,
+    # `<owner>_<names>`. The developer reviews the file before running it, as
+    # with any generated migration. When nothing is pending, nothing is written
+    # and the generator says so.
     class UpgradeGenerator < Rails::Generators::Base
       include ActiveRecord::Generators::Migration
 
       source_root File.expand_path("templates", __dir__)
 
-      desc "Upgrades existing component tables to the gem's current schema " \
-           "(currently: the slot column and (entity_id, slot) index)."
+      desc "Upgrades an existing schema to the gem's current one: the slot column " \
+           "on component tables, and the shared relationships table."
 
-      # Emits the upgrade migration, or reports there is nothing to do.
+      # Emits the slot migration for component tables that lack the column, or
+      # says there is nothing to do. Backing tables about to be moved into
+      # `relationships` are skipped — they are dropped a migration later.
       #
       # A Thor task: invoked as a generator step, not called directly.
       #
       # @return [void]
-      def create_migration_file
+      def create_slots_migration
         if tables_missing_slot.empty?
-          say "Every component table already has a slot column; nothing to upgrade.", :green
+          say "Every component table already has a slot column.", :green
           return
         end
 
@@ -58,19 +72,78 @@ module EcsRails
         )
       end
 
+      # Emits the shared-relationships migration when the `relationships` table
+      # is missing or per-relationship backing tables remain, or says so.
+      #
+      # A Thor task: invoked as a generator step, not called directly.
+      #
+      # @return [void]
+      def create_relationships_migration
+        if relationships_table_exists? && backing_tables.empty?
+          say "Relationships already live in the shared relationships table.", :green
+          return
+        end
+
+        migration_template(
+          "relationships_migration.rb.tt",
+          File.join(db_migrate_path, "ecs_rails_shared_relationships.rb")
+        )
+      end
+
       private
 
       # Component tables (any table with an entity_id column, other than
-      # `entities` itself) that have no `slot` column yet. Sorted, so the
-      # migration is deterministic; uniq, because a multi-schema search_path can
-      # list one name twice (the columns then resolve to the first schema).
+      # `entities` itself) that have no `slot` column yet — minus the backing
+      # tables the relationships migration drops. Sorted, so the migration is
+      # deterministic; uniq, because a multi-schema search_path can list one
+      # name twice (the columns then resolve to the first schema).
       def tables_missing_slot
-        @tables_missing_slot ||= connection.tables.uniq.sort.select do |table|
-          next false if table == "entities"
-
-          columns = connection.columns(table).map(&:name)
-          columns.include?("entity_id") && !columns.include?("slot")
+        @tables_missing_slot ||= component_tables.select do |table|
+          !column_names(table).include?("slot") && backing_tables.none? { |b| b[:table] == table }
         end
+      end
+
+      def component_tables
+        @component_tables ||= connection.tables.uniq.sort.select do |table|
+          table != "entities" && column_names(table).include?("entity_id")
+        end
+      end
+
+      def relationships_table_exists?
+        connection.tables.include?("relationships")
+      end
+
+      # ADR-0013 backing tables, recognised by shape and name: columns are
+      # exactly id, entity_id, one `<name>_id` uuid, timestamps (plus slot, if a
+      # slots upgrade already ran), and the table is `<owner>_<names>` with a
+      # non-empty owner. Each becomes
+      # `{ table:, slot: "author", foreign_key: "author_id", owner_model: "posts" }`.
+      # The `relationships` table itself is excluded by shape (it has more
+      # columns), and a bespoke component with a single foreign key but its own
+      # name (`sponsors`) is excluded by the name rule.
+      def backing_tables
+        @backing_tables ||= component_tables.filter_map do |table|
+          columns = column_names(table) - %w[id entity_id slot created_at updated_at]
+          next unless columns.size == 1
+
+          foreign_key = columns.first
+          next unless foreign_key.end_with?("_id") && column_type(table, foreign_key) == :uuid
+
+          name = foreign_key.delete_suffix("_id")
+          suffix = "_#{name.pluralize}"
+          next unless table.end_with?(suffix) && table.length > suffix.length
+
+          owner = table.delete_suffix(suffix)
+          { table: table, slot: name, foreign_key: foreign_key, owner_model: owner.pluralize }
+        end
+      end
+
+      def column_names(table)
+        connection.columns(table).map(&:name)
+      end
+
+      def column_type(table, column)
+        connection.columns(table).find { |c| c.name == column }&.type
       end
 
       def connection

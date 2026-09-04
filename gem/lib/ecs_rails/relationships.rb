@@ -1,104 +1,90 @@
 # frozen_string_literal: true
 
 # #constantize is load-bearing for reload safety: relationship metadata stores
-# the backing and target class *names* (strings) and resolves them on read, so a
-# reloaded constant is picked up — the same discipline as the registry
-# (RFC-0002). Required explicitly rather than relying on ActiveRecord.
+# the target class *name* (a string) and resolves it on read, so a reloaded
+# constant is picked up — the same discipline as the registry (RFC-0002).
 require "active_support/core_ext/string/inflections"
 
 module EcsRails
   # The class-level DSL for cross-entity links: `relates_to`.
   #
-  # Implements RFC-0012, decided by ADR-0013. Extended into EcsRails::Entity,
-  # alongside the `component` DSL it is built on. Surfaced by the demo, where
-  # `Authorship`, `MemberUser` and `MemberGroup` were each *nothing but* a
-  # `belongs_to` in a component, plus a `component` declaration and a migration.
+  # Implements RFC-0012 / RFC-0013, decided by ADR-0013 and re-based on the
+  # shared `relationships` table by ADR-0017. Extended into EcsRails::Entity,
+  # alongside the `component` DSL it is built on.
   #
   #   class Post < ApplicationEntity
   #     relates_to :author, User
   #   end
   #
-  #   class Membership < ApplicationEntity
-  #     relates_to :user, User
-  #     relates_to :team, Team
-  #     component Role
+  #   class Invoice < ApplicationEntity
+  #     relates_to :order, Order, unique: true   # at most one Invoice per Order
   #   end
   #
-  #   post.author = user   # writer   (delegated from the backing belongs_to)
-  #   post.author          # => the User (delegated)
-  #   post.author_relationship  # => the backing component row (the reader)
+  #   post.author = user          # writer (checked against User)
+  #   post.author                 # => the User
+  #   post.author_id              # => the User's id
+  #   post.author_relationship    # => the backing Relationship row (the reader)
   #
-  # `relates_to` writes no relationship component file. It defines the backing
-  # component dynamically and then declares it with `component`, so the whole
-  # RFC-0004/0005/0006/0009/0010/0011 stack applies for free: registry, lazy
-  # reader, delegation, `with_component`, presence, `includes_components`.
+  # ## How a relationship is stored (ADR-0017)
   #
-  # ## How the backing component is built (ADR-0013)
+  # Every relationship in the application is a row in ONE `relationships` table,
+  # created at install. `relates_to :author, User` is
   #
-  # `relates_to :author, User` on `Post` dynamically defines
-  # `Post::AuthorRelationship`, a concrete EcsRails::Component subclass, with:
-  #   - `table_name = "post_authors"` — `#{entity.singular}_#{relation.plural}`,
-  #     owner-scoped so it is collision-free by construction (ADR-0013),
-  #   - `belongs_to :author, class_name: "User", foreign_key: :author_id,
-  #     optional: true` — the target link, optional so an unset relationship is
-  #     valid (ADR-0003).
+  #   component Relationship, prefix: :author, delegate: false,
+  #             target_class_name: "User", unique: false
   #
-  # Then it runs `component Post::AuthorRelationship`. Delegation surfaces the
-  # `belongs_to` as `post.author` / `post.author=`; the backing component's own
-  # reader is `post.author_relationship`. There is no reader collision, because
-  # the component is named for the *relationship* and the association for the
-  # *target* — the rule the ADR-0006 amendment arrived at the hard way.
+  # — a labelled component (RFC-0014) whose slot is the relationship name. The
+  # reader is `author_relationship`, the slot-scoped has_one every labelled
+  # component gets, and the lazy reader presets `slot = "author"` on a virtual.
+  # Nothing is defined dynamically: no backing class, no per-relationship table,
+  # no migration. The `Relationship` class is the host app's one-line catalogue
+  # component (EcsRails::Catalogue::Relationship), found by name through
+  # {EcsRails::Config#relationship_class_name}.
   #
-  # ## The reader name (RFC-0012 Open, resolved)
-  #
-  # The reader is `author_relationship`, not `post_author_relationship`. That is
-  # a real trap: the DSL derives the reader (and has_one name, and preload key)
-  # from `component_class.model_name.singular`, and for the *nested* constant
-  # `Post::AuthorRelationship` that is "post_author_relationship" — the namespace
-  # leaks in and the entity name is doubled up. ADR-0013 specifies
-  # `author_relationship`. So the backing class pins its own `model_name` to the
-  # demodulized element ("AuthorRelationship" => "author_relationship"), which is
-  # the single source every DSL derivation reads. Nothing else in the gem uses
-  # the backing component's model_name, so this is safe and total: reader,
-  # has_one, and `includes_components` key all agree on `author_relationship`.
+  # `delegate: false` because the component's own accessor is `target`; the
+  # DSL here defines `author` / `author=` / `author_id` / `author_id=` by hand,
+  # forwarding to the reader's `target`. The target type is checked on
+  # assignment by the component (`post.author = company` raises
+  # InvalidRelationship), against the `target_class_name` slot option.
   #
   # ## Querying and preloading by name (RFC-0013 / ADR-0014)
   #
   # `with_related` / `without_related` / `includes_related` are the
   # relationship-name equivalents of `with_component` / `without_component` /
-  # `includes_components`. They are thin sugar: each resolves the relationship
-  # name to its backing class and FK via metadata `relates_to` records, then
-  # delegates to the component verb — so `Post.with_related(:author, ada)`
-  # compiles to exactly `Post.with_component(Post::AuthorRelationship, author_id:
-  # ada.id)` and inherits its entity-model scoping and EXISTS correctness
-  # (ADR-0011). The backing `*Relationship` class never appears in app code.
+  # `includes_components`. Each resolves the relationship name to its slot via
+  # the metadata `relates_to` records, then delegates to the component verb —
+  # so `Post.with_related(:author, ada)` compiles to exactly
+  # `Post.with_component(Relationship, prefix: :author, target_id: ada.id)` and
+  # inherits its entity-model scoping and EXISTS correctness (ADR-0011). Under
+  # the shared table that scope is load-bearing, not belt-and-braces: a Comment
+  # and a Post both relating `:author` share the table and the slot, and only
+  # the owner's `model` tells them apart (ADR-0014, amended).
   module Relationships
     # One recorded relationship, held by NAME so it survives a Rails reload the
     # same way the registry's {EcsRails::Registry::Declaration} does (RFC-0002):
-    # {#backing_class} and {#target_class} resolve via `constantize` on read, so a
-    # metadata entry taken before a reload still resolves to the post-reload
-    # constants.
+    # {#target_class} resolves via `constantize` on read.
     #
     # @!attribute [rw] name
     #   @return [Symbol] the relationship name, e.g. `:author`
-    # @!attribute [rw] backing_class_name
-    #   @return [String] the dynamically defined backing component,
-    #     e.g. `"Post::AuthorRelationship"`
-    # @!attribute [rw] foreign_key
-    #   @return [Symbol] the FK on the backing component, e.g. `:author_id`
     # @!attribute [rw] target_class_name
     #   @return [String] the entity pointed at, e.g. `"User"`
-    RelationshipMeta = Struct.new(:name, :backing_class_name, :foreign_key, :target_class_name) do
-      # @return [Class<EcsRails::Component>] the backing component class
-      # @raise [NameError] if the constant no longer exists
-      def backing_class
-        backing_class_name.constantize
-      end
-
+    # @!attribute [rw] unique
+    #   @return [Boolean] whether rows are written `exclusive` (ADR-0017)
+    RelationshipMeta = Struct.new(:name, :target_class_name, :unique) do
       # @return [Class<EcsRails::Entity>] the entity this relationship points at
       # @raise [NameError] if the constant no longer exists
       def target_class
         target_class_name.constantize
+      end
+
+      # @return [String] the slot the rows are stored under — the name
+      def slot
+        name.to_s
+      end
+
+      # @return [Symbol] the backing reader, `:author_relationship`
+      def reader_name
+        :"#{name}_relationship"
       end
     end
 
@@ -111,10 +97,11 @@ module EcsRails
 
     # Declares a cross-entity link named `name` at `target_class`.
     #
-    # Writes no relationship component file: it defines the backing component
-    # dynamically and declares it with {EcsRails::DSL#component}, so the whole
-    # stack — registry, lazy reader, delegation, querying, presence, preloading —
-    # applies for free.
+    # Pure Ruby: a row in the shared `relationships` table under slot `name`
+    # (ADR-0017). Declares the app's `Relationship` component into that slot with
+    # {EcsRails::DSL#component}, so the whole stack — registry, lazy reader,
+    # querying, presence, preloading — applies for free, and defines the
+    # `name` / `name=` / `name_id` / `name_id=` accessors on the entity.
     #
     # Subclasses inherit the declaration exactly as they inherit `component`.
     #
@@ -123,61 +110,63 @@ module EcsRails
     #     relates_to :author, User
     #   end
     #
-    #   post.author = user        # writer, delegated from the backing belongs_to
+    #   post.author = user        # checked: must be a User
     #   post.author               # => #<User>
-    #   post.author_relationship  # => the backing component row
+    #   post.author_relationship  # => the backing Relationship row
     #
-    # @example Several relationships on one entity
-    #   class Membership < ApplicationEntity
-    #     relates_to :user, User
-    #     relates_to :team, Team
-    #     component Role
+    # @example An exclusive link — at most one Invoice per Order (ADR-0017)
+    #   class Invoice < ApplicationEntity
+    #     relates_to :order, Order, unique: true
     #   end
     #
-    # @param name [Symbol, String] the relationship name. Becomes the delegated
-    #   accessor (`#author`, `#author=`), the `<name>_id` foreign key, and the
+    # @param name [Symbol, String] the relationship name. Becomes the slot, the
+    #   accessors (`#author`, `#author=`, `#author_id`, `#author_id=`), and the
     #   `<name>_relationship` backing reader.
     # @param target_class [Class<EcsRails::Entity>] a concrete entity to point at
-    # @return [EcsRails::Registry::Declaration] the backing component's declaration
+    # @param unique [Boolean] `true` writes rows as `exclusive`, so the database
+    #   rejects a second owner of this entity type pointing at the same target
+    #   under this name
+    # @return [EcsRails::Registry::Declaration] the Relationship declaration
     # @raise [EcsRails::InvalidRelationship] if `target_class` is not a concrete
     #   entity — a component, an abstract entity, or a plain class
     # @raise [EcsRails::DelegationConflict] if `name` collides with an existing
     #   component reader, delegated method, or another relationship
+    # @raise [ArgumentError] if `unique:` is not a Boolean
+    # @raise [NameError] if the app has no `Relationship` component (run
+    #   `rails g ecs_rails:install`, or set {EcsRails::Config#relationship_class_name})
     # @see #with_related
     # @see #includes_related
-    def relates_to(name, target_class)
+    def relates_to(name, target_class, unique: false)
       name = name.to_sym
 
-      # Target first: this must fire before any name/table derivation, so that
+      # Target first: this must fire before any name derivation, so that
       # `Class.new(ApplicationEntity).relates_to(:x, String)` raises on the bad
       # target rather than on the anonymous entity's blank model_name.
       validate_relationship_target!(name, target_class)
+      validate_unique_flag!(name, unique)
 
       # Then the name, with a relationship-shaped message. Left to `component`,
       # a re-declared relationship trips the registry's DuplicateComponent, whose
-      # message names the CamelCase backing class ("Post::AuthorRelationship")
-      # rather than the relationship the developer wrote (`:author`) — and it
-      # would also warn on the doubled const_set. Catching it here keeps the
-      # message about the thing the developer typed.
+      # message names the component ("Relationship in slot \"author\"") rather
+      # than the relationship the developer wrote (`:author`).
       detect_relationship_collision!(name)
 
-      backing = build_relationship_component(name, target_class)
+      declaration = component(
+        ecs_relationship_class,
+        prefix: name,
+        delegate: false,
+        target_class_name: target_class.name,
+        unique: unique
+      )
 
-      # Bare, not reader-prefixed (ADR-0016's `prefix: false`): the whole point
-      # of the backing component is to surface its `belongs_to` as `post.author`
-      # and `post.author=`. Prefixed, they would be `author_relationship_author`
-      # — and ADR-0017 promises the relationship API does not change shape. The
-      # reader collision the prefix normally prevents cannot arise here, because
-      # the component is named for the relationship and the association for the
-      # target (see the module comment).
-      declaration = component(backing, prefix: false)
+      define_relationship_accessors(name)
 
       # RFC-0013 / ADR-0014: record the relationship metadata the `*_related`
       # query verbs resolve against. Recorded here, at declaration, so there is
-      # one source of truth for the backing class + FK rather than a second
-      # place that re-derives the naming convention (ADR-0014). On reload the
-      # entity class body reruns on a fresh class, repopulating this from empty.
-      record_relationship_meta(name, backing, target_class)
+      # one source of truth for the slot and target rather than a second place
+      # that re-derives them. On reload the entity class body reruns on a fresh
+      # class, repopulating this from empty.
+      record_relationship_meta(name, target_class, unique)
 
       declaration
     end
@@ -207,9 +196,10 @@ module EcsRails
 
     # Entities whose `name` relationship points at `target` (RFC-0013 / ADR-0014).
     #
-    # Sugar over {EcsRails::Querying#with_component}, so it inherits that verb's
-    # entity-model scoping and correlated EXISTS (ADR-0011) — no cross-entity
-    # leak. The backing `*Relationship` class never appears in app code.
+    # Sugar over {EcsRails::Querying#with_component} on the shared Relationship
+    # component, slot-scoped, so it inherits that verb's entity-model scoping and
+    # correlated EXISTS (ADR-0011) — no cross-entity leak even though every
+    # entity's relationships share one table (ADR-0017).
     #
     # @example Posts by a given author
     #   Post.with_related(:author, ada)
@@ -227,17 +217,18 @@ module EcsRails
     # @see #includes_related
     def with_related(name, target = ANY_TARGET)
       meta = ecs_resolve_relationship!(name)
+      backing = ecs_relationship_class
 
-      return with_component(meta.backing_class) if ANY_TARGET.equal?(target)
+      return with_component(backing, prefix: meta.name) if ANY_TARGET.equal?(target)
 
       id = target.respond_to?(:id) ? target.id : target
-      with_component(meta.backing_class, meta.foreign_key => id)
+      with_component(backing, prefix: meta.name, target_id: id)
     end
 
-    # Entities with NO backing row for `name` (RFC-0013).
+    # Entities with NO row for `name` (RFC-0013).
     #
-    # Sugar over {EcsRails::Querying#without_component}; inherits its NULL-safe
-    # `NOT EXISTS` (ADR-0011).
+    # Sugar over {EcsRails::Querying#without_component}, slot-scoped; inherits
+    # its NULL-safe `NOT EXISTS` (ADR-0011).
     #
     # @example Orphaned posts
     #   Post.without_related(:author)
@@ -247,15 +238,18 @@ module EcsRails
     # @raise [EcsRails::InvalidRelationship] if `name` is not declared
     # @see #with_related
     def without_related(name)
-      without_component(ecs_resolve_relationship!(name).backing_class)
+      meta = ecs_resolve_relationship!(name)
+      without_component(ecs_relationship_class, prefix: meta.name)
     end
 
-    # Preloads each named relationship's backing component AND its target entity
-    # — one hop — so `entity.author` costs no extra query (RFC-0013 / ADR-0014).
+    # Preloads each named relationship's row AND its target entity — one hop —
+    # so `entity.author` costs no extra query (RFC-0013 / ADR-0014).
     #
-    # For `:author` that is `preload(author_relationship: :author)`. Does **not**
+    # For `:author` that is `preload(author_relationship: :target)`. Does **not**
     # preload the target's own components (ADR-0014 non-goal) — chain
-    # {EcsRails::Preloading#includes_components} on the target for that.
+    # {EcsRails::Preloading#includes_components} on the target for that, or
+    # write the nested preload by hand: `preload(author_relationship: { target:
+    # :name })`.
     #
     # @example
     #   Post.published.includes_related(:author).each { |p| p.author.name }
@@ -266,8 +260,7 @@ module EcsRails
     # @see #with_related
     def includes_related(*names)
       preloads = names.map do |name|
-        meta = ecs_resolve_relationship!(name)
-        { :"#{meta.name}_relationship" => meta.name }
+        { ecs_resolve_relationship!(name).reader_name => :target }
       end
 
       all.preload(*preloads)
@@ -275,15 +268,50 @@ module EcsRails
 
     private
 
+    # The host app's Relationship component (EcsRails::Catalogue::Relationship),
+    # resolved by name on every call so a reloaded constant is picked up.
+    def ecs_relationship_class
+      EcsRails.config.relationship_class_name.constantize
+    rescue NameError => e
+      raise NameError,
+            "EcsRails: `relates_to` needs the #{EcsRails.config.relationship_class_name} " \
+            "component (#{e.message}). Run `rails g ecs_rails:install`, which writes it, " \
+            "or set EcsRails.config.relationship_class_name to your class that includes " \
+            "EcsRails::Catalogue::Relationship.", e.backtrace
+    end
+
+    # The four accessors a relationship gives the entity, into the same module
+    # the readers and delegated methods live in (ADR-0004: an entity-defined
+    # method still wins). Each goes through the slot-scoped reader, so it reaches
+    # RFC-0006's memoised instance — the one the save cascade persists — and
+    # `Post.create!(author: user)` routes through `author=` for free.
+    def define_relationship_accessors(name)
+      reader = :"#{name}_relationship"
+      mod = generated_component_methods
+
+      mod.define_method(name) { public_send(reader).target }
+      mod.define_method(:"#{name}=") { |value| public_send(reader).target = value }
+      mod.define_method(:"#{name}_id") { public_send(reader).target_id }
+      mod.define_method(:"#{name}_id=") { |value| public_send(reader).target_id = value }
+    end
+
+    # The names a relationship reserves on the entity, for the DSL's conflict
+    # checks (EcsRails::DSL#ecs_reserved_names): a later `component Foo, prefix:
+    # false` delegating `author` must clash with `relates_to :author`, and a
+    # `relates_to :email` must clash with `component Email`'s reader. Overrides
+    # the DSL's empty default.
+    def ecs_reserved_names
+      relationship_names.each_with_object(super) do |name, reserved|
+        [name, :"#{name}=", :"#{name}_id", :"#{name}_id="].each do |method|
+          reserved[method] ||= "relates_to :#{name}"
+        end
+      end
+    end
+
     # Records one relationship's metadata on THIS class, by name and by class
-    # NAMES (strings), never Class objects (reload safety — see RelationshipMeta).
-    def record_relationship_meta(name, backing, target_class)
-      ecs_own_relationships[name] = RelationshipMeta.new(
-        name,               # :author
-        backing.name,       # "Post::AuthorRelationship"
-        :"#{name}_id",      # :author_id
-        target_class.name   # "User"
-      )
+    # NAME (a string), never a Class object (reload safety — see RelationshipMeta).
+    def record_relationship_meta(name, target_class, unique)
+      ecs_own_relationships[name] = RelationshipMeta.new(name, target_class.name, unique)
     end
 
     # This class's OWN relationships (not inherited). A per-class hash, so a fresh
@@ -319,42 +347,6 @@ module EcsRails
             "#{self.name} relates to: #{known}."
     end
 
-    # Dynamically defines the backing component class and returns it. Named
-    # before anything reads its name: the registry keys by name and rejects
-    # anonymous classes (RFC-0002), and `model_name` is derived from the const —
-    # so const_set, which both installs the nested constant and gives the class
-    # its name, must come first.
-    def build_relationship_component(name, target_class)
-      const_name = :"#{name.to_s.camelize}Relationship"       # :AuthorRelationship
-      table = "#{model_name.singular}_#{name.to_s.pluralize}" # "post_authors"
-      foreign_key = :"#{name}_id"                             # :author_id
-
-      backing = Class.new(EcsRails::Component)
-      const_set(const_name, backing)
-
-      # table_name is set explicitly (ADR-0013): the class name and the table
-      # name are decoupled, so `Post::AuthorRelationship` reads `post_authors`.
-      backing.table_name = table
-
-      # Pin model_name to the demodulized element, so the DSL-derived reader is
-      # `author_relationship` and not `post_author_relationship` — see the module
-      # comment. Closed over `const_name`; ActiveModel::Name.new(self, nil,
-      # "AuthorRelationship") gives singular "author_relationship".
-      element = const_name.to_s
-      backing.define_singleton_method(:model_name) do
-        @ecs_relationship_model_name ||= ActiveModel::Name.new(self, nil, element)
-      end
-
-      # The one sanctioned place a component names an entity class (ADR-0006):
-      # optional, so a post with no author — or a nullified one — is valid.
-      backing.belongs_to name,
-                         class_name: target_class.name,
-                         foreign_key: foreign_key,
-                         optional: true
-
-      backing
-    end
-
     # RFC-0012: the target must be a concrete entity. A component, an abstract
     # entity, or a plain class is rejected with a relationship-shaped message.
     def validate_relationship_target!(name, target_class)
@@ -372,27 +364,35 @@ module EcsRails
             "no rows; relate to a concrete entity subclass."
     end
 
+    def validate_unique_flag!(name, unique)
+      return if unique == true || unique == false
+
+      raise ArgumentError,
+            "relates_to :#{name} expects `unique:` to be true or false; got #{unique.inspect}"
+    end
+
     # RFC-0012: `name` must not already be a reader or a delegated method on this
     # entity — two `relates_to :author`, or `:author` clashing with a component
-    # that already exposes `author`. Checked here, before the backing const is
-    # created, so the message names `:author` (the relationship) rather than the
-    # backing class, and no doubled const_set warning is printed.
+    # that already exposes `author`. Checked here, before `component` runs, so the
+    # message names `:author` (the relationship) rather than the slot.
     #
     # Reuses the DSL's own reader/delegation resolution (Declaration#reader_name,
-    # #delegation_map_for — the entity-level names, prefixed per ADR-0016), so
-    # "what names does this entity already answer" is computed the one way the
-    # gem computes it everywhere else.
+    # #delegation_map_for — the entity-level names, prefixed per ADR-0016) plus
+    # the names earlier relationships reserved, so "what names does this entity
+    # already answer" is computed the one way the gem computes it everywhere else.
     def detect_relationship_collision!(name)
       taken = component_declarations.flat_map do |declaration|
         [declaration.reader_name] + delegation_map_for(declaration).keys
       end
+      taken += ecs_reserved_names.keys
 
-      return unless taken.include?(name)
+      clash = [name, :"#{name}_id"].find { |method| taken.include?(method) }
+      return unless clash
 
       raise DelegationConflict,
             "relates_to :#{name} on #{self.name} collides with an existing " \
-            "##{name} method — a component reader or another relationship already " \
-            "owns that name. Choose a different relationship name."
+            "##{clash} method — a component reader, a delegated method, or another " \
+            "relationship already owns that name. Choose a different relationship name."
     end
   end
 end

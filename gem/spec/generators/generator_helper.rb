@@ -22,7 +22,6 @@ require "tmpdir"
 
 require_relative "../../lib/generators/ecs_rails/install/install_generator"
 require_relative "../../lib/generators/ecs_rails/component/component_generator"
-require_relative "../../lib/generators/ecs_rails/relationship/relationship_generator"
 require_relative "../../lib/generators/ecs_rails/upgrade/upgrade_generator"
 
 # Shared behaviour for generator examples. Include with `include GeneratorHelper`
