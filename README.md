@@ -65,7 +65,7 @@ Email.pending.find_each(&:send_welcome_email)
 |---|---|
 | **[`docs/`](docs/)** | The specification. Architecture, ADRs, RFCs, backlog. |
 | **[`gem/`](gem/)** | The `ecs_rails` gem. |
-| **[`demo/`](demo/)** | A bulletin board built entirely from the catalogue — one migration in `db/migrate` — via `path: "../gem"` during a build; pinned to the published gem at each release. |
+| **[`demo/`](demo/)** | A bulletin board and marketplace built entirely from the catalogue — one migration in `db/migrate` — via `path: "../gem"` during a build; pinned to the published gem at each release. |
 
 The demo is built **alongside** the gem, not after it. If a feature feels
 awkward in the demo, that's the signal the API is wrong. See

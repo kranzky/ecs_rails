@@ -27,7 +27,7 @@ RSpec.describe "zero migrations after install" do
   it "composes every entity from the catalogue" do
     catalogue = EcsRails::Catalogue.components.map(&:class_name)
 
-    [User, Post, Comment, Group, Membership].each do |entity|
+    [User, Post, Comment, Group, Membership, Company, Product, Review, Employment].each do |entity|
       entity.components.each do |component|
         expect(catalogue).to include(component.name), "#{entity}: #{component} is not a catalogue component"
       end
@@ -47,6 +47,8 @@ RSpec.describe "zero migrations after install" do
       expect(Group.with_component(Text, prefix: :rules).first.rules).to be_present
       expect(Membership.first.role_name).to be_present
       expect(Text.distinct.pluck(:slot).sort).to eq %w[bio body description name rules title]
+      expect(Product.listed.count).to be > 0
+      expect(Company.first.products.size).to be > 0
     end
   end
 end

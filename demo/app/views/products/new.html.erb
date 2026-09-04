@@ -1,0 +1,4 @@
+<% content_for :title, "New product" %>
+<%= link_to "← Back to #{@company.name}", @company, class: "back" %>
+<div class="page-head"><h1>New product at <%= @company.name %></h1></div>
+<%= render "form", url: products_path(company_id: @company.id), method: :post, submit_label: "Save product", cancel_path: company_path(@company) %>

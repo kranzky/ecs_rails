@@ -77,6 +77,29 @@ end</code></pre>
   </div>
 
   <div class="card">
+    <h3 class="section-title">The market: filters, sort, and a system that never names an entity</h3>
+    <p class="prose">A <%= link_to "product", products_path %> is nine catalogue components
+       and a relationship — price is <code>Money</code> under the slot <code>price</code>,
+       the SKU an <code>Identifier</code>, stock a <code>Counter</code>, categories a
+       <code>Tags</code>, the listing lifecycle a <code>State</code> — and, like the
+       board, it needed no migration. Every filter on the market page is one
+       clause on the same query:</p>
+    <pre style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:1rem;overflow:auto"><code>Product.listed
+       .with_component(Money, prefix: :price) { where("amount_cents <= ?", 5000) }
+       .with_component(Rating, "stars >= ?", 4)
+       .with_component(Tags) { tagged("books") }
+       .order_by_component(Money, :amount_cents, prefix: :price)</code></pre>
+    <p class="prose" style="margin-bottom:0">A <%= link_to "seller", companies_path %>'s
+       people are <code>Employment</code> join entities — the same shape as a group
+       membership, carrying the <em>same</em> <code>Role</code> component — and the
+       same <code>User</code> is a customer and an employee at once, with no
+       subclass for either. Search is fed by an indexer that walks the
+       <code>texts</code> table and never names <code>Post</code> or
+       <code>Product</code>: a component table is blind to entity type, so one
+       system serves them all.</p>
+  </div>
+
+  <div class="card">
     <h3 class="section-title">Validation merges onto the entity</h3>
     <p class="prose" style="margin-bottom:0">The <code>Email</code> component
        validates its address; the error surfaces as

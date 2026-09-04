@@ -26,5 +26,15 @@ Rails.application.routes.draw do
     resources :memberships, only: %i[create destroy], module: :groups
   end
 
+  # The marketplace (ECS-22): products with filters and sort, reviews, sellers.
+  resources :products, only: %i[index show new create edit update] do
+    member do
+      patch :list
+      patch :delist
+    end
+    resources :reviews, only: :create, module: :products
+  end
+  resources :companies, only: %i[index show]
+
   get "about" => "pages#about"
 end

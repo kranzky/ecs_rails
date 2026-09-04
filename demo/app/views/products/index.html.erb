@@ -1,0 +1,58 @@
+<% content_for :title, "Market" %>
+
+<div class="page-head">
+  <h1>Market</h1>
+  <p>Listed products from every seller. Every filter below is one <code>with_component</code> clause; the sort is <code>order_by_component</code>.</p>
+</div>
+
+<%= form_with url: products_path, method: :get, class: "filters" do |f| %>
+  <div class="field">
+    <%= f.label :q, "Search" %>
+    <%= f.search_field :q, value: @query, placeholder: "Search products…", class: "input" %>
+  </div>
+  <div class="field">
+    <%= f.label :max_price, "Max price" %>
+    <%= f.select :max_price, options_for_select([["Any", ""]] + ProductsController::MAX_PRICES.map { |p| ["Under $#{p}", p] }, @max_price), {}, class: "select" %>
+  </div>
+  <div class="field">
+    <%= f.label :min_stars, "Rating" %>
+    <%= f.select :min_stars, options_for_select([["Any", ""]] + [4, 3, 2].map { |s| ["#{s}★ and up", s] }, @min_stars), {}, class: "select" %>
+  </div>
+  <div class="field">
+    <%= f.label :category, "Category" %>
+    <%= f.select :category, options_for_select([["All", ""]] + Product::CATEGORIES.map { |c| [c.capitalize, c] }, @category), {}, class: "select" %>
+  </div>
+  <div class="field">
+    <%= f.label :sort, "Sort" %>
+    <%= f.select :sort, options_for_select([["Newest", "newest"], ["Price: low to high", "price_asc"], ["Price: high to low", "price_desc"], ["Top rated", "top_rated"]], @sort), {}, class: "select" %>
+  </div>
+  <div class="btn-row">
+    <%= f.submit "Apply", class: "btn btn--primary" %>
+  </div>
+<% end %>
+
+<% if @products.empty? %>
+  <div class="empty">
+    <p>Nothing matches those filters.</p>
+    <%= link_to "Clear filters", products_path, class: "btn btn--ghost" %>
+  </div>
+<% else %>
+  <div class="grid grid--3">
+    <% @products.each do |product| %>
+      <article class="card product-card">
+        <h2><%= link_to product.title, product %></h2>
+        <div class="meta">
+          <% if product.seller %><%= link_to product.seller.name, product.seller %><span class="dot"></span><% end %>
+          <% product.tags_names.each do |tag| %><span class="tag"><%= tag %></span><% end %>
+        </div>
+        <div class="product-card__price"><%= price_tag product.price_money %></div>
+        <div class="meta product-card__foot">
+          <%= stars_for product.rating_stars %>
+          <% if product.review_count.positive? %><span class="count">(<%= product.review_count %>)</span><% end %>
+          <span class="dot"></span>
+          <% if product.in_stock? %><span class="count"><%= product.stock %> in stock</span><% else %><span class="out-of-stock">Out of stock</span><% end %>
+        </div>
+      </article>
+    <% end %>
+  </div>
+<% end %>

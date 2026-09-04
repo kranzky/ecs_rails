@@ -40,6 +40,38 @@ module ApplicationHelper
     entity.likes
   end
 
+  # --- marketplace ---------------------------------------------------------
+
+  # A Money as the shop shows it. The demo is USD-only (design §7); the
+  # component still stores the code, so anything else is shown with it.
+  def price_tag(money)
+    money.currency == "USD" ? format("$%.2f", money.amount) : money.to_s
+  end
+
+  # Stars for a Rating's integer, or a quiet "not yet rated".
+  def stars_for(stars)
+    return content_tag(:span, "Not yet rated", class: "stars stars--none") if stars.blank?
+
+    content_tag(:span, ("★" * stars) + ("☆" * (5 - stars)), class: "stars", title: "#{stars} out of 5")
+  end
+
+  def listing_badge(product)
+    if product.listed?
+      content_tag(:span, "Listed", class: "badge badge--pub")
+    elsif product.delisted?
+      content_tag(:span, "Delisted", class: "badge")
+    else
+      content_tag(:span, "Draft", class: "badge badge--draft")
+    end
+  end
+
+  # A company's logo if it has one, else its initial in a chip.
+  def logo_for(company, klass: "avatar")
+    url = company.logo_image_url
+    style = url.present? ? "background-image:url(#{url})" : nil
+    content_tag :span, (url.present? ? "" : company.name.to_s.first), class: klass, style: style, title: company.name
+  end
+
   # --- demo reset countdown -------------------------------------------------
 
   def resets_enabled?

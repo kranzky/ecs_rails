@@ -1,0 +1,62 @@
+<div class="card">
+  <% if @product.errors.any? %>
+    <div class="errors">
+      <strong><%= pluralize(@product.errors.count, "problem") %> stopped this saving:</strong>
+      <ul>
+        <% @product.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <%= form_with url: url, method: method do |f| %>
+    <div class="field">
+      <%= f.label "product[actor_id]", "Acting as" %>
+      <%= f.select "product[actor_id]",
+            options_for_select(@staff.map { |e| ["#{display_name(e.user)} (#{e.role_name} at #{@company.name})", e.user&.id] }),
+            {}, class: "select" %>
+      <p class="hint">Owners and managers may manage products; staff may not — the policy reads the Employment's Role.</p>
+    </div>
+    <div class="field">
+      <%= f.label "product[title]", "Title" %>
+      <%= f.text_field "product[title]", class: "input", maxlength: 120, value: @product.title %>
+    </div>
+    <div class="grid grid--2">
+      <div class="field">
+        <%= f.label "product[price]", "Price (USD)" %>
+        <%= f.number_field "product[price]", class: "input", step: "0.01", min: 0, value: format("%.2f", @product.price_money.amount) %>
+      </div>
+      <div class="field">
+        <%= f.label "product[stock]", "Stock" %>
+        <%= f.number_field "product[stock]", class: "input", min: 0, value: @product.stock %>
+      </div>
+    </div>
+    <div class="field">
+      <%= f.label "product[sku]", "SKU" %>
+      <%= f.text_field "product[sku]", class: "input", maxlength: 40, value: @product.sku, placeholder: "unique per shop" %>
+    </div>
+    <div class="field">
+      <label>Categories</label>
+      <div class="btn-row">
+        <% Product::CATEGORIES.each do |c| %>
+          <label class="check" style="margin-right:.5rem">
+            <%= check_box_tag "product[categories][]", c, @product.tags_names.include?(c), id: "product_categories_#{c}" %> <%= c.capitalize %>
+          </label>
+        <% end %>
+      </div>
+    </div>
+    <div class="field">
+      <%= f.label "product[body]", "Description" %>
+      <%= f.text_area "product[body]", class: "textarea", rows: 6, maxlength: 5000, value: @product.body %>
+    </div>
+    <div class="field">
+      <label class="check">
+        <%= f.check_box "product[listed]", checked: @product.listed? %>
+        Listed <span class="hint" style="margin:0">(uncheck to keep as a draft)</span>
+      </label>
+    </div>
+    <div class="btn-row">
+      <%= f.submit submit_label, class: "btn btn--primary" %>
+      <%= link_to "Cancel", cancel_path, class: "btn btn--ghost" %>
+    </div>
+  <% end %>
+</div>

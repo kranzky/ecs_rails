@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_04_063414) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_04_080008) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -119,6 +119,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_04_063414) do
     t.string "slot", default: "", null: false
     t.datetime "updated_at", null: false
     t.index ["entity_id", "slot"], name: "index_markers_on_entity_id_and_slot", unique: true
+  end
+
+  create_table "monies", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.integer "amount_cents", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.string "currency", limit: 3, default: "USD", null: false
+    t.uuid "entity_id", null: false
+    t.string "slot", default: "", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_id", "slot"], name: "index_monies_on_entity_id_and_slot", unique: true
   end
 
   create_table "names", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -273,6 +283,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_04_063414) do
   add_foreign_key "images", "entities", on_delete: :cascade
   add_foreign_key "links", "entities", on_delete: :cascade
   add_foreign_key "markers", "entities", on_delete: :cascade
+  add_foreign_key "monies", "entities", on_delete: :cascade
   add_foreign_key "names", "entities", on_delete: :cascade
   add_foreign_key "passwords", "entities", on_delete: :cascade
   add_foreign_key "periods", "entities", on_delete: :cascade

@@ -4,7 +4,7 @@ An Entity–Component–System reimagining of ActiveRecord that stays idiomatic 
 Ruby on Rails.
 
 > The full API below is implemented and tested (534 examples on real
-> PostgreSQL). A companion bulletin-board app is built entirely on it and runs
+> PostgreSQL). A companion bulletin-board-and-marketplace app is built entirely on it and runs
 > live at **[ecs-rails.kranzky.com](https://ecs-rails.kranzky.com)**. See the
 > [v0.1 retrospective](https://github.com/kranzky/ecs_rails/blob/main/docs/retrospective-v0.1.md)
 > for the full story of how it was designed.

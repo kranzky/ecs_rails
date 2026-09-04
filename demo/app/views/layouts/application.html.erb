@@ -20,6 +20,8 @@
           <%= nav_link "Posts", posts_path, active: controller_name == "posts" %>
           <%= nav_link "People", users_path, active: controller_name == "users" %>
           <%= nav_link "Groups", groups_path, active: %w[groups memberships].include?(controller_name) %>
+          <%= nav_link "Market", products_path, active: %w[products reviews].include?(controller_name) %>
+          <%= nav_link "Sellers", companies_path, active: controller_name == "companies" %>
           <%= nav_link "How it works", about_path, active: controller_name == "pages" %>
         </div>
       </div>

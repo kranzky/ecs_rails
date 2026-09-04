@@ -1,0 +1,87 @@
+<% content_for :title, @product.title %>
+
+<%= link_to "← Back to market", products_path, class: "back" %>
+
+<article class="card <%= "is-draft" if @product.draft? %>">
+  <div class="btn-row" style="justify-content:space-between">
+    <%= listing_badge @product %>
+    <span class="btn-row">
+      <%= link_to "Edit", edit_product_path(@product), class: "btn btn--sm btn--ghost" %>
+    </span>
+  </div>
+
+  <h1 style="margin:.5rem 0 .35rem;font-size:1.9rem"><%= @product.title %></h1>
+  <div class="meta">
+    <% if @company %>Sold by <%= link_to @company.name, @company %><span class="dot"></span><% end %>
+    <% if @product.sku.present? %>SKU <code><%= @product.sku %></code><span class="dot"></span><% end %>
+    <% @product.tags_names.each do |tag| %><span class="tag"><%= tag %></span><% end %>
+  </div>
+
+  <div class="btn-row" style="margin-top:1rem;gap:1.25rem">
+    <span class="product-card__price" style="font-size:1.6rem"><%= price_tag @product.price_money %></span>
+    <span><%= stars_for @product.rating_stars %> <span class="count" style="color:var(--faint)"><%= pluralize @product.review_count, "review" %></span></span>
+    <% if @product.in_stock? %><span class="count" style="color:var(--muted)"><%= @product.stock %> in stock</span><% else %><span class="out-of-stock">Out of stock</span><% end %>
+  </div>
+
+  <% if @product.body.present? %>
+    <div class="article__body prose" style="margin-top:1.25rem"><%= simple_format @product.body %></div>
+  <% end %>
+
+  <% if @company %>
+    <hr class="divider">
+    <h3 class="section-title">Manage this listing</h3>
+    <p class="hint" style="margin:0 0 .6rem">Listing and delisting go through <code>Demo::CompanyPolicy</code>, which reads the actor's <code>Employment</code> role at <%= @company.name %>. Owners and managers may; staff may not.</p>
+    <%= form_with url: (@product.listed? ? delist_product_path(@product) : list_product_path(@product)), method: :patch, class: "btn-row" do |f| %>
+      <%= f.select :actor_id, options_for_select(@staff.map { |e| ["#{display_name(e.user)} (#{e.role_name})", e.user&.id] }), {}, class: "select", style: "width:auto" %>
+      <%= f.submit(@product.listed? ? "Delist" : "List now", class: "btn btn--sm #{@product.listed? ? 'btn--danger' : 'btn--primary'}") %>
+    <% end %>
+  <% end %>
+</article>
+
+<section style="margin-top:2rem">
+  <h2 class="section-title">Reviews · <%= @reviews.size %></h2>
+  <div class="card">
+    <% if @reviews.empty? %>
+      <p style="color:var(--muted);margin:0 0 1rem">No reviews yet.</p>
+    <% else %>
+      <% @reviews.each do |review| %>
+        <div class="comment">
+          <%= avatar_for review.author %>
+          <div class="comment__body">
+            <div class="meta">
+              <strong style="color:var(--text)"><%= display_name review.author %></strong>
+              <span class="dot"></span>
+              <%= stars_for review.rating_stars %>
+              <span class="dot"></span>
+              <%= time_ago_in_words(review.created_at) %> ago
+            </div>
+            <p><%= simple_format review.body.to_s %></p>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
+
+    <% if @product.listed? %>
+      <hr class="divider">
+      <%= form_with url: product_reviews_path(@product), method: :post do |f| %>
+        <div class="grid grid--2">
+          <div class="field">
+            <%= f.label "review[author_id]", "Reviewing as" %>
+            <%= f.select "review[author_id]", options_for_select(@authors.map { |u| [display_name(u), u.id] }), {}, class: "select" %>
+          </div>
+          <div class="field">
+            <%= f.label "review[stars]", "Stars" %>
+            <%= f.select "review[stars]", options_for_select([5, 4, 3, 2, 1].map { |s| ["#{'★' * s}", s] }, 5), {}, class: "select" %>
+          </div>
+        </div>
+        <div class="field">
+          <%= f.label "review[body]", "Review" %>
+          <%= f.text_area "review[body]", class: "textarea", rows: 3, maxlength: 2000, placeholder: "How was it?" %>
+        </div>
+        <%= f.submit "Post review", class: "btn btn--primary" %>
+      <% end %>
+    <% else %>
+      <p class="hint" style="margin:.5rem 0 0">Only listed products can be reviewed.</p>
+    <% end %>
+  </div>
+</section>

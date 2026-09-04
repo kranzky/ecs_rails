@@ -185,6 +185,13 @@
       "humanMinutes": 3,
       "aiMinutes": 45,
       "costs": []
+    },
+    {
+      "date": "2026-09-04",
+      "summary": "Marketplace, first cut (Linear ECS-22): Company, Product, Review and Employment entities composed from the catalogue only \u2014 Product carries nine components (Text x2, Money under slot price, Identifier sku, Counter stock and review_count, Rating, Tags with an allow-list, State listing, SearchVector) plus relates_to :seller and has_many :reviews. Market page with search, max price, min rating and category filters (each one with_component clause in the three RFC-0018 shapes) and price/rating sort via order_by_component, preloaded; product page with reviews that recompute the product's average Rating (plain SQL, no aggregation primitive); seller pages with contact components, employees and product management; Demo::CompanyPolicy, a PORO over the Employment join entity (owner/manager/staff) with an acting-as picker since the demo has no sessions; the forum's Role serves both Membership and Employment. The install migration was regenerated with --sets core commerce (Money is commerce) \u2014 still exactly one file in db/migrate; the friction log records that adopting a set is the one migration ADR-0018 allows. Cut ECS-22/ECS-23 in Linear. Demo: 14 specs green, every page and POST flow verified over HTTP. Docs: friction log (five verdicts), design doc status, backlog row for aggregates, READMEs, CLAUDE.md.",
+      "humanMinutes": 3,
+      "aiMinutes": 60,
+      "costs": []
     }
   ]
 }

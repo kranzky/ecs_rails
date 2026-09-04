@@ -4,7 +4,7 @@
 # to build from the catalogue (ADR-0018).
 #
 # It creates the single `entities` table every entity shares, and one table per
-# catalogue component in the installed sets (core): each with a
+# catalogue component in the installed sets (core, commerce): each with a
 # UUID primary key, a non-null `entity_id`, a `slot` label defaulting to "", a
 # UNIQUE index on (entity_id, slot) and a cascading foreign key to `entities`
 # (docs/architecture.md §2). Declaring a component, a relationship or a marker
@@ -296,5 +296,16 @@ class EcsRailsInstall < ActiveRecord::Migration[8.1]
     add_index :tokens, [:entity_id, :slot], unique: true
     add_index :tokens, :digest
     add_foreign_key :tokens, :entities, column: :entity_id, on_delete: :cascade
+
+    # Money (commerce) — EcsRails::Catalogue::Money
+    create_table :monies, id: :uuid, default: -> { "gen_random_uuid()" } do |t|
+      t.uuid :entity_id, null: false
+      t.string :slot, null: false, default: ""
+      t.integer :amount_cents, default: 0, null: false
+      t.string :currency, default: "USD", null: false, limit: 3
+      t.timestamps
+    end
+    add_index :monies, [:entity_id, :slot], unique: true
+    add_foreign_key :monies, :entities, column: :entity_id, on_delete: :cascade
   end
 end
