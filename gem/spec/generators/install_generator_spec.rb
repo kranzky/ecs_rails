@@ -94,6 +94,42 @@ RSpec.describe EcsRails::Generators::InstallGenerator, type: :generator do
     end
   end
 
+  # ADR-0018 §4: the shared markers table is part of install too.
+  describe "the markers table" do
+    subject(:contents) { migration("ecs_rails_install") }
+
+    before { run_generator }
+
+      it "is created with entity_id, slot and timestamps only" do
+        block = contents[/create_table :markers.*?^    end$/m]
+
+        aggregate_failures do
+          expect(block).to match(/t\.uuid\s+:entity_id, null: false/)
+          expect(block).to match(/t\.string :slot,\s+null: false, default: ""/)
+          expect(block).to match(/t\.timestamps/)
+          expect(block.lines.grep(/^\s+t\./).size).to eq(3)
+        end
+      end
+
+      it "makes (entity_id, slot) unique and cascades on the owner" do
+        aggregate_failures do
+          expect(contents).to match(/add_index :markers, \[:entity_id, :slot\], unique: true/)
+          expect(contents).to match(/add_foreign_key :markers, :entities, column: :entity_id, on_delete: :cascade/)
+        end
+      end
+  end
+
+  # ADR-0018 §4: the one-line catalogue class every marker is a row of.
+  describe "the Marker component" do
+    before { run_generator }
+
+    it "is created under app/entities/components and includes the gem's concern" do
+      expect(file("app/entities/components/marker.rb"))
+        .to match(/class Marker < ApplicationComponent/)
+        .and match(/include EcsRails::Catalogue::Marker/)
+    end
+  end
+
   # ADR-0017 / ADR-0018: the one-line catalogue class every relates_to is a row of.
   describe "the Relationship component" do
     before { run_generator }

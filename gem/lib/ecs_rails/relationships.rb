@@ -386,7 +386,7 @@ module EcsRails
       end
       taken += ecs_reserved_names.keys
 
-      clash = [name, :"#{name}_id"].find { |method| taken.include?(method) }
+      clash = [name, :"#{name}=", :"#{name}_id"].find { |method| taken.include?(method) }
       return unless clash
 
       raise DelegationConflict,

@@ -26,11 +26,12 @@ module EcsRails
   module Generators
     # `rails g ecs_rails:install`
     #
-    # Implements RFC-0008. Emits the install migration — the `entities` table and
-    # the shared `relationships` table (ADR-0017) — the two abstract base classes
-    # a host app subclasses from, and the one-line `Relationship` catalogue class
-    # (ADR-0018). The migration mirrors docs/architecture.md §2 exactly — if the
-    # two ever disagree, the architecture document wins.
+    # Implements RFC-0008. Emits the install migration — the `entities` table,
+    # the shared `relationships` table (ADR-0017) and the shared `markers` table
+    # (ADR-0018 §4) — the two abstract base classes a host app subclasses from,
+    # and the one-line `Relationship` and `Marker` catalogue classes (ADR-0018).
+    # The migration mirrors docs/architecture.md §2 exactly — if the two ever
+    # disagree, the architecture document wins.
     #
     # Inherits from Base rather than NamedBase: install takes no NAME argument.
     class InstallGenerator < Rails::Generators::Base
@@ -38,11 +39,11 @@ module EcsRails
 
       source_root File.expand_path("templates", __dir__)
 
-      desc "Creates the install migration (entities + relationships), the " \
+      desc "Creates the install migration (entities, relationships, markers), the " \
            "ApplicationEntity / ApplicationComponent base classes, and the " \
-           "Relationship component."
+           "Relationship and Marker components."
 
-      # Emits the install migration: `entities` and `relationships`.
+      # Emits the install migration: `entities`, `relationships` and `markers`.
       #
       # A Thor task: invoked as a generator step, not called directly.
       #
@@ -70,6 +71,12 @@ module EcsRails
       def create_relationship_component
         template "relationship.rb.tt",
                  File.join(EcsRails.config.components_path, "relationship.rb")
+      end
+
+      # ADR-0018 §4: the one-line catalogue class every `marker` is a row of.
+      def create_marker_component
+        template "marker.rb.tt",
+                 File.join(EcsRails.config.components_path, "marker.rb")
       end
 
       # ADR-0010: the generated initializer both records the chosen layout (so

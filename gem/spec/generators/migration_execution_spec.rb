@@ -319,6 +319,21 @@ RSpec.describe "generated migrations actually run", type: :generator do
     end
   end
 
+  # ADR-0018 §4: the shared markers table, created by install.
+  describe "the markers table" do
+    it "is created with the unique (entity_id, slot) index and a cascading FK" do
+      names = columns_of("markers").map { |c| c["column_name"] }
+      indexes = connection.select_values(
+        "SELECT indexdef FROM pg_indexes WHERE schemaname = '#{scratch_schema}' AND tablename = 'markers'"
+      )
+
+      aggregate_failures do
+        expect(names).to contain_exactly("id", "entity_id", "slot", "created_at", "updated_at")
+        expect(indexes).to include(match(/CREATE UNIQUE INDEX .*\(entity_id, slot\)/))
+      end
+    end
+  end
+
   # RFC-0014 / ADR-0015: `rails g ecs_rails:upgrade` brings a pre-slot component
   # table forward — adds the column, swaps the unique index — and does nothing
   # for a table that already has it. Executed against the real catalog: the
@@ -331,6 +346,8 @@ RSpec.describe "generated migrations actually run", type: :generator do
     end
 
     before do
+      # Scratch schema only — see the shared-relationships describe below.
+      connection.execute("SET LOCAL search_path TO #{scratch_schema}")
       # A 0.2.x-shaped component table: no slot, entity_id-only unique index.
       connection.execute(<<~SQL)
         CREATE TABLE names (
@@ -390,7 +407,61 @@ RSpec.describe "generated migrations actually run", type: :generator do
       aggregate_failures do
         expect(migration_paths("ecs_rails_add_slots")).to be_empty
         expect(migration_paths("ecs_rails_shared_relationships")).to be_empty
+        expect(migration_paths("ecs_rails_shared_markers")).to be_empty
       end
+    end
+  end
+
+  # ADR-0018 §4: the upgrade's third job. A pre-0.3 application has one empty
+  # table per marker (`moderators`); the generated migration copies each into
+  # `markers` under the table's singular name and drops it.
+  describe "the shared-markers upgrade" do
+    def make_entity(model)
+      connection.select_value("INSERT INTO entities (model, created_at) VALUES ('#{model}', now()) RETURNING id")
+    end
+
+    before do
+      connection.execute("SET LOCAL search_path TO #{scratch_schema}")
+      connection.execute("DROP TABLE markers") # a 0.2.x app has none
+      connection.execute(<<~SQL)
+        CREATE TABLE moderators (
+          id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+          entity_id uuid NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+          created_at timestamp NOT NULL, updated_at timestamp NOT NULL
+        );
+        CREATE UNIQUE INDEX index_moderators_on_entity_id ON moderators (entity_id);
+      SQL
+      connection.schema_cache.clear!
+    end
+
+    it "recognises the marker table and skips it in the slots migration" do
+      generate(EcsRails::Generators::UpgradeGenerator, [])
+      contents = migration("ecs_rails_shared_markers")
+
+      aggregate_failures do
+        expect(contents).to include("create_table :markers", "FROM moderators", "drop_table :moderators")
+        expect(migration_paths("ecs_rails_add_slots")).to be_empty
+      end
+    end
+
+    it "moves the rows under the singular name and drops the table" do
+      user = make_entity("users")
+      connection.execute("INSERT INTO moderators (entity_id, created_at, updated_at) VALUES ('#{user}', now(), now())")
+
+      generate(EcsRails::Generators::UpgradeGenerator, [])
+      run_migration("ecs_rails_shared_markers", "EcsRailsSharedMarkers")
+
+      aggregate_failures do
+        expect(connection.select_all("SELECT entity_id, slot FROM markers").to_a)
+          .to eq([{ "entity_id" => user, "slot" => "moderator" }])
+        expect(connection.tables).not_to include("moderators")
+      end
+    end
+
+    it "leaves a component with attributes alone" do
+      generate(EcsRails::Generators::UpgradeGenerator, [])
+
+      expect(migration("ecs_rails_shared_markers")).not_to include("emails")
     end
   end
 

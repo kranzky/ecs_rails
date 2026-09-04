@@ -117,6 +117,12 @@ module EcsRails
     # yields virtual instances — see docs/adr/0012-component-preloading.md.
     extend Preloading
 
+    # The `marker` DSL (ADR-0018 §4 / RFC-0016): markers as slots of one Marker
+    # component. Extended last: it is built on `component` (DSL), reserves names
+    # through the hook Relationships also extends, and its query sugar rides
+    # Querying. See EcsRails::Markers.
+    extend Markers
+
     # Immutable identity (architecture.md §1). Beyond the guard above, this is
     # what excludes id and model from any UPDATE statement.
     attr_readonly :id, :model

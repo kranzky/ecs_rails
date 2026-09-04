@@ -36,6 +36,11 @@ module EcsRails
     #    `<name>_id`, `owner_model` = the owner's discriminator; the old table is
     #    then dropped. Irreversible, and written as `up`/`down` to say so.
     #
+    # 3. **Shared markers** (ADR-0018 §4) — creates the `markers` table if it is
+    #    missing, and moves every pre-0.3 marker table (a component table with no
+    #    attribute columns at all: `moderators`, `administrators`) into it, slot =
+    #    the table's singular name; the old table is then dropped. Irreversible.
+    #
     # Tables are found by inspecting the database, not the registry: a generator
     # runs before the app's classes are loaded, and the registry would miss a
     # component whose entity is never referenced. Any table with an `entity_id`
@@ -51,7 +56,7 @@ module EcsRails
       source_root File.expand_path("templates", __dir__)
 
       desc "Upgrades an existing schema to the gem's current one: the slot column " \
-           "on component tables, and the shared relationships table."
+           "on component tables, and the shared relationships and markers tables."
 
       # Emits the slot migration for component tables that lack the column, or
       # says there is nothing to do. Backing tables about to be moved into
@@ -90,6 +95,24 @@ module EcsRails
         )
       end
 
+      # Emits the shared-markers migration when the `markers` table is missing
+      # or empty per-marker tables remain, or says so.
+      #
+      # A Thor task: invoked as a generator step, not called directly.
+      #
+      # @return [void]
+      def create_markers_migration
+        if markers_table_exists? && marker_tables.empty?
+          say "Markers already live in the shared markers table.", :green
+          return
+        end
+
+        migration_template(
+          "markers_migration.rb.tt",
+          File.join(db_migrate_path, "ecs_rails_shared_markers.rb")
+        )
+      end
+
       private
 
       # Component tables (any table with an entity_id column, other than
@@ -99,7 +122,25 @@ module EcsRails
       # name twice (the columns then resolve to the first schema).
       def tables_missing_slot
         @tables_missing_slot ||= component_tables.select do |table|
-          !column_names(table).include?("slot") && backing_tables.none? { |b| b[:table] == table }
+          !column_names(table).include?("slot") &&
+            backing_tables.none? { |b| b[:table] == table } &&
+            marker_tables.none? { |m| m[:table] == table }
+        end
+      end
+
+      def markers_table_exists?
+        connection.tables.include?("markers")
+      end
+
+      # Pre-0.3 marker tables: a component table with no attribute columns at all
+      # — only id, entity_id, (slot,) timestamps — other than `markers` itself.
+      # Each becomes `{ table: "moderators", slot: "moderator" }`.
+      def marker_tables
+        @marker_tables ||= component_tables.filter_map do |table|
+          next if table == "markers"
+          next unless (column_names(table) - %w[id entity_id slot created_at updated_at]).empty?
+
+          { table: table, slot: table.singularize }
         end
       end
 
