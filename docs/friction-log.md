@@ -701,3 +701,91 @@ both mean.
 **Verdict.** 🟢 One verb, composes with everything, and the primary-attribute
 decision (ECS-17) paid again: `order_by_component(Counter, prefix: :likes)`
 says exactly what the page does.
+
+## The marketplace, first cut (ECS-22)
+
+Sellers, products, the catalogue pages, reviews. Four new entities, nine
+components on a product, a policy over a join entity — and `db/migrate` still
+holds one file. The verdicts, in the order the friction arrived.
+
+### 🟡 The forum was installed with `core`; a shop needs `commerce` — 2026-09-04
+
+**What happened.** `Product` declared `component Money, prefix: :price` and the
+seed fell over with `uninitialized constant Product::Money`: the install had
+been run with the default `core` set, and Money lives in `commerce`. In a
+real application the answer is `rails g ecs_rails:upgrade`, which writes one
+catalogue migration for the adopted set — a migration after install, the one
+kind [ADR-0018](adr/0018-catalogue-in-the-gem.md) allows for. The demo has
+never shipped a database, so it regenerated the install with
+`--sets core commerce` instead and `db/migrate` still holds one file, now
+with `monies` in it.
+
+**Verdict.** 🟡 The thesis holds, with its stated exception: *adopting a new
+set* is the one thing that costs a migration, and it costs exactly one. Worth
+saying plainly in the blog post rather than hiding. Two Rails-side snags,
+not the gem's: the running server held the dev database open so `db:drop`
+failed silently, and a stale `schema.rb` was loaded ahead of the migration
+until it was moved aside.
+
+### 🟢 Four filters and a sort, one query — 2026-09-04
+
+**What happened.** The market page's filters are each one clause on the same
+relation, in the three shapes RFC-0018 gives:
+
+```ruby
+Product.listed
+       .with_component(SearchVector) { matching(q) }                        # a component scope
+       .with_component(Money, prefix: :price) { where("amount_cents <= ?", c) } # a block
+       .with_component(Rating, "stars >= ?", 4)                              # where-style
+       .with_component(Tags) { tagged("books") }                             # another scope
+       .order_by_component(Money, :amount_cents, prefix: :price)
+```
+
+Four `EXISTS`, one scalar subquery in `ORDER BY`, the `model = 'products'`
+scope on all of it, `includes_components(Text, Money, Rating, Counter, Tags)`
+and a nested preload for the seller's name on top. The whole page is nine
+queries for ten products.
+
+**Verdict.** 🟢 This is the query DSL earning its keep. The search box needed
+nothing new: the entity-blind indexer from ECS-5 walks the `texts` table and
+products got indexed the moment `Product` declared `SearchVector`.
+
+### 🟢 One `Role`, two join entities, and a policy that is just Ruby — 2026-09-04
+
+**What happened.** `Employment` is `Membership` with the group swapped for a
+company: `relates_to :user`, `relates_to :company`, `component Role`. The
+same `Role` component — the same `roles` table — serves both; `Role.count`
+equals memberships plus employments. Authorization is `Demo::CompanyPolicy`,
+a PORO that reads `employment.role_name` and maps the string to abilities.
+The component stays generic; the meaning of "owner" lives in the app. Ada
+owns a company and reviews the other two companies' products with nothing to
+reconcile — customer and employee on one `User`, no subclass for either.
+
+**Verdict.** 🟢 The blog's headline claim, made concrete in forty lines.
+
+### 🟡 The average rating is a query the app writes by hand — 2026-09-04
+
+**What happened.** "Four stars and up" needs a number on the *product*, but
+the stars live on its reviews. The gem has no aggregation primitive (design
+§5, item 4), so `Product#recompute_rating!` runs
+`Rating.where(entity_id: reviews.select(:id)).average(:stars)` and writes the
+rounded result into the product's own `Rating`, plus the count into a
+`Counter`. That is what the market page filters and sorts on.
+
+**Verdict.** 🟡 Honest and small, but it is the kind of thing a Rails
+`counter_cache` does for free, and the review controller has to remember to
+call it. A component-level aggregate (`Rating` on a parent computed from the
+children's) is a real backlog candidate once a second one appears.
+
+### 🟢 The conflict machinery caught the obvious name — 2026-09-04
+
+**What happened.** The natural spelling for the review count,
+`component Counter, prefix: :reviews`, gives the product a bare `reviews`
+(Counter's primary attribute) — and `has_many :reviews, via: :product` wants
+the same name. Declaring both raises `EcsRails::DelegationConflict` at class
+load, naming both parties. The slot became `review_count`.
+
+**Verdict.** 🟢 ADR-0004 as designed: never a silent winner. The SKU's
+uniqueness came from the catalogue too — `Identifier` carries a unique
+`(slot, value)` index, so a duplicate SKU is a `RecordNotUnique` the
+controller turns into a form error, not a validation the demo had to write.

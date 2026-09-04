@@ -32,13 +32,14 @@ the project-specific rule set.
 
 ```
 gem/    the gem (lib/, spec/, generators). Specs run on real PostgreSQL.
-demo/   a Rails 8 bulletin board built on the gem. Deployed to Fly.io.
+demo/   a Rails 8 bulletin board + marketplace built on the gem. Deployed to Fly.io.
 docs/   architecture, ADRs, RFCs, backlog, friction log, design, blog.
 ```
 
 The demo uses the gem via `path: "../gem"` during a build so gem changes are
 felt in the demo the same day. Since ECS-17 the demo is composed from the
-catalogue only: `db/migrate` holds exactly one file (the install migration),
+catalogue only: `db/migrate` holds exactly one file (the install migration,
+generated with `--sets core commerce` — Money is in the commerce set),
 every class under `app/entities/components/` is a catalogue one-liner, and
 `spec/zero_migrations_spec.rb` pins that. Adding a bespoke component to the
 demo breaks the thesis; add a catalogue component to the gem instead. Each release repins the published gem, so the
