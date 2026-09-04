@@ -543,3 +543,90 @@ demote buttons did not change at all. The People page preloads
 `includes_components(Marker)` and its badges cost no further queries — `has?`
 now trusts a loaded has_one, present or absent, the way any association cache
 is trusted.
+
+---
+
+## The forum on the catalogue (ECS-17)
+
+The rebuild ADR-0018 asked for: every bespoke component gone, the board composed
+from catalogue components, `relates_to` and `marker` only, and `db/migrate`
+holding exactly one file. This is the first honest test of generic naming.
+
+### 🟢 Twelve component files and twenty-one migrations → one migration — 2026-09-04
+
+`rails g ecs_rails:install` on an emptied `db/migrate` and `components/`
+directory wrote one 300-line migration (25 tables) and 24 one-line classes. The
+five entities were rewritten in an hour:
+
+| Before | After |
+|---|---|
+| `Name` (first, last) | `Name` (given, family) |
+| `Email`, `Avatar`, `Bio` | `Email`, `Image, prefix: :avatar`, `Text, prefix: :bio` |
+| `Title`, `Body`, `Description` | `Text` under slots `title`, `body`, `description`, `rules`, `name` |
+| `Likes` | `Counter, prefix: :likes` |
+| `PublishState` | `State, prefix: :publish, states: %w[draft published]` |
+| `Moderator`, `Administrator` | `marker :moderator`, `marker :administrator` |
+| `Role` | `Role` |
+| 5 backing tables | rows in `relationships` |
+
+Nine catalogue tables carry the whole board; fifteen sit empty, waiting. The
+seed, the reset scheduler and every page work; `spec/zero_migrations_spec.rb`
+pins the claim (one migration, every component a catalogue one-liner, the
+board serving from the install schema). The only local touch on a catalogue
+class is `validates :address, presence: true` on the demo's `Email` — the
+catalogue allows a virtual, this board wants an email — and that reads as the
+right place for it.
+
+### 🟠 Generic naming: the reader reads well, the attribute does not — 2026-09-04
+
+**The verdict on `component Text, prefix: :title`.** The *reader*
+`post.title_text` is fine — better than fine in ERB, because `Text#to_s` makes
+`<%= post.title_text %>` render the string, so every display site reads as it
+did. What reads badly is one hop further:
+
+- **Writes.** `post.title_text_value = "…"` and the mass-assignment key
+  `title_text_value:`; `Group.create!(name_text_value:, description_text_value:,
+  rules_text_value:)`. The `_value` says nothing the slot did not already say.
+- **Helpers that want a String.** `simple_format @post.body_text` raised —
+  `simple_format` calls `empty?` on its argument, and a `Text` is not a String.
+  Every `truncate`, `simple_format`, `pluralize` needs `.to_s`. That was the one
+  500 the rebuild produced.
+- **Forms.** `value: @post.title_text.value` — `.value` everywhere, because a
+  form helper will not call `to_s` for you either.
+- The same shape for `Counter#count` (`likes_counter_count:`), `State#status`
+  (`publish_state_status:`), `Name#given` (`name_given:` — fine), `Image#url`
+  (`avatar_image_url` — fine). The friction is specific to components whose one
+  attribute is the whole point: `Text`, `Counter`, `Identifier`, `Timestamp`,
+  `CalendarDate`, `Rating`, `Position`, `Role`.
+
+**Not fixed here.** RFC-0014 rejected per-slot renaming as scope creep and asked
+this rebuild to earn it. It has. Three shapes to weigh, for the user, before the
+marketplace multiplies the problem sixfold:
+
+1. **`as:` on the reader** — `component Text, prefix: :title, as: :title` →
+   `post.title` (the component), `post.title_value`. Shortens the reader, does
+   not remove `_value`.
+2. **A primary attribute on the component** — `Text` declares `primary :value`;
+   the delegated *reader name itself* forwards to it when read as a value?
+   Ambiguous: `post.title_text` must stay the component (lazy reader, presence,
+   errors).
+3. **Bare delegation of the primary attribute under the slot name** —
+   `component Text, prefix: :title` also delegates `post.title` /
+   `post.title=` → `title_text.value`. The slot name *is* the field name; the
+   reader stays `title_text`. Forms post `title:`, controllers write
+   `post.title = …`, helpers get a String. Collisions are the ADR-0004 machinery
+   (a `Title` component's reader would clash, as it should). This is the one
+   the forum would use on every line.
+
+Option 3 is my recommendation; it is a small change in `delegation_map` (a
+component-declared `primary` attribute gains a second, slot-named entry) and it
+needs a decision, not a patch. Logged here; the marketplace design's decision
+list should pick it up.
+
+### 🟡 `allow_nil` on a format validator makes a blank field "invalid" — 2026-09-04
+
+A blank email posted from the form arrived as `""`, which `allow_nil: true` does
+not excuse, so the catalogue's format validator said "is invalid" alongside the
+demo's "can't be blank". Optional string columns in the catalogue now validate
+format with `allow_blank: true` (Email, Phone, Link, Address, Image); a required
+field is the application's `presence` validation, as the demo shows.

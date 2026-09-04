@@ -37,7 +37,11 @@ docs/   architecture, ADRs, RFCs, backlog, friction log, design, blog.
 ```
 
 The demo uses the gem via `path: "../gem"` during a build so gem changes are
-felt in the demo the same day. Each release repins the published gem, so the
+felt in the demo the same day. Since ECS-17 the demo is composed from the
+catalogue only: `db/migrate` holds exactly one file (the install migration),
+every class under `app/entities/components/` is a catalogue one-liner, and
+`spec/zero_migrations_spec.rb` pins that. Adding a bespoke component to the
+demo breaks the thesis; add a catalogue component to the gem instead. Each release repins the published gem, so the
 Docker build context stays self-contained. Fly deploys pause in between.
 
 ## Workflow
