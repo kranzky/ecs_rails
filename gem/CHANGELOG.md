@@ -6,6 +6,39 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- **Delegation is component-prefixed by default** (ADR-0016). A component's
+  delegated methods are named `#{reader}_#{method}`: `component Email` now gives
+  `user.email_address`, `user.email_verified` and
+  `user.email_send_welcome_email`, all routed through `user.email`. The rule is
+  uniform — attributes and behaviour alike — so two components can never
+  collide on a shared attribute name, and a component reader can never be
+  shadowed by a delegated `belongs_to`. The reader (`user.email`) and the
+  presence predicate (`user.email?`) are unchanged.
+  **Breaking:** every bare delegated call (`user.address`) becomes
+  `user.email_address` unless the declaration opts out. `only:`/`except:`
+  still name the component's own methods (`except: [:title]`).
+- `EcsRails::DelegationConflict` is now raised on the *entity-level* names, so
+  `Name#title` and `Group#title` coexist as `name_title` / `group_title` with no
+  `except:`. A conflict, and the reader-collision raise, now need two bare
+  declarations; both messages name dropping `prefix: false` as a way out.
+- `relates_to` declares its backing component bare, so `post.author` /
+  `post.author=` keep their shape.
+
+### Added
+
+- `component Foo, prefix: false` — bare delegation for one declaration, where
+  the prefix would be redundant (`post.state`, not `post.publish_state_state`).
+  `prefix: true` is the explicit default. A Symbol (RFC-0014's slot label)
+  raises `ArgumentError` until labelled slots are implemented.
+- **Flat mass assignment.** Because the prefixed writers exist,
+  `User.create!(name_first: "Ada", email_address: "a@b.com")` routes each key
+  to its component, dirties it and persists it through the save cascade;
+  `update!` too. Rails multiparameter form fields (`date_select` →
+  `group_founded_on(1i)`…) route the same way. Unknown keys still raise
+  `ActiveModel::UnknownAttributeError`.
+
 ## [0.2.2] — 2026-07-23
 
 ### Added

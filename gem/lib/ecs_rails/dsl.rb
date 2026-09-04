@@ -9,11 +9,13 @@ module EcsRails
   #   class User < ApplicationEntity
   #     component Name
   #     component Email
-  #     component Group, except: [:title]
+  #     component PublishState, prefix: false
   #   end
   #
-  #   User.components            # => [Name, Email, Group]
+  #   User.components            # => [Name, Email, PublishState]
   #   User.create!.email         # => the Email row, or a virtual one (RFC-0006)
+  #   User.new.email_address     # => delegated, prefixed with the reader (ADR-0016)
+  #   User.new.state             # => delegated bare, because of `prefix: false`
   #
   # Each declaration does three things: it records itself in the registry
   # (RFC-0002), it sets up the has_one that reads the component row, and it
@@ -34,7 +36,18 @@ module EcsRails
     # `only:` / `except:` restrict which of the component's methods are delegated
     # onto the entity (RFC-0005). They never affect the reader: `user.group`
     # exists whatever `except:` says. RFC-0004 validates and records them;
-    # RFC-0005 acts on them.
+    # RFC-0005 acts on them. Both name the **component's** methods (`:title`),
+    # never the prefixed entity-level name (`:group_title`).
+    #
+    # Delegated methods are **prefixed with the reader** by default (ADR-0016):
+    # `component Email` gives `user.email_address`, `user.email_verified` and
+    # `user.email_send_welcome_email`, all routed through `user.email`. The rule
+    # is uniform — attributes and behaviour alike — so two components can never
+    # collide on a shared attribute name, and a reader is never shadowed by a
+    # delegated `belongs_to`. `prefix: false` restores bare delegation for a
+    # component whose prefixed names would be redundant (`publish_state_state`).
+    # A verb that reads badly prefixed is reached through the reader instead
+    # (`user.email.send_welcome_email`), or renamed on the component.
     #
     # Deliberately no `dependent:` option on the has_one, contradicting RFC-0004
     # and matching architecture.md §3 and RFC-0003: cascade is owned by the
@@ -61,15 +74,31 @@ module EcsRails
     #
     #   User.new.email           # => #<Email> — never nil
     #
-    # @example Resolving a delegation conflict
-    #   component Group, except: [:title]
+    # @example Prefixed delegation, the default (ADR-0016)
+    #   component Email
+    #
+    #   user.email_address = "a@b.com"   # => user.email.address = "a@b.com"
+    #   user.email_send_welcome_email    # => user.email.send_welcome_email
+    #
+    # @example Bare delegation, where the prefix would be redundant
+    #   component PublishState, prefix: false
+    #
+    #   post.state                       # => post.publish_state.state
+    #
+    # @example Resolving a delegation conflict between two bare components
+    #   component Group, prefix: false, except: [:title]
     #
     # @param component_class [Class<EcsRails::Component>] a concrete component
     # @param only [Array<Symbol>, Symbol, nil] delegate only these methods.
-    #   Attribute aware: `:title` covers `#title` and `#title=`.
+    #   Attribute aware: `:title` covers `#title` and `#title=`. Names the
+    #   component's methods, not the prefixed entity-level names.
     #   Mutually exclusive with `except:`.
     # @param except [Array<Symbol>, Symbol, nil] delegate everything but these.
     #   Attribute aware, as `only:` is. Mutually exclusive with `only:`.
+    # @param prefix [Boolean, nil] how delegated methods are named on the entity.
+    #   Omitted (or `true`): `#{reader}_#{method}` — `email_address`. `false`:
+    #   the bare component method name — `address`. A Symbol label (RFC-0014's
+    #   slots) is not implemented yet and raises.
     # @return [EcsRails::Registry::Declaration] the recorded declaration
     # @raise [EcsRails::InvalidComponent] if `component_class` is not a concrete
     #   {EcsRails::Component} subclass, or is abstract and so owns no table
@@ -79,22 +108,23 @@ module EcsRails
     #   delegated by a sibling component, or collides with a component reader
     #   (ADR-0004)
     # @raise [ArgumentError] if both `only:` and `except:` are given, if either
-    #   names a method the component does not delegate, or if either class is
-    #   anonymous
+    #   names a method the component does not delegate, if `prefix:` is anything
+    #   but `true`/`false`/`nil`, or if either class is anonymous
     # @see #components
     # @see EcsRails::Presence::Entity#has? the `<reader>?` predicate this generates
-    def component(component_class, only: nil, except: nil)
+    def component(component_class, only: nil, except: nil, prefix: nil)
       validate_component_class!(component_class)
-      options = normalized_delegation_options(only: only, except: except)
+      options = normalized_delegation_options(only: only, except: except, prefix: prefix)
       validate_not_inherited!(component_class)
 
       # RFC-0005 is resolved *before* anything is registered or defined, so that
       # a bad `only:`/`except:` name or a DelegationConflict leaves the class in
-      # exactly the state it was in. #delegated_method_names validates the option
-      # names against the component's real method set (ArgumentError on a typo);
-      # #detect_delegation_conflict! raises DelegationConflict (ADR-0004) if any
-      # of those names is already delegated by a sibling component.
-      delegated = delegated_method_names(component_class, options)
+      # exactly the state it was in. #delegation_map validates the option names
+      # against the component's real method set (ArgumentError on a typo) and
+      # applies the ADR-0016 prefix; #detect_delegation_conflict! raises
+      # DelegationConflict (ADR-0004) if any resulting entity-level name is
+      # already delegated by a sibling component.
+      delegated = delegation_map(component_class, options)
       detect_delegation_conflict!(component_class, delegated)
       detect_reader_collision!(component_class, delegated)
 
@@ -228,8 +258,8 @@ module EcsRails
       end
     end
 
-    # RFC-0005: generates one delegating method on the entity, per name in the
-    # delegated set, into the same module the reader lives in.
+    # RFC-0005: generates one delegating method on the entity, per entry in the
+    # delegation map, into the same module the reader lives in.
     #
     # The methods live in generated_component_methods (an *included* module), so
     # a method defined directly on the entity class shadows them by Ruby's own
@@ -238,19 +268,23 @@ module EcsRails
     #
     # Each generated method calls the entity's own component reader (`email`),
     # so it goes through RFC-0006's memo and reaches the one instance the save
-    # cascade will later persist — the seam that makes `user.address = "x";
-    # user.save!` write a single row. It does *not* rebind self or instance_exec
-    # (ADR-0001): it forwards the call, so `self` inside the component method is
-    # the component, never the entity.
+    # cascade will later persist — the seam that makes `user.email_address =
+    # "x"; user.save!` write a single row. It does *not* rebind self or
+    # instance_exec (ADR-0001): it forwards the call, so `self` inside the
+    # component method is the component, never the entity.
+    #
+    # The entity-level name (`email_address`) and the component method it
+    # forwards to (`address`) differ under ADR-0016's default prefix; the map
+    # carries both, so this is the only place that needs to know.
     #
     # *args, **kwargs and &block are all forwarded untouched (RFC-0005).
     def define_component_delegation(component_class, delegated)
-      reader = component_class.model_name.singular.to_sym
+      reader = reader_name_for(component_class)
       mod = generated_component_methods
 
-      delegated.each do |method_name|
-        mod.define_method(method_name) do |*args, **kwargs, &block|
-          public_send(reader).public_send(method_name, *args, **kwargs, &block)
+      delegated.each do |entity_method, component_method|
+        mod.define_method(entity_method) do |*args, **kwargs, &block|
+          public_send(reader).public_send(component_method, *args, **kwargs, &block)
         end
       end
     end
@@ -283,8 +317,33 @@ module EcsRails
       mod.define_method(predicate) { has?(component) }
     end
 
-    # RFC-0005: the set of method names delegated for one component, after
-    # `only:`/`except:` are applied. Also the place their names are validated —
+    # ADR-0016: the names an entity answers for one component, each mapped to
+    # the component method it forwards to. Keys are entity-level
+    # (`email_address`), values component-level (`address`).
+    #
+    # By default every name is prefixed with the component's reader, so the one
+    # rule is `#{reader}_#{method}` — the same shape RFC-0014's labelled slots
+    # use, which is what makes the two cases one rule. `prefix: false` makes
+    # key and value identical (bare delegation). The prefix is applied to the
+    # whole delegated set, behaviour included: `email_send_welcome_email` is
+    # ugly but unambiguous, and the reader (`user.email.send_welcome_email`) is
+    # always there for a verb that reads badly prefixed. An attributes-only rule
+    # would need a heuristic for what counts as an attribute and would reopen the
+    # verb collisions ADR-0016 exists to close.
+    #
+    # Conflict detection, reader collision and method generation all work on
+    # this map, so "what does the entity answer" is computed in one place.
+    def delegation_map(component_class, options)
+      names = delegated_method_names(component_class, options)
+      return names.to_h { |name| [name, name] } if options[:prefix] == false
+
+      reader = reader_name_for(component_class)
+      names.to_h { |name| [:"#{reader}_#{name}", name] }
+    end
+
+    # RFC-0005: the set of the component's own method names delegated for one
+    # component, after `only:`/`except:` are applied — before ADR-0016's prefix,
+    # which #delegation_map adds. Also the place the option names are validated —
     # RFC-0004 stored them but never checked they name anything real.
     #
     # `only:` keeps the named members; `except:` drops them. Both are attribute
@@ -406,6 +465,13 @@ module EcsRails
     # and its ancestors (the new one is not registered yet), so the message can
     # name the sibling that got there first.
     #
+    # Compared on the *entity-level* names (ADR-0016), so two components that
+    # share an attribute (`Name#title`, `Group#title`) no longer clash — they
+    # delegate `name_title` and `group_title`. A clash now needs both to be
+    # bare (`prefix: false`), or a prefixed name to spell out another's
+    # (`EmailAddress#verified` vs `Email#address_verified`). The raise stays as
+    # the backstop ADR-0004 promised.
+    #
     # Only component-vs-component overlaps count. An overlap with a method the
     # entity itself defines is not a conflict: that method wins by Ruby's lookup
     # (the generated module is included), which is ADR-0004's other half.
@@ -419,18 +485,18 @@ module EcsRails
         next if declaration.component_class_name == component_class.name
 
         other = declaration.component_class
-        delegated_method_names(other, declaration.options).each do |name|
+        delegation_map(other, declaration.options).each_key do |name|
           owners[name] ||= other
         end
       end
 
       # Sort so the reader (`title`) is reported before its writer (`title=`) —
       # "title" < "title=" — giving the tidier message and except: hint.
-      clash = delegated.select { |name| owners.key?(name) }.min_by(&:to_s)
+      clash = delegated.keys.select { |name| owners.key?(name) }.min_by(&:to_s)
       return unless clash
 
       raise DelegationConflict,
-            delegation_conflict_message(component_class, owners[clash], clash)
+            delegation_conflict_message(component_class, owners[clash], clash, delegated[clash])
     end
 
     # A component reader (`post.author`) is structural — it is how you reach the
@@ -447,35 +513,45 @@ module EcsRails
     # a sibling's. The reverse — a sibling's delegated method colliding with the
     # new reader — is the same names from the other side, and
     # #detect_delegation_conflict! on the earlier declaration already covers it.
+    #
+    # Under ADR-0016's default prefix this can only fire for a `prefix: false`
+    # component (a prefixed name always starts with its own reader plus an
+    # underscore, so it can never *equal* a reader) — or when a prefixed name
+    # happens to spell a sibling's reader. Checked on the entity-level names.
     def detect_reader_collision!(component_class, delegated)
       readers = component_declarations.map { |d| reader_name_for(d.component_class) }
       readers << reader_name_for(component_class)
 
-      clash = delegated.find { |name| readers.include?(name) }
+      clash = delegated.keys.find { |name| readers.include?(name) }
       return unless clash
 
-      raise DelegationConflict, reader_collision_message(component_class, clash)
+      raise DelegationConflict, reader_collision_message(component_class, clash, delegated[clash])
     end
 
     def reader_name_for(component_class)
       component_class.model_name.singular.to_sym
     end
 
-    # Names the collision and the two ways out: rename the offending method
-    # (usually a relationship component's `belongs_to`), or exclude it.
-    def reader_collision_message(component_class, method)
+    # Names the collision and the three ways out: keep the default prefix,
+    # rename the offending method (usually a relationship component's
+    # `belongs_to`), or exclude it. `except:` takes the component's own method
+    # name, which is why the map's value is passed alongside the clashing key.
+    def reader_collision_message(component_class, method, component_method)
       "##{method} on #{name} is both a component reader and a method delegated " \
-        "from #{component_class.name}. A reader name is reserved. Rename the " \
+        "from #{component_class.name}. A reader name is reserved. Drop " \
+        "`prefix: false` so the method is delegated as " \
+        "#{reader_name_for(component_class)}_#{component_method}, rename the " \
         "method — for a relationship component, name the association for its " \
         "target (e.g. `belongs_to :user`) rather than the component — or exclude " \
-        "it with `component #{component_class.name}, except: [:#{method.to_s.chomp("=")}]`."
+        "it with `component #{component_class.name}, except: [:#{component_method.to_s.chomp("=")}]`."
     end
 
     # The message ADR-0004 specifies: the method, both components, the entity,
-    # and the exact `except:` line that resolves it.
-    def delegation_conflict_message(new_component, existing_component, method)
-      attribute = method.to_s.chomp("=").to_sym
-      reader = new_component.model_name.singular
+    # and the exact `except:` line that resolves it. The `except:` hint names
+    # the component's own method (`:title`), not the entity-level name.
+    def delegation_conflict_message(new_component, existing_component, method, component_method)
+      attribute = component_method.to_s.chomp("=").to_sym
+      reader = reader_name_for(new_component)
 
       "##{method} is defined by both #{existing_component.name} and " \
         "#{new_component.name} on #{name}. " \
@@ -540,16 +616,41 @@ module EcsRails
             "inherited from #{clash.entity_class_name}"
     end
 
-    def normalized_delegation_options(only:, except:)
+    # The options the registry records for a declaration: `only:`/`except:` as
+    # normalised symbol arrays, and `prefix: false` when bare delegation was
+    # asked for. The default prefix is *not* recorded — `{}` still means "all of
+    # it, prefixed" — so a plain `component Email` declaration compares equal
+    # before and after ADR-0016, and conflict detection re-derives the same map
+    # from the same options.
+    def normalized_delegation_options(only:, except:, prefix:)
       if only && except
         raise ArgumentError,
               "`only:` and `except:` are mutually exclusive; pass at most one"
       end
 
-      return { only: method_names(only) } if only
-      return { except: method_names(except) } if except
+      validate_prefix!(prefix)
 
-      {}
+      options = {}
+      options[:only] = method_names(only) if only
+      options[:except] = method_names(except) if except
+      options[:prefix] = false if prefix == false
+      options
+    end
+
+    # ADR-0016: `prefix:` is a Boolean for now. `nil` and `true` are the default
+    # (reader-prefixed); `false` is bare. RFC-0014 will let a Symbol label a
+    # slot (`prefix: :business`) and that is the *only* other shape the keyword
+    # will take — so anything else is rejected here, with a message that says
+    # slots are not built yet rather than silently treating `:business` as
+    # truthy and generating unprefixed methods for it.
+    def validate_prefix!(prefix)
+      return if prefix.nil? || prefix == true || prefix == false
+
+      raise ArgumentError,
+            "`prefix:` expects true (the default: delegated methods are named " \
+            "#{model_name.singular}.<reader>_<method>) or false (bare <method>); " \
+            "got #{prefix.inspect}. Labelled slots (`prefix: :label`, RFC-0014) " \
+            "are not implemented yet."
     end
 
     def method_names(value)
