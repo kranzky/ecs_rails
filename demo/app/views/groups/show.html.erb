@@ -4,6 +4,11 @@
 <div class="card">
   <h1 style="margin:0 0 .3rem"><%= @group.name_first %></h1>
   <p style="color:var(--muted);margin:0"><%= @group.description_text %></p>
+  <% if @group.rules_description_text.present? %>
+    <hr class="divider">
+    <h3 class="section-title">House rules</h3>
+    <p class="prose" style="margin:0;color:var(--muted)"><%= simple_format @group.rules_description_text %></p>
+  <% end %>
 </div>
 
 <section style="margin-top:2rem">

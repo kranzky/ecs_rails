@@ -18,6 +18,11 @@
       <%= f.label "group[description]", "Description" %>
       <%= f.text_area "group[description]", class: "textarea", rows: 3, maxlength: 300, value: @group.description_text %>
     </div>
+    <div class="field">
+      <%= f.label "group[rules]", "House rules" %>
+      <%= f.text_area "group[rules]", class: "textarea", rows: 3, maxlength: 500, value: @group.rules_description_text, placeholder: "Optional. Be kind, stay on topic…" %>
+      <p class="hint">A second <code>Description</code> component on the same group, in the <code>:rules</code> slot.</p>
+    </div>
     <div class="btn-row">
       <%= f.submit "Create group", class: "btn btn--primary" %>
       <%= link_to "Cancel", groups_path, class: "btn btn--ghost" %>
