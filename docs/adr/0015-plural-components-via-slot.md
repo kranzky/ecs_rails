@@ -1,6 +1,6 @@
 # ADR-0015: Plural components via a slot discriminator
 
-**Status:** Accepted
+**Status:** Accepted — implemented 2026-09-04 (Linear ECS-4; see [RFC-0014's amendment](../rfc/0014-plural-components.md#amendment-as-implemented))
 **Date:** 2026-07-24
 **Amends:** [ADR-0005](0005-one-component-per-entity.md)
 **Surfaced by:** the standard-component-library brainstorm — `Phone` (mobile/work), `PostalAddress` (billing/shipping) and `Token` (by purpose) are all naturally multi-role, and modelling each role as a separate entity is wrong.
@@ -36,10 +36,10 @@ case** — `slot = ""` — with no change to existing declarations or reads. A
 
 ```ruby
 class User < ApplicationEntity
-  component PostalAddress                      # slot ""         → user.postal_address
-  component PostalAddress, prefix: :business   # slot "business" → user.business_address
-  component Phone,         prefix: :mobile     # slot "mobile"   → user.mobile_phone
-  component Phone,         prefix: :work       # slot "work"     → user.work_phone
+  component Address                      # slot ""         → user.address
+  component Address, prefix: :business   # slot "business" → user.business_address
+  component Phone,   prefix: :mobile     # slot "mobile"   → user.mobile_phone
+  component Phone,   prefix: :work       # slot "work"     → user.work_phone
 end
 
 user.business_address.line1 = "1 St Georges Tce"

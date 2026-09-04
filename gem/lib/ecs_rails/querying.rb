@@ -51,7 +51,13 @@ module EcsRails
     # @example Chaining — each call ANDs
     #   Post.with_component(Title).with_component(Body).order(created_at: :desc)
     #
+    # @example Filtering by slot (RFC-0014) — `prefix:` is sugar for `slot:`
+    #   User.with_component(PostalAddress, prefix: :business, region: "WA")
+    #   User.with_component(PostalAddress)   # any slot
+    #
     # @param component_class [Class<EcsRails::Component>] a concrete component
+    # @param prefix [Symbol, String, nil] a slot label, as the DSL spells it;
+    #   equivalent to `slot: "label"`. Omitted: any slot.
     # @param conditions [Hash] optional attribute equality the row must match
     # @return [ActiveRecord::Relation] chainable, and still scoped to this
     #   entity's own `model` discriminator (ADR-0002)
@@ -59,7 +65,8 @@ module EcsRails
     #   component, or is abstract and so owns no table
     # @see #without_component
     # @see EcsRails::Relationships#with_related the relationship-name equivalent
-    def with_component(component_class, **conditions)
+    def with_component(component_class, prefix: nil, **conditions)
+      conditions = ecs_slot_conditions(prefix).merge(conditions)
       all.where(ecs_component_exists_sql(component_class, conditions, negate: false))
     end
 
@@ -75,16 +82,28 @@ module EcsRails
     # @example
     #   User.without_component(Avatar)
     #
+    # @example No row in one slot (RFC-0014)
+    #   User.without_component(PostalAddress, prefix: :business)
+    #
     # @param component_class [Class<EcsRails::Component>] a concrete component
+    # @param prefix [Symbol, String, nil] a slot label; omitted means no row in
+    #   any slot
     # @return [ActiveRecord::Relation] chainable, entity-model scoped
     # @raise [EcsRails::InvalidComponent] if `component_class` is not a concrete
     #   component, or is abstract and so owns no table
     # @see #with_component
-    def without_component(component_class)
-      all.where(ecs_component_exists_sql(component_class, {}, negate: true))
+    def without_component(component_class, prefix: nil)
+      all.where(ecs_component_exists_sql(component_class, ecs_slot_conditions(prefix), negate: true))
     end
 
     private
+
+    # RFC-0014: `prefix: :business` reads as the DSL does and means
+    # `slot: "business"`. The slot is an ordinary column, so this is the only
+    # query surface slots need — pure spelling.
+    def ecs_slot_conditions(prefix)
+      prefix.nil? ? {} : { slot: prefix.to_s }
+    end
 
     # Builds the `EXISTS (...)` / `NOT EXISTS (...)` fragment for one component.
     #

@@ -53,6 +53,10 @@ module EcsRails
     # @example A named subset, chained onto a component filter
     #   Post.with_component(PublishState).includes_components(Title, Body)
     #
+    # A component declared under several slots (RFC-0014) preloads every slot's
+    # has_one: `includes_components(PostalAddress)` batches `postal_address` and
+    # `business_address` alike, one query each.
+    #
     # @param component_classes [Array<Class<EcsRails::Component>>] components to
     #   preload; empty preloads every component the entity declares
     # @return [ActiveRecord::Relation] chainable, entity-model scoped
@@ -61,19 +65,26 @@ module EcsRails
     #   which accepts any concrete component
     # @see EcsRails::Relationships#includes_related for relationships
     def includes_components(*component_classes)
-      declared = components
-      targets = component_classes.empty? ? declared : component_classes
-      targets.each { |component_class| ecs_validate_declared_component!(component_class, declared) }
+      declarations = component_declarations
+      targets =
+        if component_classes.empty?
+          declarations
+        else
+          component_classes.flat_map { |component_class| ecs_declarations_of!(component_class, declarations) }
+        end
 
-      all.preload(*targets.map { |component_class| ecs_component_association_name(component_class) })
+      all.preload(*targets.map(&:reader_name))
     end
 
     private
 
-    # The has_one name for a component — the same derivation the DSL uses when it
-    # defines the association (EcsRails::DSL#define_component_association).
-    def ecs_component_association_name(component_class)
-      component_class.model_name.singular.to_sym
+    # Every declaration of `component_class` on this entity — one per slot
+    # (RFC-0014). Each reader name is the has_one the DSL defined, so preloading
+    # by reader name is the same derivation the DSL used
+    # (EcsRails::DSL#define_component_association).
+    def ecs_declarations_of!(component_class, declarations)
+      ecs_validate_declared_component!(component_class, declarations.map(&:component_class).uniq)
+      declarations.select { |declaration| declaration.component_class_name == component_class.name }
     end
 
     # A preloadable component is one this entity *declares* — unlike the query DSL

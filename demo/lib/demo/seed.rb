@@ -33,7 +33,8 @@ module Demo
         comment(post, author, text)
       end
 
-      rubyists = group("Rubyists", "People who enjoy writing Ruby.")
+      rubyists = group("Rubyists", "People who enjoy writing Ruby.",
+                       rules: "Be kind. Share code, not screenshots. No language wars.")
       pioneers = group("Computing Pioneers", "The people who got us here.")
 
       [[ada, rubyists, "owner"], [grace, rubyists, "member"], [alan, rubyists, "member"],
@@ -62,8 +63,10 @@ module Demo
       Comment.create!(body_text: text, author: author, post: post, likes_count: rand(0..5))
     end
 
-    def group(name, description)
-      Group.create!(name_first: name, description_text: description)
+    # `rules:` lands in the :rules slot of Description (RFC-0014) — same
+    # component, second row — through the prefixed delegated writer.
+    def group(name, description, rules: nil)
+      Group.create!(name_first: name, description_text: description, rules_description_text: rules)
     end
 
     def membership(user, group, role)

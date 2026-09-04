@@ -1,6 +1,6 @@
 # RFC-0014: Labelled (plural) components
 
-**Status:** Proposed
+**Status:** Implemented (2026-09-04, Linear ECS-4) — see [the amendment](#amendment-as-implemented)
 **Depends on:** RFC-0002 (registry), RFC-0004 (component DSL), RFC-0005 (delegation), RFC-0006 (lazy components), RFC-0008 (generators), RFC-0009 (presence), RFC-0010 (query)
 **Decision:** [ADR-0015](../adr/0015-plural-components-via-slot.md)
 
@@ -13,12 +13,17 @@ standard-library survey (`Phone`, `PostalAddress`, `Token`, …).
 
 ```ruby
 class User < ApplicationEntity
-  component PostalAddress                      # user.postal_address
-  component PostalAddress, prefix: :business   # user.business_address
-  component Phone,         prefix: :mobile     # user.mobile_phone
-  component Phone,         prefix: :work       # user.work_phone
+  component Address                      # user.address
+  component Address, prefix: :business   # user.business_address
+  component Phone,   prefix: :mobile     # user.mobile_phone
+  component Phone,   prefix: :work       # user.work_phone
 end
 ```
+
+> The component is `Address`, not `PostalAddress`: the reader rule is
+> `#{prefix}_#{singular}`, so only the short name yields `business_address`.
+> [ADR-0016](../adr/0016-prefixed-delegation-by-default.md) freed that name
+> (`Email#address` delegates as `email_address`), and the catalogue takes it.
 
 ## Rules
 
@@ -201,3 +206,89 @@ Once shipped, the standard-library generators (`Phone`, `PostalAddress`, `Token`
 can assume labelled use. Add a demo entity that exercises two slots of one
 component (a `User` with `postal_address` + `business_address`) so the friction
 log has a real verdict on prefixed delegation.
+
+## Amendment: as implemented
+
+*2026-09-04, Linear ECS-4.* Built on top of ADR-0016's delegation map. The RFC's
+rules stand; these are the decisions it left open or implied, and one
+correction.
+
+- **Correction — the component is `Address`.** The examples above originally
+  read `PostalAddress` → `business_address`, which the reader rule
+  (`#{prefix}_#{model_name.singular}`) does not produce; it produces
+  `business_postal_address`. The rule is right and the examples were loose.
+  Rewritten to `Address`, the name ADR-0016 freed and the catalogue uses. The
+  gem's fixture is `Address` too.
+- **Keyword `prefix:`, default slot `""`.** Confirmed as the RFC's answers. One
+  keyword carries three meanings with no ambiguity: `true`/omitted and `false`
+  are the default slot (prefixed or bare delegation, ADR-0016); a Symbol or
+  String is a slot label. A label must be a method-name segment
+  (`/\A[a-z_][a-z0-9_]*\z/`) and may not be `""`; anything else raises.
+- **Every `has_one` is slot-scoped, the default slot included** —
+  `has_one :address, -> { where(slot: "") }`. Not only when a component is
+  declared twice: with two slots of `Address` on one entity, an unscoped default
+  reader would return whichever row the database offered. The cost is one
+  `AND slot = ''` per component read. Uniform, per ADR-0015's own argument.
+- **`slot` is identity, not state.** The lazy reader presets it on a virtual
+  (`user.business_address.slot == "business"` before any write), the dirty rule
+  skips it (a preset slot must not make an untouched virtual look dirty), and it
+  is never delegated — `user.business_address_slot` does not exist.
+- **The registry keys by `(entity, component, slot)`.** `Declaration` gains
+  `slot`, `reader_name`, `prefix` and `slot_options`. `Entity.components` lists
+  a type once however many slots it has; `component_declarations` lists each
+  slot. New: `Entity.declaration_for(Address, prefix: :business)`.
+- **Reader collisions now run both ways.** The new reader may not be a name the
+  entity already answers (a sibling's reader or delegated method): `component
+  Address, prefix: :business` beside a `BusinessAddress` component raises. The
+  same `(component, slot)` twice stays a `DuplicateComponent`.
+- **`delegate: false`** generates the reader and predicate only. It is recorded
+  as `delegate: false` in the declaration's options and rejects `only:`/`except:`
+  alongside it (nothing to select from).
+- **Presence takes `prefix:`** — `add(Address, prefix: :business)`, `has?`,
+  `remove` — and `has?` is slot-scoped in SQL. An undeclared slot is
+  `InvalidComponent`, naming the slot. The per-slot predicate
+  `user.business_address?` is generated as before.
+- **Queries take `prefix:` as sugar for `slot:`** on both `with_component` and
+  `without_component`; `with_component(Address)` with no prefix matches any
+  slot, as the RFC said. Nothing else changed: slot is a column.
+- **Preloading follows declarations.** `includes_components(Address)` preloads
+  every slot's `has_one`, one query per slot; the no-argument form preloads
+  every declaration. Validation keys are per reader
+  (`errors[:"business_address.postcode"]`, "Business address postcode is
+  invalid") with no change to RFC-0007.
+- **`relates_to` is unaffected**: its backing component sits in the default
+  slot with `prefix: false`, so `post.author` is as it was. Backing tables gain
+  the `slot` column like every component table, until ADR-0017 retires them.
+- **Slot configuration — the one decision ADR-0018 needed.** A component
+  declares the options it accepts with `slot_option :name, default:`; the
+  declaration site passes them as extra keywords on `component`
+  (`component State, prefix: :order, states: %w[pending paid]`); the instance
+  reads them back through a generated method (`order_state.states`) or
+  `slot_options`. Options are **declared, not inferred**: an unknown keyword on
+  `component` raises at declaration time listing the accepted ones, and a
+  `slot_option` that would shadow a method or column raises when declared. The
+  value resolves through the *owning entity's* declaration, because the same
+  class is configured differently on different entities (`State` on an `Order`
+  vs on a `Post`) — so there is no class-level answer. Reached through the lazy
+  reader, a relationship or a preload, the entity is already in hand and it
+  costs nothing; a component loaded standalone (`State.where(...)`) loads its
+  entity, one query, which a system that needs options should preload.
+- **Generators.** `ecs_rails:component` and `ecs_rails:relationship` emit the
+  `slot` column and the `(entity_id, slot)` unique index. The upgrade is
+  **`rails g ecs_rails:upgrade`** (not `upgrade_slots`): ADR-0018 makes it the
+  only migration a user ever runs after install, and adding slots is its first
+  job. It finds component tables by inspecting the database for an `entity_id`
+  column and no `slot` column — the registry is empty when a generator runs —
+  and writes one migration for all of them, or nothing if every table is
+  current. Proven against a real 0.2.x-shaped table in the migration-execution
+  spec.
+- **Runtime slot accessor: still no.** `Klass.find_or_initialize_by(entity_id:,
+  slot:)` at the component-table level is the ECS-shaped answer, as ECS-4
+  decided.
+
+**Demo verdict.** The forum's `Group` now declares `Description` twice — a
+description and, in the `:rules` slot, house rules — with one `descriptions`
+table. `group.rules_description_text` reads fine in the view and the form; the
+prefixed slot name is long but says exactly what it is. The 17 existing
+component tables were upgraded by one generated migration. See the
+[friction log](../friction-log.md).

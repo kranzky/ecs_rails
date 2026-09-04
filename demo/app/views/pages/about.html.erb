@@ -50,6 +50,14 @@ end</code></pre>
          shared component can't leak across types.</p>
     </div>
     <div class="card">
+      <h3 class="section-title">One component, two slots</h3>
+      <p class="prose" style="margin-bottom:0">A <%= link_to "group", groups_path %> has a
+         description <em>and</em> house rules — the same <code>Description</code>
+         component declared twice: <code>component Description</code> and
+         <code>component Description, prefix: :rules</code>. Same table, one row
+         per slot, read as <code>group.rules_description_text</code>.</p>
+    </div>
+    <div class="card">
       <h3 class="section-title">Relationships & join entities</h3>
       <p class="prose" style="margin-bottom:0"><code>relates_to :author, User</code>
          links a post to its author with no boilerplate. A

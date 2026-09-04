@@ -29,9 +29,14 @@ RSpec.describe EcsRails::Generators::RelationshipGenerator, type: :generator do
       expect(contents).to match(/t\.uuid :author_id, default: nil/)
     end
 
-    # ADR-0005 — one relationship row per owner.
-    it "makes the entity_id index unique" do
-      expect(contents).to match(/add_index :post_authors, :entity_id, unique: true/)
+    # ADR-0005 / ADR-0015 — one relationship row per owner (and slot).
+    it "makes the (entity_id, slot) index unique" do
+      expect(contents).to match(/add_index :post_authors, \[:entity_id, :slot\], unique: true/)
+    end
+
+    # RFC-0014: a backing table is a component table, so it carries the slot column.
+    it "declares the slot column" do
+      expect(contents).to match(/t\.string :slot, null: false, default: ""/)
     end
 
     it "cascades on the owner side (entity_id)" do

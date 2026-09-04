@@ -3,8 +3,9 @@
 # The test schema. Mirrors docs/architecture.md §2.
 #
 # Every component table here follows the same invariants the generator
-# (RFC-0008) will enforce: UUID PK, non-null entity_id with a UNIQUE index and
-# an ON DELETE CASCADE FK, and an explicit default for every attribute.
+# (RFC-0008) enforces: UUID PK, non-null entity_id, a `slot` string defaulting
+# to "" with a UNIQUE index on (entity_id, slot) (ADR-0005 / ADR-0015), an ON
+# DELETE CASCADE FK, and an explicit default for every attribute.
 
 ActiveRecord::Schema.verbose = false
 
@@ -21,6 +22,7 @@ ActiveRecord::Schema.define do
 
   create_table :emails, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid    :entity_id, null: false
+    t.string :slot,     null: false, default: ""
     t.string  :address,   default: nil
     t.boolean :verified,  default: false, null: false
     t.timestamps
@@ -28,6 +30,7 @@ ActiveRecord::Schema.define do
 
   create_table :names, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid   :entity_id, null: false
+    t.string :slot,     null: false, default: ""
     t.string :first,     default: nil
     t.string :last,      default: nil
     t.string :title,     default: nil
@@ -36,6 +39,7 @@ ActiveRecord::Schema.define do
 
   create_table :groups, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid   :entity_id,   null: false
+    t.string :slot,        null: false, default: ""
     t.string :title,       default: nil
     t.string :description, default: nil
     # A date, so delegation_spec can prove Rails multiparameter form fields
@@ -47,6 +51,7 @@ ActiveRecord::Schema.define do
 
   create_table :avatars, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid   :entity_id, null: false
+    t.string :slot,     null: false, default: ""
     t.string :url,       default: nil
     t.timestamps
   end
@@ -56,6 +61,7 @@ ActiveRecord::Schema.define do
   # collision" specs in delegation_spec.rb. Surfaced by the demo.
   create_table :sponsors, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid :entity_id, null: false
+    t.string :slot,     null: false, default: ""
     t.uuid :sponsor_id, default: nil
     t.timestamps
   end
@@ -67,6 +73,7 @@ ActiveRecord::Schema.define do
   # there is no attribute column: the whole point is that presence is the state.
   create_table :moderators, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid :entity_id, null: false
+    t.string :slot,     null: false, default: ""
     t.timestamps
   end
 
@@ -74,12 +81,28 @@ ActiveRecord::Schema.define do
   # so `user.add(PublishState)` exercises RFC-0009's InvalidComponent path.
   create_table :publish_states, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid   :entity_id, null: false
+    t.string :slot,     null: false, default: ""
     t.string :state,     default: nil
     t.timestamps
   end
 
-  %i[emails names groups avatars sponsors moderators publish_states].each do |table|
-    add_index table, :entity_id, unique: true
+  # A naturally multi-role component (RFC-0014 / ADR-0015): one `addresses`
+  # table serves the default slot (`user.address`) and every labelled
+  # slot (`user.business_address`, `supplier.remit_address`) alike. The `slot`
+  # column, present on every component table, is what tells them apart.
+  create_table :addresses, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid   :entity_id, null: false
+    t.string :slot,      null: false, default: ""
+    t.string :line1,     default: nil
+    t.string :region,    default: nil
+    t.string :postcode,  default: nil
+    t.timestamps
+  end
+
+  # ADR-0005 as generalised by ADR-0015: one row per (entity, slot). The
+  # singular case is the `slot = ""` special case of the composite index.
+  %i[emails names groups avatars sponsors moderators publish_states addresses].each do |table|
+    add_index table, %i[entity_id slot], unique: true
     add_foreign_key table, :entities, column: :entity_id, on_delete: :cascade
   end
 
@@ -97,6 +120,7 @@ ActiveRecord::Schema.define do
   # `post_authors` backs `Post.relates_to :author, User`.
   create_table :post_authors, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid :entity_id, null: false
+    t.string :slot,     null: false, default: ""
     t.uuid :author_id, default: nil
     t.timestamps
   end
@@ -106,6 +130,7 @@ ActiveRecord::Schema.define do
   # test is real: `Post.with_related(:author, ada)` must not return a Comment.
   create_table :comment_authors, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid :entity_id, null: false
+    t.string :slot,     null: false, default: ""
     t.uuid :author_id, default: nil
     t.timestamps
   end
@@ -114,12 +139,14 @@ ActiveRecord::Schema.define do
   # which carries two relationships — the many-to-many pattern (ADR-0005).
   create_table :membership_users, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid :entity_id, null: false
+    t.string :slot,     null: false, default: ""
     t.uuid :user_id,   default: nil
     t.timestamps
   end
 
   create_table :membership_teams, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid :entity_id, null: false
+    t.string :slot,     null: false, default: ""
     t.uuid :team_id,   default: nil
     t.timestamps
   end
@@ -130,6 +157,7 @@ ActiveRecord::Schema.define do
   # it after a simulated class reload.
   create_table :reloadable_authors, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid :entity_id, null: false
+    t.string :slot,     null: false, default: ""
     t.uuid :author_id, default: nil
     t.timestamps
   end
@@ -141,7 +169,7 @@ ActiveRecord::Schema.define do
     membership_teams: :team_id,
     reloadable_authors: :author_id
   }.each do |table, target|
-    add_index table, :entity_id, unique: true
+    add_index table, %i[entity_id slot], unique: true
     add_foreign_key table, :entities, column: :entity_id, on_delete: :cascade
     add_index table, target
     add_foreign_key table, :entities, column: target, on_delete: :nullify

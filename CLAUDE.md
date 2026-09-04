@@ -90,6 +90,13 @@ bundle exec rspec                   # component specs are placeholders
   name the component's methods, never the prefixed name. `relates_to` is bare
   so `post.author` keeps its shape. Flat mass assignment
   (`User.create!(name_first: ...)`) falls out of this and is pinned by spec.
+- **Slots** (RFC-0014 / ADR-0015): `component Address, prefix: :business` is a
+  second singleton of the same component, reader `business_address`, stored in
+  the same table under `slot = "business"`. Every component table has `slot`
+  and a unique `(entity_id, slot)` index; every `has_one` is slot-scoped. Slot
+  is identity: never delegated, never dirt. Per-slot options are declared on
+  the component with `slot_option` and passed as extra keywords on `component`.
+  `rails g ecs_rails:upgrade` brings an older schema forward.
 - **Conflicts raise at declaration time** (ADR-0004). Never a silent winner.
 - **Presence is explicit** (ADR-0009): markers persist via `add`/`remove`.
 - **Reload safety**: the registry and relationship metadata store class

@@ -121,12 +121,21 @@ RSpec.describe "generated migrations actually run", type: :generator do
       end
     end
 
-    # ADR-0005, proven against the catalog rather than the file text.
-    it "creates a UNIQUE index on entity_id" do
+    # ADR-0005 / ADR-0015, proven against the catalog rather than the file text.
+    it "creates a UNIQUE index on (entity_id, slot)" do
       indexes = connection.select_values(
         "SELECT indexdef FROM pg_indexes WHERE schemaname = '#{scratch_schema}' AND tablename = 'emails'"
       )
-      expect(indexes).to include(match(/CREATE UNIQUE INDEX .*\(entity_id\)/))
+      expect(indexes).to include(match(/CREATE UNIQUE INDEX .*\(entity_id, slot\)/))
+    end
+
+    it "gives slot a non-null empty-string default" do
+      slot = columns_of("emails").find { |c| c["column_name"] == "slot" }
+
+      aggregate_failures do
+        expect(slot["is_nullable"]).to eq("NO")
+        expect(slot["column_default"]).to match(/''/)
+      end
     end
 
     it "creates a foreign key to entities with ON DELETE CASCADE" do
@@ -151,7 +160,7 @@ RSpec.describe "generated migrations actually run", type: :generator do
       )
     end
 
-    it "rejects a second component row for the same entity" do
+    it "rejects a second component row for the same entity and slot" do
       entity_id = create_entity
       connection.execute("INSERT INTO emails (entity_id, created_at, updated_at) VALUES ('#{entity_id}', now(), now())")
 
@@ -160,6 +169,17 @@ RSpec.describe "generated migrations actually run", type: :generator do
           connection.execute("INSERT INTO emails (entity_id, created_at, updated_at) VALUES ('#{entity_id}', now(), now())")
         end
       end.to raise_error(ActiveRecord::RecordNotUnique)
+    end
+
+    # RFC-0014 / ADR-0015: the same component in another slot is a second row.
+    it "accepts a second row for the same entity in a different slot" do
+      entity_id = create_entity
+      connection.execute("INSERT INTO emails (entity_id, created_at, updated_at) VALUES ('#{entity_id}', now(), now())")
+      connection.execute(
+        "INSERT INTO emails (entity_id, slot, created_at, updated_at) VALUES ('#{entity_id}', 'work', now(), now())"
+      )
+
+      expect(connection.select_value("SELECT count(*) FROM emails").to_i).to eq(2)
     end
 
     it "rejects a component row with no entity" do
@@ -226,11 +246,11 @@ RSpec.describe "generated migrations actually run", type: :generator do
       expect(delete_rule_for("author_id")).to eq("n") # confdeltype 'n' = SET NULL
     end
 
-    it "enforces the unique entity_id index (one relationship per owner)" do
+    it "enforces the unique (entity_id, slot) index (one relationship per owner)" do
       indexes = connection.select_values(
         "SELECT indexdef FROM pg_indexes WHERE schemaname = '#{scratch_schema}' AND tablename = 'post_authors'"
       )
-      expect(indexes).to include(match(/CREATE UNIQUE INDEX .*\(entity_id\)/))
+      expect(indexes).to include(match(/CREATE UNIQUE INDEX .*\(entity_id, slot\)/))
     end
 
     # The behaviour the whole feature turns on, proven end to end: destroying the
@@ -252,6 +272,78 @@ RSpec.describe "generated migrations actually run", type: :generator do
         expect(connection.select_value("SELECT count(*) FROM post_authors").to_i).to eq(1)
         expect(connection.select_value("SELECT author_id FROM post_authors")).to be_nil
       end
+    end
+  end
+
+  # RFC-0014 / ADR-0015: `rails g ecs_rails:upgrade` brings a pre-slot component
+  # table forward — adds the column, swaps the unique index — and does nothing
+  # for a table that already has it. Executed against the real catalog: the
+  # pre-slot table is built by hand, the way a 0.2.x app left it.
+  describe "the upgrade migration" do
+    def indexes_of(table)
+      connection.select_values(
+        "SELECT indexdef FROM pg_indexes WHERE schemaname = '#{scratch_schema}' AND tablename = '#{table}'"
+      )
+    end
+
+    before do
+      # A 0.2.x-shaped component table: no slot, entity_id-only unique index.
+      connection.execute(<<~SQL)
+        CREATE TABLE names (
+          id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+          entity_id uuid NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+          first character varying,
+          created_at timestamp NOT NULL, updated_at timestamp NOT NULL
+        );
+        CREATE UNIQUE INDEX index_names_on_entity_id ON names (entity_id);
+      SQL
+      connection.schema_cache.clear!
+    end
+
+    it "adds slot and the composite index to the table that lacks them" do
+      generate(EcsRails::Generators::UpgradeGenerator, [])
+      run_migration("ecs_rails_add_slots", "EcsRailsAddSlots")
+
+      slot = columns_of("names").find { |c| c["column_name"] == "slot" }
+
+      aggregate_failures do
+        expect(slot).not_to be_nil
+        expect(slot["is_nullable"]).to eq("NO")
+        expect(indexes_of("names")).to include(match(/CREATE UNIQUE INDEX .*\(entity_id, slot\)/))
+        expect(indexes_of("names")).not_to include(match(/\(entity_id\)$/))
+      end
+    end
+
+    it "leaves a table that already has slot alone" do
+      generate(EcsRails::Generators::UpgradeGenerator, [])
+      contents = migration("ecs_rails_add_slots")
+
+      aggregate_failures do
+        expect(contents).to include("add_column :names, :slot")
+        expect(contents).not_to include("add_column :emails")
+        expect(contents).not_to include(":entities")
+      end
+    end
+
+    it "keeps existing rows, all in the default slot" do
+      entity_id = connection.select_value(
+        "INSERT INTO entities (model, created_at) VALUES ('users', now()) RETURNING id"
+      )
+      connection.execute("INSERT INTO names (entity_id, first, created_at, updated_at) VALUES ('#{entity_id}', 'Ada', now(), now())")
+
+      generate(EcsRails::Generators::UpgradeGenerator, [])
+      run_migration("ecs_rails_add_slots", "EcsRailsAddSlots")
+
+      expect(connection.select_all("SELECT first, slot FROM names").to_a).to eq([{ "first" => "Ada", "slot" => "" }])
+    end
+
+    it "writes nothing when every component table is already current" do
+      connection.execute("DROP TABLE names")
+      connection.schema_cache.clear!
+
+      generate(EcsRails::Generators::UpgradeGenerator, [])
+
+      expect(migration_paths("ecs_rails_add_slots")).to be_empty
     end
   end
 end

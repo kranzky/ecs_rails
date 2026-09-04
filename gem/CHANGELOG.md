@@ -6,7 +6,48 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **Labelled (plural) components — slots** (RFC-0014 / ADR-0015). A component
+  may be declared more than once on an entity under distinct labels, each a
+  singleton with its own reader: `component Address` and `component Address,
+  prefix: :business` give `user.address` and `user.business_address`, backed by
+  one `addresses` table and told apart by a new `slot` column. Everything
+  singular works per slot with no new API — the lazy reader (a virtual is
+  built with its slot preset), delegation (`business_address_line1`), presence
+  (`add(Address, prefix: :business)`, `user.business_address?`), validation
+  keys (`errors[:"business_address.postcode"]`), querying
+  (`with_component(Address, prefix: :business, region: "WA")`) and preloading
+  (`includes_components(Address)` batches every slot).
+- `component Foo, delegate: false` — reader and predicate only, no delegated
+  methods, for when even prefixed names get long.
+- **Per-slot options.** A component declares what it accepts with
+  `slot_option :states, default: []`; the declaration site passes them as extra
+  keywords (`component State, prefix: :order, states: %w[pending paid]`); the
+  instance reads them back (`order_state.states`, `slot_options`). Unknown
+  options raise at declaration time.
+- `Entity.declaration_for(Component, prefix:)`; `Registry::Declaration#slot`,
+  `#reader_name`, `#prefix`, `#slot_options`.
+- **`rails g ecs_rails:upgrade`** — one migration that adds the `slot` column
+  and the `(entity_id, slot)` unique index to every existing component table
+  that lacks them, found by inspecting the database. Safe on shipped data.
+  This is the only migration a 0.2.x app needs to run.
+
 ### Changed
+
+- **Every component table carries `slot string NOT NULL DEFAULT ''`, and the
+  unique index moves from `entity_id` to `(entity_id, slot)`.** The
+  `ecs_rails:component` and `ecs_rails:relationship` generators emit the new
+  shape; existing tables need `rails g ecs_rails:upgrade` (above). **Breaking
+  for existing databases** until upgraded: the gem's has_ones are slot-scoped
+  and will not find rows in a table with no slot column.
+- `Entity.components` lists each component type once however many slots it is
+  declared under; `component_declarations` lists each slot.
+- A new reader colliding with a name the entity already answers (a sibling's
+  reader or delegated method) now raises `DelegationConflict` at declaration.
+- `EcsRails::Registry#register` takes `slot:` and `slot_options:`; the same
+  component in a different slot is a distinct declaration, the same slot twice
+  is still `DuplicateComponent`.
 
 - **Delegation is component-prefixed by default** (ADR-0016). A component's
   delegated methods are named `#{reader}_#{method}`: `component Email` now gives

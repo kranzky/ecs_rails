@@ -136,6 +136,13 @@
       "humanMinutes": 10,
       "aiMinutes": 70,
       "costs": []
+    },
+    {
+      "date": "2026-09-04",
+      "summary": "Implemented labelled (plural) components \u2014 slots \u2014 per RFC-0014 / ADR-0015 (Linear ECS-4). Gem: `component Address, prefix: :business` declares the component into slot \"business\" with reader `business_address` and delegation `business_address_line1`; every component table now carries `slot string NOT NULL DEFAULT ''` with the unique index moved to (entity_id, slot), and every has_one is slot-scoped (the default slot too, or a labelled row would answer for the singular reader). The lazy reader presets slot on a virtual, the dirty rule and delegation treat slot as identity, presence takes `prefix:` and is slot-scoped in SQL, queries take `prefix:` as sugar for `slot:`, preloading follows declarations so `includes_components(Address)` batches every slot, and validation keys are per reader. Registry declarations gain slot/reader_name/prefix/slot_options and key by (entity, component, slot); `Entity.declaration_for` added; `Entity.components` lists a type once. Added `delegate: false` (reader and predicate only) and a reverse reader-collision check. Settled ECS-4's slot-configuration question with `slot_option :name, default:` on the component plus extra keywords on `component`, resolved per instance through the owning entity's declaration (the same class is configured differently on different entities), with unknown options and shadowing names raising at declaration time. Corrected RFC-0014's examples: the reader rule gives `business_postal_address` for PostalAddress, so the fixture and examples are `Address`, the short name ADR-0016 freed. Generators: component and relationship migrations emit the slot column and composite index; new `rails g ecs_rails:upgrade` (ADR-0018's one post-install migration) inspects the database and writes one migration for every component table lacking slot, proven against a real 0.2.x-shaped table. 649 examples green (was 564), YARD 100%. Demo: `ecs_rails:upgrade` migrated all 17 tables; Group declares Description twice (description + :rules house rules) with form, view, seed and preload; verified by booting and posting through the form. The generator exposed three stale tables in the demo's schema.rb (authorships, member_users, member_groups) left from before relates_to \u2014 dropped, schema re-dumped, logged in the friction log. Docs: RFC-0014 amendment, ADR-0015 status, architecture \u00a71/\u00a72/\u00a74, docs index, backlog, CHANGELOG, gem README, CLAUDE.md.",
+      "humanMinutes": 5,
+      "aiMinutes": 80,
+      "costs": []
     }
   ]
 }

@@ -66,12 +66,17 @@ module EcsRails
       # it means the cascade can simply walk the memo, rather than interrogating
       # ActiveRecord about which associations happen to be loaded.
       #
+      # `slot` is the declaration's slot (RFC-0014): `""` for a singular
+      # component, `"business"` for `component PostalAddress, prefix:
+      # :business`. It only matters when no row exists, to preset the virtual —
+      # see #ecs_build_component.
+      #
       # @api private
-      def ecs_component(name)
+      def ecs_component(name, slot = "")
         cache = (@ecs_components ||= {})
         return cache[name] if cache.key?(name)
 
-        cache[name] = yield || ecs_build_component(name)
+        cache[name] = yield || ecs_build_component(name, slot)
       end
 
       # Forgets a component, so the next read rebuilds it as virtual.
@@ -106,8 +111,15 @@ module EcsRails
       # column definitions — so a virtual `user.email.address` and a bare
       # `Email.new.address` agree by construction rather than by us copying a
       # list of defaults about.
-      def ecs_build_component(name)
+      #
+      # The one attribute NOT left at its default is `slot` (RFC-0014): a
+      # virtual `business_address` is built with `slot = "business"` preset, so
+      # its first write lands in the right slot. Like entity_id, slot is
+      # identity rather than state, and Component#ecs_dirty? skips it — a
+      # preset slot must not make an untouched virtual look dirty.
+      def ecs_build_component(name, slot = "")
         component = self.class.reflect_on_association(name).klass.new
+        component.slot = slot.to_s
         # Not `component.entity_id = id` — the belongs_to writer also sets the
         # association target, which is what makes `user.email.entity` return
         # this very entity without a query (architecture.md §1: a system reaches
@@ -220,9 +232,12 @@ module EcsRails
       private
 
       # Attributes that say something about the component, as opposed to which
-      # component it is. Only these can make it dirty.
+      # component it is. Only these can make it dirty. `slot` (RFC-0014) is the
+      # second half of the row's identity — which of an entity's PostalAddresses
+      # this is — so a labelled virtual with `slot = "business"` preset is no
+      # more dirty than a singular one with entity_id set.
       def state_attribute?(attribute)
-        attribute != self.class.primary_key && attribute != "entity_id"
+        attribute != self.class.primary_key && attribute != "entity_id" && attribute != "slot"
       end
 
       # Tells the owning entity to forget this component, so its reader reverts
@@ -233,11 +248,15 @@ module EcsRails
       # query and simply has nobody to notify. Nothing is reset on *this*
       # object: ActiveRecord freezes a destroyed record, and the entity is going
       # to hand out a fresh instance anyway.
+      #
+      # The reader to forget is slot-aware (RFC-0014): destroying the
+      # `business_address` row resets `user.business_address`, not
+      # `user.postal_address`.
       def reset_entity_component
         owner = association(:entity).target
         return unless owner.is_a?(EcsRails::Entity)
 
-        owner.ecs_forget_component(model_name.singular.to_sym)
+        owner.ecs_forget_component(ecs_reader_name)
       end
     end
   end

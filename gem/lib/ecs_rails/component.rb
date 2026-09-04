@@ -34,6 +34,11 @@ module EcsRails
     # virtual instance (architecture.md §3).
     include Lazy::Component
 
+    # Labelled components (RFC-0014 / ADR-0015), from the component's side: the
+    # slot-aware reader name, and the `slot_option` DSL through which a
+    # declaration site configures this component per slot.
+    include Slots::Component
+
     # Every component belongs to exactly one entity (architecture.md §1).
     #
     # The association targets the abstract ApplicationEntity, which has no table
@@ -60,9 +65,9 @@ module EcsRails
     # destructive; the DB layer already has the right one.
     belongs_to :entity, class_name: "ApplicationEntity", optional: false
 
-    # The unique index on entity_id (ADR-0005) is the real enforcement, and a
-    # uniqueness validation here would cost a SELECT on every save while still
-    # racing. RFC-0003 asserts RecordNotUnique from the database, so the guard
-    # is left where it is enforced.
+    # The unique index on (entity_id, slot) (ADR-0005, generalised by ADR-0015)
+    # is the real enforcement, and a uniqueness validation here would cost a
+    # SELECT on every save while still racing. RFC-0003 asserts RecordNotUnique
+    # from the database, so the guard is left where it is enforced.
   end
 end

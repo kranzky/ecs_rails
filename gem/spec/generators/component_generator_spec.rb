@@ -23,9 +23,18 @@ RSpec.describe EcsRails::Generators::ComponentGenerator, type: :generator do
       expect(contents).to match(/t\.uuid :entity_id, null: false/)
     end
 
-    # ADR-0005 — non-negotiable.
-    it "makes the entity_id index unique" do
-      expect(contents).to match(/add_index .*:emails, :entity_id, unique: true/)
+    # RFC-0014 / ADR-0015: every component table carries the slot column.
+    it "declares the slot column, non-null, defaulting to the empty string" do
+      expect(contents).to match(/t\.string :slot, null: false, default: ""/)
+    end
+
+    # ADR-0005 as generalised by ADR-0015 — non-negotiable.
+    it "makes the (entity_id, slot) index unique" do
+      expect(contents).to match(/add_index :emails, \[:entity_id, :slot\], unique: true/)
+    end
+
+    it "emits no entity_id-only unique index" do
+      expect(contents).not_to match(/add_index :emails, :entity_id/)
     end
 
     it "cascades on delete" do
@@ -72,7 +81,7 @@ RSpec.describe EcsRails::Generators::ComponentGenerator, type: :generator do
     it "leaves no attribute column without a default" do
       run_generator %w[Thing a:string b:integer c:boolean]
 
-      attribute_lines = migration("create_things").lines.grep(/^\s+t\.(?!timestamps|uuid :entity_id)/)
+      attribute_lines = migration("create_things").lines.grep(/^\s+t\.(?!timestamps|uuid :entity_id|string :slot)/)
 
       expect(attribute_lines).to all(match(/default:/))
     end
@@ -85,10 +94,11 @@ RSpec.describe EcsRails::Generators::ComponentGenerator, type: :generator do
       expect(migration_paths("create_emails").size).to eq(1)
     end
 
-    it "still enforces the entity_id invariants" do
+    it "still enforces the entity_id and slot invariants" do
       aggregate_failures do
         expect(migration("create_emails")).to match(/t\.uuid :entity_id, null: false/)
-        expect(migration("create_emails")).to match(/add_index :emails, :entity_id, unique: true/)
+        expect(migration("create_emails")).to match(/t\.string :slot, null: false, default: ""/)
+        expect(migration("create_emails")).to match(/add_index :emails, \[:entity_id, :slot\], unique: true/)
         expect(migration("create_emails")).to match(/on_delete: :cascade/)
       end
     end

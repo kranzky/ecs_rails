@@ -2,6 +2,8 @@
 
 class GroupsController < ApplicationController
   def index
+    # includes_components(Description) preloads BOTH slots (the plain
+    # description and the :rules one), one query each.
     @groups = Group.all.includes_components(Name, Description)
   end
 
@@ -26,7 +28,8 @@ class GroupsController < ApplicationController
     # description at its nil default, so no Description row is written for it.
     group = Group.new(
       name_first: cap(group_params[:name], 80),
-      description_text: cap(group_params[:description], 300).presence
+      description_text: cap(group_params[:description], 300).presence,
+      rules_description_text: cap(group_params[:rules], 500).presence
     )
 
     if group.save
@@ -40,6 +43,6 @@ class GroupsController < ApplicationController
   private
 
   def group_params
-    params.require(:group).permit(:name, :description)
+    params.require(:group).permit(:name, :description, :rules)
   end
 end

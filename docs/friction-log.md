@@ -453,3 +453,42 @@ string. Caught by checking `bio.persisted?` after the request; fixed with
 being exactly as strict as documented, not a gem bug — but it is the kind of
 thing a form-facing developer will hit on day one, and worth a line in the
 guide when there is one.
+
+### 🟢 Two slots of one component, in one afternoon — 2026-09-04
+
+[RFC-0014](rfc/0014-plural-components.md) applied to the forum (Linear ECS-4).
+`Group` now declares `Description` twice — the description and, in the
+`:rules` slot, the house rules:
+
+```ruby
+class Group < ApplicationEntity
+  component Name
+  component Description                   # group.description_text
+  component Description, prefix: :rules   # group.rules_description_text
+end
+```
+
+One `descriptions` table, one row per slot, no new component class and no new
+table. The view reads `group.rules_description_text`, the form posts
+`rules_description_text:` through flat mass assignment, the seed passes
+`rules:`. `includes_components(Description)` on the index preloads both slots.
+Nothing in the gem needed touching after the spec suite was green — the
+mechanism generalised exactly as ADR-0015 argued it would.
+
+**`rails g ecs_rails:upgrade` did the schema work.** One generated migration
+added `slot` and swapped the unique index on all 17 component tables, and ran
+in under a second on the seeded database. The reader name for a labelled slot
+is long (`rules_description_text`) but says exactly what it is; ECS-17 will
+judge whether generic catalogue names (`title_text`) want an `as:`.
+
+### 🟡 The demo's `schema.rb` had drifted from its migrations — 2026-09-04
+
+Not a gem problem, but the upgrade generator found it: inspecting the database
+turned up three tables — `authorships`, `member_users`, `member_groups` — that
+no migration creates. They were left behind when `relates_to` replaced the
+hand-written relationship components in July and `schema.rb` was never
+regenerated from the chain; `db:migrate` on an empty database loads
+`schema.rb` first, so even a rebuild kept them. The generated migration was
+trimmed by hand to the 17 real tables, the stale tables dropped, and
+`schema.rb` re-dumped. Worth knowing for ECS-17, whose whole point is that
+`db/migrate` holds one file.
