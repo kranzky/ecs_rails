@@ -89,6 +89,10 @@ module EcsRails
     # Lazy::Entity because it walks Lazy's memo (@ecs_components).
     include Validations::Entity
 
+    # The wildcard query `referrers` (RFC-0015): every relationship row pointing
+    # at this entity, whatever its name.
+    include Inverses::Entity
+
     # The `component` DSL (RFC-0004). Extended rather than defined here: RFC-0001
     # is about identity, and composition is a separate concern with its own file.
     # Singleton methods are inherited, so every entity subclass answers it.
@@ -122,6 +126,14 @@ module EcsRails
     # through the hook Relationships also extends, and its query sugar rides
     # Querying. See EcsRails::Markers.
     extend Markers
+
+    # The parent side of a relationship (RFC-0015): `has_many :comments, Comment,
+    # via: :post` and `has_one`, expanding to native has_many :through over the
+    # shared relationships table. Extended last so its `has_many`/`has_one`
+    # overrides sit in front of ActiveRecord's — which they fall through to
+    # without `via:`, as the DSL's own slot-scoped has_one does — and so its
+    # reserved names extend Relationships' and Markers'. See EcsRails::Inverses.
+    extend Inverses
 
     # Immutable identity (architecture.md §1). Beyond the guard above, this is
     # what excludes id and model from any UPDATE statement.

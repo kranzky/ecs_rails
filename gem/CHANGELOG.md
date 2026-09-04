@@ -8,6 +8,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Inverse relationships** (RFC-0015): `has_many :comments, via: :post` and
+  `has_one :invoice, via: :order` on the parent expand to native `has_many
+  :through` over the shared `relationships` table — a real `CollectionProxy` of
+  the child class, `<<`, `create!`, scopes, the component query DSL chained on,
+  `includes(:comments)`. The child is inferred from the reader, or named
+  (`"Comment"`, or the class), and the pair is validated on first use and at
+  boot under `eager_load` — never at class-load time, which autoloading makes
+  unsafe. `has_one` requires the child's `unique: true`. `dependent: :destroy`
+  / `:delete_all` removes the link rows with the parent. `entity.referrers`
+  lists every relationship row pointing at an entity. Without `via:` both
+  macros are ActiveRecord's own.
+
 - **Primary attributes** (RFC-0014 amendment). A component declares
   `primary :value`; a labelled slot of it then also delegates the bare slot
   name, so `component Text, prefix: :title` gives `post.title` / `post.title=`
@@ -83,6 +95,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- `EcsRails::Catalogue::Password` no longer raises at class-load time when
+  bcrypt is absent — which, under `eager_load`, stopped an application that
+  installed `core` from booting. `has_secure_password` is set up when bcrypt is
+  available; otherwise `password=` and `authenticate` raise a LoadError saying
+  what to add. Surfaced by eager-loading the forum.
 - The catalogue's format validators (`Email#address`, `Phone#e164` and
   `#extension`, `Link#url`, `Address#country`, `Image#url`) use `allow_blank`,
   not `allow_nil`: a blank form field no longer reads "is invalid" on top of
