@@ -8,6 +8,10 @@ gem "rake", "~> 13.0"
 
 group :development, :test do
   gem "pg", "~> 1.5"
+  # EcsRails::Catalogue::Password uses has_secure_password, which needs bcrypt
+  # in the application. Not a gem dependency — the catalogue must not impose
+  # one on every user — so it is here for the suite only.
+  gem "bcrypt", "~> 3.1"
   gem "rspec", "~> 3.13"
   gem "rubocop", "~> 1.66", require: false
   gem "rubocop-rspec", "~> 3.0", require: false

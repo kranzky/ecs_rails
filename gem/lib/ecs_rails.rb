@@ -18,8 +18,7 @@ require "ecs_rails/querying"
 require "ecs_rails/preloading"
 require "ecs_rails/entity"
 require "ecs_rails/component"
-require "ecs_rails/catalogue/relationship"
-require "ecs_rails/catalogue/marker"
+require "ecs_rails/catalogue"
 
 # ECS Rails — an Entity-Component-System reimagining of ActiveRecord.
 #

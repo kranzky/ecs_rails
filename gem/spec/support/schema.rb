@@ -113,42 +113,21 @@ ActiveRecord::Schema.define do
     drop_table table, if_exists: true
   end
 
-  # --- the shared relationships table (ADR-0017) ------------------------------
+  # --- the catalogue (ADR-0018) ---------------------------------------------------
   #
-  # Every `relates_to` in every entity is a row here; the slot is the
-  # relationship name. Replaces the per-relationship backing tables ADR-0013
-  # generated (post_authors, comment_authors, membership_users, ...). The two
-  # foreign keys are asymmetric on purpose: destroying the owner (entity_id)
-  # CASCADES and takes the link with it; destroying the target NULLIFIES, so the
-  # owner survives with the link cleared. `owner_model` mirrors the owner's
-  # entities.model so the exclusivity index is per owner type; `exclusive` is
-  # what `relates_to ..., unique: true` writes, and the partial unique index is
-  # what enforces it — at most one Invoice per Order — with no index of its own.
-  create_table :relationships, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid    :entity_id,   null: false
-    t.string  :slot,        null: false, default: ""
-    t.uuid    :target_id,   default: nil
-    t.string  :owner_model, null: false
-    t.boolean :exclusive,   null: false, default: false
-    t.timestamps
-  end
-  add_index :relationships, %i[entity_id slot], unique: true
-  add_index :relationships, %i[target_id slot]
-  add_index :relationships, %i[target_id slot owner_model], unique: true, where: "exclusive",
-                                                             name: "index_relationships_exclusive"
-  add_foreign_key :relationships, :entities, column: :entity_id, on_delete: :cascade
-  add_foreign_key :relationships, :entities, column: :target_id, on_delete: :nullify
-
-  # --- the shared markers table (ADR-0018 §4) ----------------------------------
+  # Every catalogue table — `relationships` and `markers` among them — is
+  # created here FROM THE GEM'S OWN SCHEMA DECLARATIONS, the same recordings the
+  # install and upgrade generators render into migrations. One source of truth:
+  # the table the suite runs against and the table a user's migration creates
+  # cannot drift.
   #
-  # Every `marker :name` is a row here; the slot is the marker name. The
-  # `moderators` table above stays: it is an ordinary zero-attribute component
-  # (ADR-0009's original shape), which the presence spec still exercises.
-  create_table :markers, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid   :entity_id, null: false
-    t.string :slot,      null: false, default: ""
-    t.timestamps
+  # Three catalogue tables collide with the bespoke fixture tables above
+  # (`emails`, `names`, `addresses`, which the core specs depend on in a hundred
+  # places). Those three are created under a `catalogue_` prefix and their spec
+  # classes override `table_name` — exactly the idiom an application whose
+  # `emails` table is already taken would use (the app owns the table name).
+  EcsRails::Catalogue.create_tables(self, except: %i[email name address], force: :cascade)
+  %i[email name address].each do |name|
+    EcsRails::Catalogue[name].schema.apply(self, table_name: "catalogue_#{EcsRails::Catalogue[name].table}", force: :cascade)
   end
-  add_index :markers, %i[entity_id slot], unique: true
-  add_foreign_key :markers, :entities, column: :entity_id, on_delete: :cascade
 end

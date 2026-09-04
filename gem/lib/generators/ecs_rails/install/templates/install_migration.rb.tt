@@ -1,11 +1,20 @@
 # frozen_string_literal: true
 
-# The ECS Rails install migration: the single `entities` table every entity
-# shares, the single `relationships` table every `relates_to` is a row of, and
-# the single `markers` table every `marker` is a row of. See
-# docs/architecture.md §2, docs/adr/0002-single-entities-table.md,
-# docs/adr/0017-shared-relationships-table.md and
-# docs/adr/0018-catalogue-in-the-gem.md §4.
+# The ECS Rails install migration — the last migration this application needs
+# to build from the catalogue (ADR-0018).
+#
+# It creates the single `entities` table every entity shares, and one table per
+# catalogue component in the installed sets (<%= sets.join(", ") %>): each with a
+# UUID primary key, a non-null `entity_id`, a `slot` label defaulting to "", a
+# UNIQUE index on (entity_id, slot) and a cascading foreign key to `entities`
+# (docs/architecture.md §2). Declaring a component, a relationship or a marker
+# on an entity is then pure Ruby; a slot names the role
+# (`component Text, prefix: :title`). `rails g ecs_rails:upgrade` brings the
+# tables forward when the gem is upgraded.
+#
+# Generated from the gem's schema declarations (EcsRails::Catalogue); edit the
+# declarations' one-line classes under <%= EcsRails.config.components_path %>,
+# not this file.
 class EcsRailsInstall < ActiveRecord::Migration[<%= migration_version %>]
   def change
     # gen_random_uuid() lives in pgcrypto on PostgreSQL < 13; enabling it is
@@ -20,48 +29,10 @@ class EcsRailsInstall < ActiveRecord::Migration[<%= migration_version %>]
       # No updated_at — an entity is written once and never changes.
       # See RFC-0001 and docs/architecture.md §1.
     end
+<% catalogue_components.each do |component| -%>
 
-    # Every relationship in the application is a row here (ADR-0017): the owner
-    # is entity_id, the relationship name is the slot, the pointed-at entity is
-    # target_id. Declaring `relates_to :author, User` on an entity needs no
-    # migration — this table already exists.
-    create_table :relationships, id: :uuid, default: -> { "gen_random_uuid()" } do |t|
-      t.uuid    :entity_id,   null: false
-      t.string  :slot,        null: false, default: ""
-      t.uuid    :target_id,   default: nil
-      # A copy of the owner's entities.model, so exclusivity is per owner type
-      # and the inverse has_many (RFC-0015) has a cheap scope.
-      t.string  :owner_model, null: false
-      # Written true by `relates_to ..., unique: true`; the partial index below
-      # then makes the link one-to-one at the database.
-      t.boolean :exclusive,   null: false, default: false
-      t.timestamps
-    end
-
-    # ADR-0005 / ADR-0015: one target per (owner, relationship name).
-    add_index :relationships, [:entity_id, :slot], unique: true
-    # Inverse lookups — "who points at this entity under this name" (RFC-0015).
-    add_index :relationships, [:target_id, :slot]
-    # `unique: true` relationships: at most one owner of a given type pointing at
-    # a given target under a given name — has_one, enforced here, once, for every
-    # exclusive relationship the application will ever declare.
-    add_index :relationships, [:target_id, :slot, :owner_model], unique: true, where: "exclusive",
-                                                                 name: "index_relationships_exclusive"
-
-    # Destroying the owner destroys the link. Destroying the TARGET nullifies it —
-    # the owner survives with the link cleared — never cascading to the owner.
-    add_foreign_key :relationships, :entities, column: :entity_id, on_delete: :cascade
-    add_foreign_key :relationships, :entities, column: :target_id, on_delete: :nullify
-
-    # Every marker in the application is a row here (ADR-0018 §4): a user IS a
-    # moderator exactly when the (entity_id, "moderator") row exists. No state,
-    # only presence. Declaring `marker :moderator` needs no migration.
-    create_table :markers, id: :uuid, default: -> { "gen_random_uuid()" } do |t|
-      t.uuid   :entity_id, null: false
-      t.string :slot,      null: false, default: ""
-      t.timestamps
-    end
-    add_index :markers, [:entity_id, :slot], unique: true
-    add_foreign_key :markers, :entities, column: :entity_id, on_delete: :cascade
+    # <%= component.class_name %> (<%= component.set %>) — EcsRails::Catalogue::<%= component.class_name %>
+<%= component.schema.to_ruby(table_name: component.table) %>
+<% end -%>
   end
 end

@@ -1,0 +1,10 @@
+# frozen_string_literal: true
+
+# <%= component.class_name %>, from the ECS Rails catalogue (ADR-0018). The
+# behaviour, validations and table (`<%= component.table %>`) come from the gem's
+# concern; this application owns the constant. Add local behaviour here. Declare
+# it on an entity with `component <%= class_name %>` (or under a slot,
+# `component <%= class_name %>, prefix: :label`); the table already exists.
+class <%= class_name %> < ApplicationComponent
+  include EcsRails::Catalogue::<%= component.class_name %>
+end

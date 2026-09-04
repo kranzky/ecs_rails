@@ -65,10 +65,10 @@ RSpec.describe EcsRails::Generators::InstallGenerator, type: :generator do
         aggregate_failures do
           expect(contents).to match(/create_table :relationships, id: :uuid/)
           expect(contents).to match(/t\.uuid\s+:entity_id,\s+null: false/)
-          expect(contents).to match(/t\.string\s+:slot,\s+null: false, default: ""/)
+          expect(contents).to match(/t\.string :slot, null: false, default: ""/)
           expect(contents).to match(/t\.uuid\s+:target_id/)
-          expect(contents).to match(/t\.string\s+:owner_model, null: false/)
-          expect(contents).to match(/t\.boolean :exclusive,\s+null: false, default: false/)
+          expect(contents).to match(/t\.string :owner_model, null: false/)
+          expect(contents).to match(/t\.boolean :exclusive, default: false, null: false/)
         end
       end
 
@@ -104,8 +104,8 @@ RSpec.describe EcsRails::Generators::InstallGenerator, type: :generator do
         block = contents[/create_table :markers.*?^    end$/m]
 
         aggregate_failures do
-          expect(block).to match(/t\.uuid\s+:entity_id, null: false/)
-          expect(block).to match(/t\.string :slot,\s+null: false, default: ""/)
+          expect(block).to match(/t\.uuid :entity_id, null: false/)
+          expect(block).to match(/t\.string :slot, null: false, default: ""/)
           expect(block).to match(/t\.timestamps/)
           expect(block.lines.grep(/^\s+t\./).size).to eq(3)
         end
@@ -117,6 +117,80 @@ RSpec.describe EcsRails::Generators::InstallGenerator, type: :generator do
           expect(contents).to match(/add_foreign_key :markers, :entities, column: :entity_id, on_delete: :cascade/)
         end
       end
+  end
+
+  # ADR-0018 / RFC-0017: one one-line class per catalogue component, and one
+  # table each in the migration, for the selected sets.
+  describe "the catalogue" do
+    it "writes a class per core component and a table per class by default" do
+      run_generator
+      contents = migration("ecs_rails_install")
+      core = EcsRails::Catalogue.in_sets(:core)
+
+      aggregate_failures do
+        core.each do |component|
+          expect(file("app/entities/components/#{component.class_name.underscore}.rb"))
+            .to match(/class #{component.class_name} < ApplicationComponent/)
+            .and match(/include EcsRails::Catalogue::#{component.class_name}/)
+          expect(contents).to include("create_table :#{component.table},")
+        end
+        expect(contents).not_to include("create_table :monies") # commerce is not core
+        expect(file?("app/entities/components/money.rb")).to be(false)
+        expect(contents.scan("create_table :").size).to eq(core.size + 1) # + entities
+      end
+    end
+
+    it "installs more sets with --sets" do
+      run_generator %w[--sets core commerce]
+
+      aggregate_failures do
+        expect(migration("ecs_rails_install")).to include("create_table :monies")
+        expect(file("app/entities/components/money.rb")).to match(/class Money < ApplicationComponent/)
+        expect(migration("ecs_rails_install")).to include("(core, commerce)")
+      end
+    end
+
+    it "accepts a comma-separated --sets too" do
+      run_generator %w[--sets=core,commerce]
+
+      expect(file?("app/entities/components/money.rb")).to be(true)
+    end
+
+    it "renames a class with --rename, keeping the concern and the table" do
+      run_generator %w[--sets core commerce --rename money:Price text:Copy]
+
+      aggregate_failures do
+        expect(file("app/entities/components/price.rb"))
+          .to match(/class Price < ApplicationComponent/)
+          .and match(/include EcsRails::Catalogue::Money/)
+        expect(file?("app/entities/components/money.rb")).to be(false)
+        expect(file("app/entities/components/copy.rb")).to match(/include EcsRails::Catalogue::Text/)
+        expect(migration("ecs_rails_install")).to include("create_table :monies", "create_table :texts")
+      end
+    end
+
+    it "rejects an unknown set" do
+      expect { run_generator %w[--sets premium] }.to raise_error(ArgumentError, /premium/)
+    end
+
+    it "rejects a rename of an unknown component" do
+      expect { run_generator %w[--rename widget:Gizmo] }.to raise_error(Thor::Error, /widget/)
+    end
+
+    it "renders the migration from the declarations, with every invariant" do
+      run_generator
+      contents = migration("ecs_rails_install")
+      texts = contents[/create_table :texts.*?add_foreign_key :texts.*$/m]
+
+      aggregate_failures do
+        expect(texts).to include("t.uuid :entity_id, null: false", 't.string :slot, null: false, default: ""')
+        expect(texts).to include("t.text :value, default: nil", "t.timestamps")
+        expect(texts).to include("add_index :texts, [:entity_id, :slot], unique: true")
+        expect(texts).to include("add_foreign_key :texts, :entities, column: :entity_id, on_delete: :cascade")
+        expect(contents).to include("add_index :identifiers, [:slot, :value], unique: true")
+        expect(contents).to include("add_index :tags, :names, using: :gin")
+      end
+    end
   end
 
   # ADR-0018 §4: the one-line catalogue class every marker is a row of.

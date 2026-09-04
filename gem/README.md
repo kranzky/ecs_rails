@@ -62,6 +62,23 @@ user.save!                               # one row per slot, in one `addresses` 
 User.with_component(Address, prefix: :business, region: "WA")
 ```
 
+**The catalogue.** Twenty-five standard components ship in the gem —
+`Name`, `Email`, `Address`, `Phone`, `Text`, `Money`, `State`, `Counter`,
+`Tags`, `Token`, `Period`, ... — and `rails g ecs_rails:install` creates every
+one of their tables in a single migration. After that, composing entities from
+them needs no migration at all: a slot names the role.
+
+```ruby
+class Product < ApplicationEntity
+  component Text,       prefix: :title      # product.title_text
+  component Money,      prefix: :price      # product.price_money.to_s => "USD 19.99"
+  component Identifier, prefix: :sku        # unique per slot
+  component State,      prefix: :listing, states: %w[draft listed delisted]
+  relates_to :seller, Company
+  marker :featured
+end
+```
+
 Cross-entity links are rows in one `relationships` table, created at install,
 so declaring one is pure Ruby:
 
@@ -108,13 +125,15 @@ gem "ecs_on_rails"
 
 ```sh
 bundle install
-rails g ecs_rails:install
-rails g ecs_rails:component Email address:string verified:boolean
+rails g ecs_rails:install                    # the core set; --sets core commerce for more
+rails db:migrate                             # the last migration you need
 ```
 
 Entities go in `app/entities`, components in `app/entities/components`
 ([configurable](https://github.com/kranzky/ecs_rails/blob/main/docs/adr/0010-entity-component-directory-layout.md)); the
-install generator wires the autoloading.
+install generator wires the autoloading and writes a one-line class per
+catalogue component. `rails g ecs_rails:component Widget size:integer` is the
+escape hatch for a bespoke table.
 
 ## Documentation
 
