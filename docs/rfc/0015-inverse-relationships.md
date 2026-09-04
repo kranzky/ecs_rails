@@ -1,6 +1,6 @@
 # RFC-0015: Inverse relationships — `has_many` / `has_one`
 
-**Status:** Proposed — rewritten 2026-09-02 over the shared `relationships` table.
+**Status:** Implemented (2026-09-04, Linear ECS-6) — see [the amendment](#amendment-as-implemented). Rewritten 2026-09-02 over the shared `relationships` table.
 Previously a sketch gated on demo friction; the [marketplace design](../design/marketplace-demo.md)
 already lists six unbounded manys, two one-to-one inverses and a data-integrity
 bug, so it is built up front (Linear ECS-6).
@@ -202,3 +202,70 @@ No longer gated on friction. The marketplace's manys (`basket.items`,
 and the nullify-on-destroy bug are on record; building the demo without this
 would mean rewriting checkout and the basket pages afterwards. Lands right after
 the shared table (Linear ECS-15).
+
+## Amendment: as implemented
+
+*2026-09-04, Linear ECS-6.* `EcsRails::Inverses`, extended into `Entity` last.
+The spike the Open questions asked for came first, and passed: the `through`
+source over the shared `entities` table returns the child class (ADR-0008's
+`instantiate_instance_of`), `<<` and `create!` preset the link row, preloading
+is three queries, and the generated SQL carries both the entity-model scope and
+`owner_model`.
+
+- **DSL surface: explicit `via:`**, as the RFC leaned; the child is **inferred
+  from the reader** (`has_many :comments, via: :post` → `"Comment"`), or given
+  as a class name (`"Comment"`) or a class. Both macros fall through to
+  ActiveRecord's own when `via:` is absent, so the DSL's slot-scoped `has_one`
+  for component readers is untouched.
+- **The child is held by NAME and the pair is validated on first use**, not at
+  class-load time. The RFC asked for a class-load raise; the forum rebuild
+  showed why Rails resolves association classes lazily: the parent names the
+  child and the child's `relates_to` names the parent, and under autoloading a
+  constant reference from either body loads the other *half-defined*
+  (`Group` → `Membership` → `relates_to :group, Group` → a half-defined
+  `Group` inspecting a half-defined `Membership`). So `has_many` records the
+  child's name, `owner_model` is read inside the link scope's lambda at query
+  time, and the checks (concrete entity, declares `via` towards this entity,
+  `unique: true` for `has_one`) run once per class on the first read — or for
+  `has_one` also on `build_x` / `create_x` — and **at boot under
+  `config.eager_load`** (the Railtie), so production fails to start rather than
+  at the first request. `Entity.validate_inverses!` runs them on demand. This
+  is the declaration-time ethos at the earliest moment that is safe.
+- **The expansion** adds `class_name: "Comment"` on the through, as the RFC's
+  spike required: the collection is of the child class, and the entity-model
+  scope guards alongside `owner_model` on the link scope.
+- **`build` writes the link when the *parent* saves**, not when the child does
+  — standard `has_many :through`. The RFC's test (`build` then `c.save!`) was
+  wrong about Rails and is corrected in the spec; `<<` and `create!` link
+  immediately. For `has_one`, assignment links immediately and `create_x!`
+  flushes the join record ActiveRecord would otherwise leave for the owner's
+  save; `build_x` links on the owner's save. The `has_one` link is itself a
+  `has_one` (`invoice_order_link`): ActiveRecord's has_one :through cannot
+  pass through a collection.
+- **`dependent:`** accepts `:destroy` or `:delete_all` and applies to the link
+  rows only; anything else raises, saying so. The default is the foreign key's
+  nullify, the conservative choice the Open questions favoured. The forum uses
+  `dependent: :destroy` on `Post has_many :comments` and `Group has_many
+  :memberships`.
+- **Validation at class-load time**: the child must be a concrete entity that
+  declares `via` towards this entity (or an ancestor — a subclass reads its
+  parent's inverses); `has_one` additionally requires `unique: true`. Each
+  failure names the exact `relates_to` line to write.
+- **Names are reserved** (`comments`, `comments=`, `comment_ids`, the link
+  name) through the DSL's `ecs_reserved_names` hook, so a later component,
+  marker or relationship cannot take them, and the inverse refuses a name the
+  entity already answers.
+- **`entity.referrers`** (with optional `slot:`) is the wildcard: every
+  relationship row pointing at an entity. A query on `Relationship`, not an
+  association.
+- **Metadata**: `Entity.inverses` / `inverse_meta(:comments)` →
+  `InverseMeta(name, macro, child_class_name, via)` with `link_name`, by class
+  name for reload safety.
+- The one immediate check: passing a *component* class as the child
+  (`has_many :things, Email, via:`) raises at declaration — that mistake is
+  visible without loading anything.
+
+**Demo verdict.** `post.comments`, `user.posts`, `user.comments`,
+`user.memberships` and `group.memberships` replaced the `with_related` queries
+in three controllers; `includes_components` chains straight onto the
+collection. See the [friction log](../friction-log.md).

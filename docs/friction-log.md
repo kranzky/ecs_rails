@@ -634,3 +634,23 @@ not excuse, so the catalogue's format validator said "is invalid" alongside the
 demo's "can't be blank". Optional string columns in the catalogue now validate
 format with `allow_blank: true` (Email, Phone, Link, Address, Image); a required
 field is the application's `presence` validation, as the demo shows.
+
+### 🟢 `post.comments` — and the load-order trap it found — 2026-09-04
+
+[RFC-0015](rfc/0015-inverse-relationships.md) applied to the forum (Linear
+ECS-6): `Post has_many :comments, via: :post`, `User has_many :posts /
+:comments / :memberships`, `Group has_many :memberships`. Three controllers
+dropped their `with_related` queries for the collection, with
+`includes_components` chained straight on; the "who points at me" question
+(`user.referrers`) is one call.
+
+**The first cut took the child as a constant** — `has_many :memberships,
+Membership, via: :group` — and every page returned 500. Referencing
+`Membership` from `Group`'s class body autoloaded `membership.rb`, whose
+`relates_to :group, Group` re-entered a half-defined `Group`, which then read a
+half-defined `Membership` ("has no relationship :group") and, on Rails'
+retry, hit "User already declares Name". Rails resolves association classes
+from strings for exactly this reason. Fixed in the gem the same hour: the
+child is inferred or named, resolved at query time, and the pair is validated
+on first use and at boot under `eager_load`. Verdict: 🟢 once the trap was out
+of the way, and worth a bold line in CLAUDE.md so nobody puts it back.
