@@ -1023,3 +1023,27 @@ Thirteen live HTTP routes return 200; browser inspection confirms the styled
 pagination controls. An isolated review database provides multi-page fixtures.
 Offset pages remain subject to shifting edges during concurrent insertions;
 the stable-order guarantee applies to an unchanged result set.
+
+## ECS-32 — index whole owners in bounded batches
+
+**Problem.** The component indexer grouped the whole Text table in memory and
+looked up every owner individually. Splitting Text rows into ordinary batches
+would be incorrect: one entity's later slots would overwrite its earlier ones.
+
+**Change.** Batch base entities with Text rows, 100 owners at a time. Resolve
+SearchVector eligibility once per concrete class within each batch, fetch all
+of those owners' text values in slot order, and batch their existing default
+vectors. Keep the catalogue's `reindex!` path for both existing and virtual
+components. The PORO has no concrete entity names or new ActiveRecord internals.
+
+**Verdict.** Seven examples cover complete documents across uneven boundaries,
+many slots on one owner, nil text, unfamiliar entity types, untouched ineligible
+or textless owners, vector identity, repeat runs and bounded discovery SQL.
+All 77 demo and 924 gem examples pass; eager loading and YARD 100% pass.
+At 2,500 owners, the local comparison reduces owner reads from 2,500 to 26,
+total queries from 8,501 to 4,076 and peak RSS from 182.8 to 123.3 MiB.
+Document checksums match at both 250 and 2,500 owners. Small-case RSS is higher
+for batching (115.5 vs 108.1 MiB); these single-process observations include
+Rails boot and are not universal performance claims. The bounded unit is a
+batch's text bytes, so a single enormous owner can still be expensive. See
+[reproduction and raw measurements](design/batched-indexer.md).

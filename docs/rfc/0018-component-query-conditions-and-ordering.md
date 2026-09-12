@@ -92,3 +92,12 @@ count, and the rejections (unknown column, bad direction, non-component).
 `Demo::Indexer` over every entity's `Text` slots) and a "most liked" sort
 (`order_by_component(Counter, prefix: :likes, direction: :desc)`). See the
 [friction log](../friction-log.md).
+
+## ECS-32 amendment — bounded indexer batches
+
+The demo indexer now batches base-entity identities with Text rows, loads all
+eligible owners' text slots together, and preserves slot ordering in each
+document. Declaration checks and existing vector reads happen per batch;
+the system still names no concrete entity class. Owners without Text rows or
+without a SearchVector declaration keep the earlier skip behavior. See the
+[design, checks and local measurements](../design/batched-indexer.md).
