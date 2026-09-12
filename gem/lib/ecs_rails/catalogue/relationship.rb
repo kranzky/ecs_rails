@@ -50,7 +50,8 @@ module EcsRails
     # it: `post.author = company` raises {EcsRails::InvalidRelationship}. The
     # database never enforced target *type* — the foreign key points at
     # `entities`, not at a per-type table — so this Ruby check is the type
-    # system, and it is mandatory (ADR-0017).
+    # system, and it is mandatory (ADR-0017). Validation checks ID assignments
+    # too, including saves made directly through this component (RFC-0012).
     module Relationship
       extend Definition
 
@@ -77,6 +78,7 @@ module EcsRails
         slot_option :target_class_name
         slot_option :unique, default: false
 
+        validate :ecs_validate_target
         before_save :ecs_stamp_owner
       end
 
@@ -106,6 +108,23 @@ module EcsRails
       end
 
       private
+
+      # ID writers bypass the object writer's type check. Validate through the
+      # association so preloaded/assigned targets are reused and a changed ID
+      # invalidates the old target using Rails' normal association behavior.
+      # The component error merges onto the owner through RFC-0007, preserving
+      # save/save! behavior even when the owner has not been inserted yet.
+      def ecs_validate_target
+        return if target_id.nil?
+
+        expected = target_class
+        value = target
+        if value.nil?
+          errors.add(:target, "must exist")
+        elsif expected && !value.is_a?(expected)
+          errors.add(:target, "must be a #{expected.name}")
+        end
+      end
 
       # The owner's discriminator and the slot's exclusivity, copied onto the
       # row so the database can enforce `unique: true` per owner type

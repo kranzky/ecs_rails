@@ -866,3 +866,19 @@ virtual: Alan saved a shipping address and a mobile and got exactly one
 
 **Verdict.** 🟢 RFC-0014's showcase, done. The error message names the slot
 reader (`Mobile phone`), which is the right level of detail for a form.
+
+
+## Relationship target IDs (ECS-24) — 2026-09-12
+
+The review found that `Post.create!(author_id: another_post.id)` bypassed the
+object writer's target-type check. The shared catalogue Relationship now
+validates the resolved target on normal persistence, so a form-style ID gets
+ordinary component validation errors: `save` returns false, `save!` raises, and
+the error merges under `author_relationship.target`. A nonexistent ID reports
+`must exist`; subclasses and nil targets remain valid. Loaded targets are reused.
+
+**Demo verdict.** The demo takes the fix through its gem path dependency, with
+no application code or migration change. A regression spec proves that a seller
+Company cannot become a forum post's author. All 21 demo examples pass, eager
+loading passes, and the health, forum, marketplace, sellers, users and about
+pages return HTTP 200. The remaining unsaved-target lifecycle issue is ECS-25.

@@ -105,6 +105,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Relationship target IDs now validate against the declared target class,
+  including flat mass assignment and direct Relationship saves (ECS-24).
+  Wrong-type and nonexistent IDs return validation errors through `save` /
+  `save!`; subclasses and nil targets remain valid, and validation reuses
+  loaded targets. Wrong-type object assignments still raise immediately.
+
 - `EcsRails::Catalogue::Password` no longer raises at class-load time when
   bcrypt is absent — which, under `eager_load`, stopped an application that
   installed `core` from booting. `has_secure_password` is set up when bcrypt is

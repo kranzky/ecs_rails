@@ -260,6 +260,11 @@ Post.includes_related(:author)        # preload the row and its target
   `EcsRails::Catalogue::Relationship`, written by `ecs_rails:install`.
 - The target type is enforced in Ruby against the declared class; the database
   enforces referential integrity against `entities`, never type.
+  Object assignment rejects a wrong type immediately. Normal component
+  validation also checks ID assignments: a wrong type or nonexistent target
+  makes `save` return false and `save!` raise `ActiveRecord::RecordInvalid`.
+  Errors merge onto the owner under `author_relationship.target`; declared
+  target subclasses and nil targets remain valid (RFC-0012, ECS-24 amendment).
 - Destroying the **owner** cascades and removes the link. Destroying the
   **target** nullifies the link; the owner survives. Neither cascades to the
   other entity.
