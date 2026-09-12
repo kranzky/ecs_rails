@@ -4,6 +4,9 @@ module EcsRails
   # Base class for every error the gem raises.
   class Error < StandardError; end
 
+  # Raised when catalogue upgrade finds structure needing an explicit repair.
+  class SchemaMismatch < Error; end
+
   # Raised when `component` is given something that is not a EcsRails::Component.
   # See RFC-0004.
   class InvalidComponent < Error; end

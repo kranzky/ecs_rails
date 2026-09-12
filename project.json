@@ -234,6 +234,13 @@
       "humanMinutes": 0,
       "aiMinutes": 15,
       "costs": []
+    },
+    {
+      "date": "2026-09-12",
+      "summary": "ECS-29: reproduced false-current catalogue upgrades for nonunique lookalike indexes, missing foreign keys and changed defaults. Added schema preflight before file generation: common UUID identity, types/defaults/nullability/limits/precision/arrays, index uniqueness/predicates/access method and validated foreign keys/delete actions. Compatible missing structures render additive migrations; incompatible definitions report actual/expected properties and require explicit repair. Accounted for pre-slot migrations and protected catalogue tables from legacy marker/backing-table detection. Thirty new real-PostgreSQL tests exercise structural mismatches, executed constraints, preserved legacy rows, duplicate-data failures and repeat generation. Verified 924 gem examples, 50 demo examples, YARD 100%, eager loading, actual demo upgrade dry run and nine HTTP routes.",
+      "humanMinutes": 0,
+      "aiMinutes": 15,
+      "costs": []
     }
   ]
 }

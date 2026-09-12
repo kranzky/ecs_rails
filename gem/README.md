@@ -170,6 +170,14 @@ install generator wires the autoloading and writes a one-line class per
 catalogue component. `rails g ecs_rails:component Widget size:integer` is the
 escape hatch for a bespoke table.
 
+After updating the gem, run `rails g ecs_rails:upgrade` and review its migrations.
+It verifies the existing catalogue's columns, unique/partial indexes and foreign
+keys, then generates compatible additions. An incompatible definition reports
+its table, actual properties and expected properties before writing files;
+prepare an explicit repair/backfill migration and rerun upgrade. It never
+converts existing values or replaces constraints automatically. New constraints
+still validate existing rows when the generated migration runs.
+
 ## Documentation
 
 - **[Architecture](https://github.com/kranzky/ecs_rails/blob/main/docs/architecture.md)** — the invariants. Start here.

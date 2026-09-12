@@ -956,3 +956,25 @@ loading, packaging and nine HTTP routes pass. One install migration remains.
 The request tests also exposed an inherited development Rails environment: the
 old helper only refused production. It now refuses every non-test environment
 before boot; run the demo suite with `RAILS_ENV=test`.
+
+
+## Catalogue upgrade structure (ECS-29) — 2026-09-12
+
+The original diff treated a nonunique index on the right columns as the required
+unique one and ignored altered defaults and missing foreign keys. Three real
+PostgreSQL probes reproduced those false-current results. Upgrade now inspects
+column definitions, common component identity, index semantics and foreign-key
+behavior before writing any files. Missing compatible structures produce
+additive migrations; incompatible ones name the table/property, actual value
+and expected value, requiring an explicit repair/backfill. Existing data is
+never coerced or deleted to make a constraint fit.
+
+**Demo verdict.** The actual core/commerce schema passes the generator's pretend
+run unchanged, and the single install migration remains. All 50 demo examples,
+924 gem examples (30 new), YARD 100%, eager loading and nine HTTP routes pass.
+Scratch-schema regressions run generated constraints against legacy rows, retain
+those rows, verify cascade/nullify behavior and repeat generation after migration.
+Duplicate legacy identifiers fail a generated unique index without losing data.
+Known catalogue tables missing their attributes are no longer mistaken for old
+marker tables. Default normalization uses registered types rather than loading
+application models, preserving schema-cache isolation.

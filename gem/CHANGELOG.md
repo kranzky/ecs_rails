@@ -105,6 +105,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Catalogue upgrades verify live column definitions, UUID primary keys,
+  unique/partial indexes and validated foreign keys with deletion behavior
+  before writing files (ECS-29). Missing compatible structures generate additive
+  migrations; incompatible definitions report actual/expected properties and
+  require explicit repair. Known catalogue tables with missing attributes are
+  no longer mistaken for legacy marker tables. No data conversion is inferred.
+
 - Demo checkout and basket edits now coordinate on the basket; stock updates
   lock the actual Counter rows in product order (ECS-28). Submitted revisions
   identify completed orders so successful retries return the original result,
