@@ -105,6 +105,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Explicitly assigned new relationship targets now save with their owner in
+  one transaction instead of being silently dropped (ECS-25). The lazy
+  cascade recognizes pending targets, and Rails autosave validates and saves
+  them and their touched components. Invalid targets fail through `save` /
+  `save!`; simply reading an unset relationship still creates no row.
+
 - Relationship target IDs now validate against the declared target class,
   including flat mass assignment and direct Relationship saves (ECS-24).
   Wrong-type and nonexistent IDs return validation errors through `save` /

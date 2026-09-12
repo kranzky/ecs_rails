@@ -882,3 +882,18 @@ no application code or migration change. A regression spec proves that a seller
 Company cannot become a forum post's author. All 21 demo examples pass, eager
 loading passes, and the health, forum, marketplace, sellers, users and about
 pages return HTTP 200. The remaining unsaved-target lifecycle issue is ECS-25.
+
+
+## New relationship targets (ECS-25) — 2026-09-12
+
+`Post.create!(author: User.new)` used to succeed without saving the author or
+link. An explicitly assigned new target now counts as pending component state,
+so the lazy cascade reaches Rails' target autosave. The owner, target, target's
+touched components and relationship save in one transaction; invalid targets
+surface nested errors through the existing component error merger.
+
+**Demo verdict.** A new forum post can now be created together with an author
+carrying catalogue Name and Email components. The regression uses the demo's
+actual `name_given` and `email_address` vocabulary. All 22 demo examples pass,
+eager loading passes, and six main pages return HTTP 200. No application code
+or migration was needed. Reading an unset relationship still creates nothing.

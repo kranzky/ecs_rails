@@ -71,7 +71,10 @@ module EcsRails
         # row's `model` decides the subclass (ADR-0008) — so `post.author` is a
         # User. Optional: an unset relationship is a valid row-less virtual, and
         # a nullified one (target destroyed) is a valid row (ADR-0003 / ADR-0013).
-        belongs_to :target, class_name: "ApplicationEntity", optional: true
+        # Explicitly assigned new targets participate in the same transaction
+        # as the link. Autosave also validates them before the owner can commit
+        # (RFC-0012, ECS-25 amendment), preserving the save/save! contract.
+        belongs_to :target, class_name: "ApplicationEntity", optional: true, autosave: true
 
         # RFC-0014 slot options, set by `relates_to` on the declaration: the
         # target type this slot points at, and whether the link is exclusive.
@@ -105,6 +108,20 @@ module EcsRails
         end
 
         super
+      end
+
+      # Whether the relationship has state waiting to be persisted.
+      # A new target has no UUID yet, but assigning it is a write. Without this
+      # check the lazy cascade skips the link before Rails can autosave its
+      # target. Only inspect an already loaded association: merely checking for
+      # pending state must not query an untouched target (RFC-0006 / RFC-0012).
+      #
+      # @return [Boolean]
+      def ecs_dirty?
+        return true if super
+        return false unless association(:target).loaded?
+
+        target&.new_record? || false
       end
 
       private
