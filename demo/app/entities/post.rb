@@ -19,7 +19,7 @@ class Post < ApplicationEntity
   # "publish" whose status is published, scoped to posts. Compiles to a
   # correlated EXISTS, so a State on another entity type cannot leak in.
   def self.published
-    with_component(State, prefix: :publish, status: "published").order(created_at: :desc)
+    with_component(State, prefix: :publish, status: "published").order(created_at: :desc, id: :asc)
   end
 
   # Full-text search over the SearchVector the Indexer maintains (RFC-0018: a
@@ -34,7 +34,7 @@ class Post < ApplicationEntity
   # "Most liked first" — ordering by a component's value is a different
   # mechanism from filtering (RFC-0018): a scalar subquery in ORDER BY.
   def self.most_liked
-    reorder(nil).order_by_component(Counter, prefix: :likes, direction: :desc).order(created_at: :desc)
+    reorder(nil).order_by_component(Counter, prefix: :likes, direction: :desc).order(created_at: :desc, id: :asc)
   end
 
   def published?

@@ -13,23 +13,23 @@ class ProductsController < ApplicationController
     @category  = Product::CATEGORIES.include?(params[:category]) ? params[:category] : nil
     @sort      = Product::SORTS.key?(params[:sort]) ? params[:sort] : "newest"
 
-    @products = Product.listed
+    products = Product.listed
                        .searching(@query)
                        .priced_at_most(@max_price && @max_price * 100)
                        .rated_at_least(@min_stars)
                        .in_category(@category)
                        .sorted(@sort)
-                       .includes_components(Text, Money, Rating, Counter, Tags)
-                       .preload(seller_relationship: { target: :name_text })
+    @products = paginate_list(products)
+                  .includes_components(Text, Money, Rating, Counter, Tags)
+                  .preload(seller_relationship: { target: :name_text })
   end
 
   def show
     @product = Product.find(params[:id])
     @company = @product.seller
-    @reviews = @product.reviews
+    @reviews = paginate_list(@product.reviews.order(created_at: :desc, id: :asc))
                        .includes_components(Text, Rating, Counter)
-                       .preload(author_relationship: { target: :name })
-                       .order(created_at: :desc)
+                       .preload(author_relationship: { target: [:name, :avatar_image] })
     @review = Review.new
     @authors = User.all
     @staff = @company&.staff || []

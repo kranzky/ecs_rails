@@ -20,7 +20,7 @@
 </div>
 
 <section style="margin-top:2rem">
-  <h2 class="section-title">People · <%= @staff.size %></h2>
+  <h2 class="section-title">People · <%= @staff.total_count %></h2>
   <div class="card">
     <p class="hint" style="margin:0 0 .75rem">Each row is an <code>Employment</code> — the same join-entity shape as a group membership, carrying the same <code>Role</code> component. Every one of these people also shops here.</p>
     <% @staff.each do |e| %>
@@ -33,11 +33,12 @@
       </div>
     <% end %>
   </div>
+  <%= paginate @staff, param_name: :staff_page, window: 1, outer_window: 1 %>
 </section>
 
 <section style="margin-top:2rem">
   <div class="page-head page-head--row" style="margin-bottom:.75rem">
-    <h2 class="section-title" style="margin:0">Products · <%= @products.size %></h2>
+    <h2 class="section-title" style="margin:0">Products · <%= @products.total_count %></h2>
     <%= link_to "New product", new_product_path(company_id: @company.id), class: "btn btn--sm btn--primary" %>
   </div>
   <% if @products.empty? %>
@@ -61,4 +62,5 @@
       <% end %>
     </div>
   <% end %>
+  <%= paginate @products, window: 1, outer_window: 1 %>
 </section>

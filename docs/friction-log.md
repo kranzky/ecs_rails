@@ -997,3 +997,29 @@ new CI gate that fails on any undocumented category. Ruby-version validation
 runs in CI; the application uses the same API without a narrower Rails range.
 The development-only JSON < 3 bound moved into the runtime gemspec so packaged
 consumers get the tested decoder dependency too.
+
+## ECS-31 — bounded browsing lists
+
+**Problem.** Preloading the whole catalogue avoided N+1 SQL but still allocated
+and rendered every matching product. Other index and detail collections had
+the same growth pattern, and equal dates/ratings did not define a unique order.
+
+**Change.** The demo uses Kaminari 1.2.2 with a fixed 24-row page size. A small
+controller helper normalizes page input and clamps out-of-range bookmarks;
+the gem supplies relation scopes, counts and navigation. UUIDs break final
+sort ties. Index pages, reviews, comments, profile posts, group memberships,
+seller products/staff and order history are bounded before preloads. Staff
+and products have independent page parameters. Total headings remain totals.
+Form pickers and complete checkout documents retain their existing behavior.
+
+**Verdict.** Ordinary ActiveRecord pagination composes with the ECS scopes and
+preloads without a gem change or migration. Twenty request examples cover all
+affected lists, tied sorts, invalid pages, filter retention, empty/exact page
+boundaries and independent seller navigation. Doubling the market fixture
+from 49 to 98 products leaves the page's instantiated products, components and
+seller targets unchanged (24 products, 48 Text rows, 24 seller relationships).
+All 70 demo and 924 gem examples pass, eager loading passes, and YARD is 100%.
+Thirteen live HTTP routes return 200; browser inspection confirms the styled
+pagination controls. An isolated review database provides multi-page fixtures.
+Offset pages remain subject to shifting edges during concurrent insertions;
+the stable-order guarantee applies to an unchanged result set.

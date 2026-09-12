@@ -4,15 +4,14 @@ class UsersController < ApplicationController
   def index
     # includes_components(Marker) preloads every marker slot, so the badges'
     # `moderator?` / `administrator?` cost no queries on the list.
-    @users = User.all.includes_components(Name, Email, Image, Marker)
+    @users = paginate_list(User.order(created_at: :asc, id: :asc)).includes_components(Name, Email, Image, Marker)
   end
 
   def show
     @user = User.find(params[:id])
     # The inverse association (RFC-0015): user.posts is a collection.
-    @posts = @user.posts
+    @posts = paginate_list(@user.posts.order(created_at: :desc, id: :asc))
                   .includes_components(Text, Counter, State)
-                  .order(created_at: :desc)
   end
 
   def new

@@ -69,7 +69,7 @@
 </section>
 
 <section style="margin-top:2rem">
-  <h2 class="section-title">Posts by <%= @user.name_given %> · <%= @posts.size %></h2>
+  <h2 class="section-title">Posts by <%= @user.name_given %> · <%= @posts.total_count %></h2>
   <% if @posts.empty? %>
     <div class="empty">No posts yet.</div>
   <% else %>
@@ -85,4 +85,5 @@
       <% end %>
     </div>
   <% end %>
+  <%= paginate @posts, window: 1, outer_window: 1 %>
 </section>
