@@ -100,7 +100,7 @@ class PackageSmoke
   end
 
   def rails(path, database, *arguments, home: @candidate_home)
-    command(RbConfig.ruby, "-S", "bundle", "exec", "rails", *arguments,
+    command(RbConfig.ruby, "bin/rails", *arguments,
             chdir: path, gem_home: home, database: database)
   end
 
