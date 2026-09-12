@@ -7,6 +7,7 @@
 class Order < ApplicationEntity
   STATES = %w[pending paid shipped delivered cancelled].freeze
 
+  component Identifier, prefix: :checkout_request
   component Identifier, prefix: :order_number                       # order.order_number
   component Money,      prefix: :total                              # order.total_money
   component State,      prefix: :fulfilment, states: STATES         # order.fulfilment_state

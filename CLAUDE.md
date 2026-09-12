@@ -78,7 +78,7 @@ bundle exec yard stats --list-undoc # must stay 100% documented
 # demo (rbenv shims must be on PATH)
 cd demo && bin/rails db:prepare && bin/rails demo:reset
 bin/rails server -p 3021            # matches .claude/launch.json
-bundle exec rspec                   # component specs are placeholders
+RAILS_ENV=test bundle exec rspec    # test-only guard; never use development
 ```
 
 ## Design rules that bite

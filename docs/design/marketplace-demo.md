@@ -587,3 +587,14 @@ Gem first, in dependency order; each step one PR with green tests.
 - **Zero migrations after install** is the claim the demo exists to prove.
 </content>
 </invoke>
+
+
+## Checkout coordination amendment — 2026-09-12 (ECS-28)
+
+The initial checkout's browser-dependent duplicate handling and uncoordinated
+`max + 1` numbering are superseded by [checkout concurrency](checkout-concurrency.md).
+Basket edits and checkout share a lock; a Counter revision identifies the form,
+and an Order Identifier records its completed request. Stock Counter rows lock
+in product UUID order. Document series use transaction advisory locks and a
+numeric maximum. Payment remains simulated; database rollback cannot reverse a
+real external charge. No new migration or component type is needed.
