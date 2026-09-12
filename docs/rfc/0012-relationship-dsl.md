@@ -194,3 +194,20 @@ generated migration, and no controller, view or seed line changed except the two
 raw nested preloads, which name `target` instead of the relationship
 (`preload(author_relationship: { target: :name })`). See the
 [friction log](../friction-log.md).
+
+## Amendment: validate target IDs before persistence (ECS-24)
+
+*2026-09-12.* The assignment-time object check remains unchanged. Every normal
+relationship validation also resolves a non-null `target_id` through the target
+association and checks the resulting entity against the declared class, accepting
+subclasses. This covers `author_id=`, flat mass assignment, and direct saves of
+the shared Relationship component, including independently loaded rows.
+
+A wrong-type ID adds `target: "must be a User"` (using the declared class name);
+a nonexistent ID adds `target: "must exist"`. The existing error merger exposes
+these as `author_relationship.target` on the owner: `save` returns false and
+`save!` raises `ActiveRecord::RecordInvalid`, before committing any changes.
+An already loaded target is reused by the association, with no additional lookup.
+Nil and database-nullified targets remain valid; untouched virtual relationships
+still create no row. Explicit validation-bypassing writes retain ordinary Rails
+semantics and only the database foreign key protects them.
