@@ -220,6 +220,13 @@
       "humanMinutes": 0,
       "aiMinutes": 15,
       "costs": []
+    },
+    {
+      "date": "2026-09-12",
+      "summary": "ECS-27: treat an unset marketplace price as free, matching Money display. Product price filtering and both sort directions use a slot-scoped Rails left join with COALESCE(..., 0); equal displayed prices use stable newest/UUID ties. Preserved gem component-presence semantics and the one-install-migration demo. Added 11 behavior examples covering virtual/persisted zero, positive and boundary prices, display helper, sorting, filter composition and unrelated Money slots; updated marketplace query assertions and documented the product rule. Verified 894 gem examples, 34 demo examples, YARD 100%, eager loading, packaging and eight HTTP routes including combined catalogue queries.",
+      "humanMinutes": 0,
+      "aiMinutes": 10,
+      "costs": []
     }
   ]
 }

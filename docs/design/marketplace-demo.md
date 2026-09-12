@@ -27,6 +27,22 @@ and a `Product` page's discussion is the bulletin board, re-skinned.
 
 ---
 
+## Price rule (ECS-27, 2026-09-12)
+
+An unset price is a legitimate free price. A virtual Money component and a
+persisted zero both display `$0.00` in this USD-only demo; listing does not
+require a price row. Price ceilings include both at zero and at every positive
+ceiling, and the ceiling itself is inclusive. Ascending and descending price
+sorts compare the displayed amount, then newest first and UUID ascending for
+stable ties across virtual and persisted prices.
+
+The Product queries use Rails' slot-scoped `price_money` left join with
+`COALESCE(monies.amount_cents, 0)`. The singleton index guarantees at most one
+matching row per product, and another Money slot cannot supply the price.
+This is a product display rule: the gem's `with_component` and
+`without_component` continue to describe persisted presence. No migration or
+new query DSL option is needed.
+
 ## 1. What the demo must show off
 
 The brief is "as much of the framework and as many bundled components as

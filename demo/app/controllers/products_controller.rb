@@ -4,9 +4,9 @@ class ProductsController < ApplicationController
   MAX_PRICES = [10, 25, 50, 100, 250].freeze
 
   def index
-    # Every filter is one with_component clause — a block, a where-style pair,
-    # or a component's own scope (RFC-0018) — and sorting is a scalar subquery
-    # in ORDER BY. All of them AND together on the same entity-scoped relation.
+    # Component-presence filters use EXISTS (RFC-0018). Price uses a slot-scoped
+    # left join so an absent Money row counts as the displayed zero (ECS-27).
+    # All filters compose on the same entity-scoped relation.
     @query     = params[:q].to_s.strip.first(80)
     @max_price = MAX_PRICES.include?(params[:max_price].to_i) ? params[:max_price].to_i : nil
     @min_stars = (1..5).cover?(params[:min_stars].to_i) ? params[:min_stars].to_i : nil

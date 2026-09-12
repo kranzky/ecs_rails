@@ -10,7 +10,7 @@ RSpec.describe "marketplace" do
   before(:all) { Demo::Reset.call }
 
   describe "catalogue filters (RFC-0018)" do
-    it "filters listed products by a price ceiling through a block" do
+    it "filters listed products by their displayed price ceiling" do
       cheap = Product.listed.priced_at_most(20_00)
 
       expect(cheap).not_to be_empty
@@ -36,7 +36,7 @@ RSpec.describe "marketplace" do
       expect(Post.published.searching("compiler")).to be_empty
     end
 
-    it "sorts by price and by rating with order_by_component" do
+    it "sorts by displayed price and by the Rating component" do
       prices = Product.listed.sorted("price_asc").map { |p| p.price_money.amount_cents }
       expect(prices).to eq prices.sort
 
@@ -49,9 +49,9 @@ RSpec.describe "marketplace" do
       sql = Product.listed.priced_at_most(50_00).rated_at_least(4).in_category("books").sorted("price_desc").to_sql
 
       aggregate_failures do
-        expect(sql.scan("EXISTS").size).to eq 4
+        expect(sql.scan("EXISTS").size).to eq 3
         expect(sql).to include(%("entities"."model" = 'products'))
-        expect(sql).to match(/ORDER BY \(SELECT "monies"."amount_cents"/)
+        expect(sql).to include("LEFT OUTER JOIN", "ORDER BY COALESCE(monies.amount_cents, 0) DESC")
       end
     end
   end

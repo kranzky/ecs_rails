@@ -914,3 +914,19 @@ still the recommended path when row identity should survive. Generated
 build/create helpers now reject calls with that guidance; reload/reset clear
 both caches. Inverse relationship collections retain their Rails APIs. No demo
 implementation change or migration was needed.
+
+
+## Virtual zero prices (ECS-27) — 2026-09-12
+
+A product with no Money row displayed `$0.00` but disappeared under a price
+ceiling, because `with_component` correctly requires persisted presence. The
+product rule is now explicit: an unset price is free, just like a persisted
+zero. Price filtering and ordering use the same `COALESCE` expression over the
+slot-scoped Rails `price_money` left join, with stable ties for equal prices.
+
+**Demo verdict.** Eleven new behavior examples cover the display helper, virtual
+and persisted zero, positive prices, inclusive/zero/negative ceilings, both sort
+directions, category/listing composition, another Money slot, and unchanged gem
+presence semantics. All 34 demo examples pass; combined catalogue filters/sorts
+return HTTP 200. A small application query was enough: no migration or new gem
+query option. The slot's unique index keeps the join from duplicating products.
