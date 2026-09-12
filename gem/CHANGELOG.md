@@ -105,6 +105,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Demo price filters and ordering now treat an absent Money row as the displayed
+  zero price, matching persisted free products (ECS-27). The product-specific
+  queries use a slot-scoped left join and `COALESCE`, with stable price ties;
+  the gem's persisted component-presence semantics are unchanged.
+
 - Component assignment now replaces a singleton atomically and updates both
   the lazy memo and association cache (ECS-26), including labelled slots.
   Invalid replacements preserve the old row; new owners defer persistence,

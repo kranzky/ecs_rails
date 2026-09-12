@@ -33,11 +33,13 @@ class Product < ApplicationEntity
     with_component(SearchVector) { matching(query) }
   end
 
-  # "Under $50": a block on with_component, run as Money's relation.
+  # An unset price is free, matching Money's virtual USD 0.00 display. The
+  # slot-scoped has_one joins at most one row; COALESCE gives missing rows the
+  # same numeric value without changing the gem's presence query semantics.
   def self.priced_at_most(cents)
     return all if cents.nil?
 
-    with_component(Money, prefix: :price) { where("amount_cents <= ?", cents) }
+    left_joins(:price_money).where("COALESCE(monies.amount_cents, 0) <= ?", cents)
   end
 
   # "Four stars and up": the where-style positional form.
@@ -56,13 +58,24 @@ class Product < ApplicationEntity
 
   SORTS = {
     "newest"     => ->(scope) { scope.order(created_at: :desc) },
-    "price_asc"  => ->(scope) { scope.order_by_component(Money, :amount_cents, prefix: :price).order(created_at: :desc) },
-    "price_desc" => ->(scope) { scope.order_by_component(Money, :amount_cents, :desc, prefix: :price).order(created_at: :desc) },
+    "price_asc"  => ->(scope) { scope.order_by_price(:asc) },
+    "price_desc" => ->(scope) { scope.order_by_price(:desc) },
     "top_rated"  => ->(scope) { scope.order_by_component(Rating, :stars, :desc).order(created_at: :desc) }
   }.freeze
 
   def self.sorted(key)
     SORTS.fetch(key.to_s) { SORTS["newest"] }.call(all)
+  end
+
+  # Filtering and ordering use the displayed value, including virtual zero.
+  # Equal prices share one stable tie-breaker regardless of row presence.
+  def self.order_by_price(direction)
+    ordering = {
+      asc: "COALESCE(monies.amount_cents, 0) ASC",
+      desc: "COALESCE(monies.amount_cents, 0) DESC"
+    }.fetch(direction)
+
+    left_joins(:price_money).order(Arel.sql(ordering)).order(created_at: :desc, id: :asc)
   end
 
   # --- lifecycle ---------------------------------------------------------------
