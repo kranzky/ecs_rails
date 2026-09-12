@@ -206,6 +206,13 @@
       "humanMinutes": 0,
       "aiMinutes": 15,
       "costs": []
+    },
+    {
+      "date": "2026-09-12",
+      "summary": "ECS-25: explicitly assigned new relationship targets now participate in lazy validation/persistence and Rails autosave, so owner, target, target components and link persist transactionally instead of silently losing the link. Invalid targets preserve save/save! behavior and nested component errors. Added 19 gem cases for new/persisted owners, clearing, replacement, retries, direct saves and rollback, plus a real-demo nested-creation regression. Verified 865 gem examples, 22 demo examples, YARD 100%, eager loading, gem packaging and six HTTP pages. Documented the contract in RFC-0012, architecture, changelog and friction log.",
+      "humanMinutes": 0,
+      "aiMinutes": 10,
+      "costs": []
     }
   ]
 }

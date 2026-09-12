@@ -154,6 +154,12 @@ A component row is inserted **only if** the component is dirty — that is, at
 least one attribute differs from its default. Reading a virtual component, or
 assigning an attribute a value equal to its default, never causes an insert.
 
+An explicitly assigned new relationship target is pending state even before
+it has a UUID. The relationship's Rails autosave persists that target and its
+touched components in the owner's transaction; invalid targets prevent the
+save. Reading an unset relationship or clearing the assignment creates no row
+(RFC-0012, ECS-25 amendment).
+
 ### Validation
 
 A virtual, non-dirty component is **not validated**. `User.create!` succeeds

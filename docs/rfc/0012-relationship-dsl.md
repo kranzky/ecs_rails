@@ -211,3 +211,20 @@ An already loaded target is reused by the association, with no additional lookup
 Nil and database-nullified targets remain valid; untouched virtual relationships
 still create no row. Explicit validation-bypassing writes retain ordinary Rails
 semantics and only the database foreign key protects them.
+
+## Amendment: save explicitly assigned new targets (ECS-25)
+
+*2026-09-12.* Assigning a new target is pending relationship state even when its
+UUID is still nil. The relationship participates in the owner's validation and
+save cascade, and its `belongs_to :target` uses Rails' `autosave: true` behavior.
+Saving the owner persists the target, its touched components and the link in the
+same transaction. An invalid target produces nested validation errors through
+the existing component error merger: `save` returns false, `save!` raises
+`ActiveRecord::RecordInvalid`. Later transaction failure rolls all writes back.
+
+This chooses ordinary Rails autosave over rejecting new targets, so
+`Post.create!(author: User.new)` has the natural nested-creation behavior. The
+tradeoff is that explicitly assigning a new target authorizes its persistence
+along with the owner. Merely reading an unset relationship, or assigning then
+clearing a new target, still creates no relationship or target row. This applies
+to new and persisted owners, and direct saves of the shared Relationship.
