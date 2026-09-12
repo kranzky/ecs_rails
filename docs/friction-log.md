@@ -978,3 +978,22 @@ Duplicate legacy identifiers fail a generated unique index without losing data.
 Known catalogue tables missing their attributes are no longer mistaken for old
 marker tables. Default normalization uses registered types rather than loading
 application models, preserving schema-cache isolation.
+
+
+## Compatibility and installed packages (ECS-30) — 2026-09-12
+
+The gem's support range now has explicit CI entries for every released Rails
+minor it advertises, including the Ruby 3.2 boundary and current Ruby 4.0. Each
+entry runs the PostgreSQL gem suite and two temporary applications installed
+from packages. One follows the catalogue quickstart and renders a page; the
+other persists real rows under published 0.2.2, installs the candidate, runs its
+upgrade and verifies component, marker, relationship and entity IDs survive.
+The scripts own uniquely named databases and never reset a working demo.
+
+**Local verdict.** Ruby 3.4.5 passes all 924 gem examples on Rails 7.1.6, 7.2.3.2,
+8.0.5.1 and 8.1.3.1. Packaged fresh-install and upgrade checks pass on 7.1.6 and
+8.1.3.1; all 50 demo examples and eager loading pass. YARD remains 100%, with a
+new CI gate that fails on any undocumented category. Ruby-version validation
+runs in CI; the application uses the same API without a narrower Rails range.
+The development-only JSON < 3 bound moved into the runtime gemspec so packaged
+consumers get the tested decoder dependency too.

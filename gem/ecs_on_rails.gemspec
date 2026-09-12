@@ -47,6 +47,10 @@ Gem::Specification.new do |spec|
   spec.files = Dir["lib/**/*", ".yardopts", "LICENSE.txt", "README.md", "CHANGELOG.md"]
   spec.require_paths = ["lib"]
 
+  # Supported Rails decoders still pass JSON options positionally (ECS-30).
+  # This must constrain packaged consumers too, not only the development bundle.
+  spec.add_dependency "json", ">= 2.0", "< 3.0"
+
   spec.add_dependency "activerecord",  ">= 7.1", "< 9.0"
   spec.add_dependency "activesupport", ">= 7.1", "< 9.0"
   spec.add_dependency "railties",      ">= 7.1", "< 9.0"

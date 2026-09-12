@@ -171,12 +171,42 @@ catalogue component. `rails g ecs_rails:component Widget size:integer` is the
 escape hatch for a bespoke table.
 
 After updating the gem, run `rails g ecs_rails:upgrade` and review its migrations.
+Run the generator in an environment with eager loading disabled (development by
+default): an old app needs the generated component classes before it can fully
+boot with the new gem. After migrating and updating marker declarations, verify
+the completed app with `bin/rails zeitwerk:check`.
 It verifies the existing catalogue's columns, unique/partial indexes and foreign
 keys, then generates compatible additions. An incompatible definition reports
 its table, actual properties and expected properties before writing files;
 prepare an explicit repair/backfill migration and rerun upgrade. It never
 converts existing values or replaces constraints automatically. New constraints
 still validate existing rows when the generated migration runs.
+
+## Compatibility checks
+
+The gem requires Ruby >= 3.2 and Rails >= 7.1, < 9. The representative CI matrix
+covers Ruby/Rails 3.2/7.1, 3.2/7.2, 3.3/8.0, 3.2/8.1, 3.4/8.1 and 4.0/8.1,
+resolving current patches within each Rails minor. It runs PostgreSQL gem specs
+and packaged fresh-install/0.2.2-upgrade checks for each entry. The demo suite,
+eager loading and a 100% public-API documentation gate run separately.
+
+JSON is constrained to version 2 because supported Rails decoders still use
+positional option hashes incompatible with JSON 3. This is a runtime dependency,
+so a packaged consumer receives the same constraint as the test suite.
+
+To reproduce a Rails series locally from `gem/`:
+
+```sh
+export BUNDLE_GEMFILE="$PWD/gemfiles/rails_7.1.gemfile"
+bundle install
+DATABASE_URL=postgresql:///ecs_rails_test bundle exec rspec
+DATABASE_URL=postgresql:///ecs_rails_test bundle exec ruby script/package_smoke.rb
+```
+
+The package smoke script creates its own uniquely named PostgreSQL databases;
+its connection role needs permission to create databases. It removes only those
+databases after the run. CI uploads each built gem with its resolved dependency
+lockfile. This tests released versions, not future Ruby/Rails releases.
 
 ## Documentation
 
