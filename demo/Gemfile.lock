@@ -4,6 +4,7 @@ PATH
     ecs_on_rails (0.2.2)
       activerecord (>= 7.1, < 9.0)
       activesupport (>= 7.1, < 9.0)
+      json (>= 2.0, < 3.0)
       railties (>= 7.1, < 9.0)
 
 GEM

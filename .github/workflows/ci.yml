@@ -7,13 +7,22 @@ on:
 
 jobs:
   gem:
-    name: gem suite (RSpec + PostgreSQL)
+    name: gem + package (Ruby ${{ matrix.ruby }}, Rails ${{ matrix.rails }})
     runs-on: ubuntu-latest
-
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { ruby: '3.2', rails: '7.1' }
+          - { ruby: '3.2', rails: '7.2' }
+          - { ruby: '3.3', rails: '8.0' }
+          - { ruby: '3.2', rails: '8.1' }
+          - { ruby: '3.4', rails: '8.1' }
+          - { ruby: '4.0', rails: '8.1' }
     defaults:
       run:
         working-directory: gem
-
     services:
       postgres:
         image: postgres:16
@@ -21,26 +30,84 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: ecs_rails_test
-        ports:
-          - 5432:5432
+        ports: ['5432:5432']
         options: >-
           --health-cmd "pg_isready -U postgres"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
+          --health-interval 10s --health-timeout 5s --health-retries 5
     env:
-      # The gem's spec_helper reads DATABASE_URL; point it at the service above.
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/ecs_rails_test
-
+      RAILS_ENV: test
+      BUNDLE_GEMFILE: ${{ github.workspace }}/gem/gemfiles/rails_${{ matrix.rails }}.gemfile
     steps:
       - uses: actions/checkout@v4
-
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.4.5"
+          ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
           working-directory: gem
-
-      - name: RSpec
+      - name: Resolved versions
+        run: bundle exec ruby -e 'require "rails"; puts "Ruby #{RUBY_VERSION}, Rails #{Rails.version}"'
+      - name: Gem specifications on PostgreSQL
         run: bundle exec rspec --format progress
+      - name: Packaged quickstart and published 0.2.2 upgrade
+        run: bundle exec ruby script/package_smoke.rb
+      - name: Build review artifact
+        run: |
+          mkdir -p ../tmp/artifacts
+          bundle exec gem build ecs_on_rails.gemspec --output ../tmp/artifacts/ecs_on_rails.gem
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ecs-rails-ruby-${{ matrix.ruby }}-rails-${{ matrix.rails }}
+          path: |
+            tmp/artifacts/*.gem
+            gem/gemfiles/*.lock
+          if-no-files-found: error
+
+  demo:
+    name: demo suite and eager loading
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: demo
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: demo_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/demo_test
+      RAILS_ENV: test
+      DEMO_RESET_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4.5'
+          bundler-cache: true
+          working-directory: demo
+      - run: bin/rails db:prepare
+      - run: bundle exec rspec
+      - run: bin/rails zeitwerk:check
+
+  documentation:
+    name: public API documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: gem
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4.5'
+          bundler-cache: true
+          working-directory: gem
+      - run: bundle exec ruby script/check_documentation.rb

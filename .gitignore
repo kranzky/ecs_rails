@@ -23,6 +23,7 @@ doc/
 
 # The gem's Gemfile.lock is not committed — it is a library, not an app.
 /gem/Gemfile.lock
+/gem/gemfiles/*.lock
 
 # Rails (demo app)
 /demo/log/*

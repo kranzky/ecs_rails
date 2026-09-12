@@ -105,6 +105,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- The Rails-compatible JSON `< 3` constraint is now a runtime dependency,
+  protecting installed gem consumers as well as development bundles (ECS-30).
+  CI covers each Rails 7.1/7.2/8.0/8.1 series, Ruby 3.2 through 4.0 representative
+  combinations, the demo suite, documentation and real packaged install/upgrade
+  flows against isolated PostgreSQL databases.
+
 - Catalogue upgrades verify live column definitions, UUID primary keys,
   unique/partial indexes and validated foreign keys with deletion behavior
   before writing files (ECS-29). Missing compatible structures generate additive

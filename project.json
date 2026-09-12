@@ -241,6 +241,13 @@
       "humanMinutes": 0,
       "aiMinutes": 15,
       "costs": []
+    },
+    {
+      "date": "2026-09-12",
+      "summary": "ECS-30: added a six-entry Ruby/Rails CI matrix covering Rails 7.1, 7.2, 8.0 and 8.1, Ruby 3.2 lower-bound entries and Ruby 4.0. Each runs PostgreSQL specs plus actual packaged fresh-install and published-0.2.2 upgrade checks in temporary apps and owned databases, with preserved component/marker/relationship/entity IDs and rendered-page/eager-load checks. Added separate demo and fail-on-undocumented YARD jobs and downloadable gem/lockfile artifacts. Moved JSON < 3 from the development bundle into runtime dependencies. Local Ruby 3.4.5 passes 924 examples on each of Rails 7.1.6, 7.2.3.2, 8.0.5.1 and 8.1.3.1; package smoke passes at the oldest/newest Rails boundaries, and 50 demo examples plus eager loading and YARD 100% pass. Cross-Ruby validation runs in CI.",
+      "humanMinutes": 0,
+      "aiMinutes": 20,
+      "costs": []
     }
   ]
 }
