@@ -138,17 +138,16 @@ RSpec.describe EcsRails::Catalogue do
     end
 
     it "renders only what is missing as a diff" do
-      diff = schema.to_ruby_diff(table_name: "monies", existing_columns: %w[id entity_id slot amount_cents],
-                                 existing_indexes: [%w[entity_id slot]])
+      connection = ActiveRecord::Base.connection
+      schema.apply(connection, table_name: :money_diff_checks)
+      connection.remove_column(:money_diff_checks, :currency)
+      diff = schema.to_ruby_diff(table_name: "money_diff_checks", connection: connection)
 
-      expect(diff.lines.map(&:strip)).to eq ['add_column :monies, :currency, :string, default: "USD", null: false, limit: 3']
+      expect(diff.lines.map(&:strip)).to eq ['add_column :money_diff_checks, :currency, :string, default: "USD", null: false, limit: 3']
     end
 
     it "renders an empty diff for a current table" do
-      diff = schema.to_ruby_diff(table_name: "monies", existing_columns: %w[id entity_id slot amount_cents currency],
-                                 existing_indexes: [%w[entity_id slot]])
-
-      expect(diff).to eq ""
+      expect(schema.to_ruby_diff(table_name: "monies", connection: ActiveRecord::Base.connection)).to eq ""
     end
 
     # THE guarantee ADR-0018 rests on: the suite's tables ARE the declarations.

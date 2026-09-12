@@ -69,6 +69,16 @@ module EcsRails
       desc "Upgrades an existing schema to the gem's current one: the slot column " \
            "on component tables, and the shared relationships and markers tables."
 
+      # Inspects every selected catalogue table before any generator writes.
+      # An incompatible schema must not leave a partial set of upgrade files.
+      #
+      # @return [void]
+      def verify_catalogue_schema
+        catalogue_changes
+      rescue EcsRails::SchemaMismatch => error
+        raise Thor::Error, error.message
+      end
+
       # Emits the slot migration for component tables that lack the column, or
       # says there is nothing to do. Backing tables about to be moved into
       # `relationships`, and marker tables about to be moved into `markers`, are
@@ -165,10 +175,11 @@ module EcsRails
 
       # Pre-0.3 marker tables: a component table with no attribute columns at all
       # — only id, entity_id, (slot,) timestamps — other than `markers` itself.
-      # Each becomes `{ table: "moderators", slot: "moderator" }`.
+      # Each becomes `{ table: "moderators", slot: "moderator" }`. Catalogue
+      # ownership wins over shape: missing attributes must never trigger a move.
       def marker_tables
         @marker_tables ||= component_tables.filter_map do |table|
-          next if table == "markers"
+          next if table == "markers" || upgradeable_components.any? { |component| component.table == table }
           next unless (column_names(table) - %w[id entity_id slot created_at updated_at]).empty?
 
           { table: table, slot: table.singularize }
@@ -213,8 +224,8 @@ module EcsRails
             if connection.tables.include?(table)
               component.schema.to_ruby_diff(
                 table_name: table,
-                existing_columns: column_names(table),
-                existing_indexes: connection.indexes(table).map(&:columns)
+                connection: connection,
+                slot_upgrade: tables_missing_slot.include?(table)
               )
             else
               component.schema.to_ruby(table_name: table)
@@ -233,6 +244,8 @@ module EcsRails
       # name (`sponsors`) is excluded by the name rule.
       def backing_tables
         @backing_tables ||= component_tables.filter_map do |table|
+          next if upgradeable_components.any? { |component| component.table == table }
+
           columns = column_names(table) - %w[id entity_id slot created_at updated_at]
           next unless columns.size == 1
 

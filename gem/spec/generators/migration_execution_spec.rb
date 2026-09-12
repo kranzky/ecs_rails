@@ -400,6 +400,211 @@ RSpec.describe "generated migrations actually run", type: :generator do
       expect(migration_paths("ecs_rails_catalogue")).to be_empty
     end
 
+    it "does not mistake a nonunique lookalike for identifier uniqueness" do
+      connection.remove_index(:identifiers, column: %i[slot value])
+      connection.add_index(:identifiers, %i[slot value])
+
+      expect { generate(EcsRails::Generators::UpgradeGenerator, []) }
+        .to raise_error(/identifiers.*index.*unique/m)
+      expect(migration_paths("ecs_rails_catalogue")).to be_empty
+    end
+
+    it "restores a missing owner foreign key and preserves existing rows" do
+      entity = connection.select_value("INSERT INTO entities (model, created_at) VALUES ('users', now()) RETURNING id")
+      connection.execute("INSERT INTO addresses (entity_id, line1, created_at, updated_at) VALUES ('#{entity}', 'Keep me', now(), now())")
+      connection.remove_foreign_key(:addresses, column: :entity_id)
+
+      generate(EcsRails::Generators::UpgradeGenerator, [])
+      run_migration("ecs_rails_catalogue", "EcsRailsCatalogue")
+
+      foreign_key = connection.foreign_keys(:addresses).find { |key| key.column == "entity_id" }
+      expect(foreign_key.on_delete).to eq :cascade
+      expect(connection.select_value("SELECT line1 FROM addresses")).to eq "Keep me"
+    end
+
+    it "diagnoses an altered column default before writing upgrade files" do
+      connection.change_column_default(:counters, :count, 7)
+      expect { generate(EcsRails::Generators::UpgradeGenerator, []) }
+        .to raise_error(/counters.count.*default.*7.*0/m)
+      expect(migration_paths("ecs_rails_catalogue")).to be_empty
+    end
+
+    {
+      "nullability" => [->(db) { db.change_column_null(:counters, :count, true) }, /counters.count null.*true.*false/],
+      "integer width" => [->(db) { db.change_column(:counters, :count, :bigint) }, /counters.count limit.*8.*4/],
+      "column type" => [->(db) { db.change_column(:addresses, :line1, :text) }, /addresses.line1 type.*text.*string/],
+      "string limit" => [->(db) { db.change_column(:addresses, :country, :string, limit: 3) }, /addresses.country limit.*3.*2/],
+      "decimal precision" => [->(db) { db.change_column(:geolocations, :lat, :decimal, precision: 11, scale: 7) }, /geolocations.lat precision.*11.*10/],
+      "decimal scale" => [->(db) { db.change_column(:geolocations, :lat, :decimal, precision: 10, scale: 6) }, /geolocations.lat scale.*6.*7/],
+      "timestamp precision" => [->(db) { db.change_column(:addresses, :created_at, :datetime, precision: 3) }, /addresses.created_at precision.*3.*6/],
+      "JSON default" => [->(db) { db.change_column_default(:states, :transitions, {}) }, /states.transitions default.*\{\}.*\[\]/],
+      "array default" => [->(db) { db.change_column_default(:tags, :names, ["changed"]) }, /tags.names default.*changed.*\[\]/],
+      "UUID generation" => [->(db) { db.change_column_default(:counters, :id, "00000000-0000-0000-0000-000000000001") }, /counters.id default.*gen_random_uuid/]
+    }.each do |property, (alter, message)|
+      it "diagnoses changed #{property} without altering the column" do
+        alter.call(connection)
+        tables = %w[addresses counters geolocations states tags]
+        before = tables.to_h { |table| [table, connection.columns(table)] }
+        expect { generate(EcsRails::Generators::UpgradeGenerator, []) }.to raise_error(message)
+        expect(tables.to_h { |table| [table, connection.columns(table)] }).to eq before
+        expect(migration_paths("ecs_rails_catalogue")).to be_empty
+      end
+    end
+
+    it "diagnoses an absent non-null column that needs a backfill" do
+      connection.remove_column(:relationships, :owner_model)
+      expect { generate(EcsRails::Generators::UpgradeGenerator, []) }
+        .to raise_error(/relationships.owner_model is missing.*backfill/)
+    end
+
+    it "diagnoses a changed partial uniqueness predicate" do
+      connection.remove_index(:relationships, name: "index_relationships_exclusive")
+      connection.add_index(:relationships, %i[target_id slot owner_model], unique: true,
+                           where: "NOT exclusive", name: "index_relationships_exclusive")
+      expect { generate(EcsRails::Generators::UpgradeGenerator, []) }
+        .to raise_error(/relationships.index.*NOT exclusive.*exclusive/m)
+    end
+
+    it "accepts renamed matching indexes and equivalent Boolean predicates" do
+      connection.remove_index(:relationships, name: "index_relationships_exclusive")
+      connection.add_index(:relationships, %i[target_id slot owner_model], unique: true,
+                           where: "exclusive IS TRUE", name: "custom_exclusive_index")
+      generate(EcsRails::Generators::UpgradeGenerator, [])
+      expect(migration_paths("ecs_rails_catalogue")).to be_empty
+    end
+
+    it "diagnoses a changed index access method" do
+      connection.remove_index(:tags, column: :names)
+      connection.add_index(:tags, :names, using: :btree)
+      expect { generate(EcsRails::Generators::UpgradeGenerator, []) }
+        .to raise_error(/tags.index.*btree.*gin/m)
+    end
+
+    it "diagnoses a nonunique singleton index" do
+      connection.remove_index(:addresses, column: %i[entity_id slot])
+      connection.add_index(:addresses, %i[entity_id slot])
+      expect { generate(EcsRails::Generators::UpgradeGenerator, []) }
+        .to raise_error(/addresses.index.*unique.*false.*true/m)
+    end
+
+    it "diagnoses a foreign key with the wrong deletion behavior" do
+      connection.remove_foreign_key(:relationships, column: :target_id)
+      connection.add_foreign_key(:relationships, :entities, column: :target_id, on_delete: :cascade)
+      expect { generate(EcsRails::Generators::UpgradeGenerator, []) }
+        .to raise_error(/relationships.foreign key target_id.*cascade.*nullify/m)
+    end
+
+    it "diagnoses an unvalidated foreign key" do
+      connection.remove_foreign_key(:addresses, column: :entity_id)
+      connection.add_foreign_key(:addresses, :entities, column: :entity_id, on_delete: :cascade, validate: false)
+      expect { generate(EcsRails::Generators::UpgradeGenerator, []) }
+        .to raise_error(/addresses.foreign key entity_id.*validate.*false.*true/m)
+    end
+
+    it "diagnoses a foreign key pointing to a different table" do
+      connection.create_table(:other_entities, id: :uuid)
+      connection.remove_foreign_key(:addresses, column: :entity_id)
+      connection.add_foreign_key(:addresses, :other_entities, column: :entity_id, on_delete: :cascade)
+      expect { generate(EcsRails::Generators::UpgradeGenerator, []) }
+        .to raise_error(/addresses.foreign key entity_id.*other_entities.*entities/m)
+    end
+
+    it "adds missing constraints, retains legacy relationships and is current on the next generation" do
+      owner = connection.select_value("INSERT INTO entities (model, created_at) VALUES ('posts', now()) RETURNING id")
+      target = connection.select_value("INSERT INTO entities (model, created_at) VALUES ('users', now()) RETURNING id")
+      connection.execute("INSERT INTO relationships (entity_id, slot, target_id, owner_model, exclusive, created_at, updated_at) VALUES ('#{owner}', 'author', '#{target}', 'posts', true, now(), now())")
+      connection.remove_foreign_key(:relationships, column: :target_id)
+      connection.remove_index(:relationships, name: "index_relationships_exclusive")
+      connection.remove_index(:relationships, column: %i[entity_id slot])
+
+      generate(EcsRails::Generators::UpgradeGenerator, [])
+      run_migration("ecs_rails_catalogue", "EcsRailsCatalogue")
+      expect(connection.select_value("SELECT target_id FROM relationships")).to eq target
+      indexes = connection.indexes(:relationships)
+      expect(indexes.find { |index| index.columns == %w[entity_id slot] }.unique).to eq true
+      expect(indexes.find { |index| index.name == "index_relationships_exclusive" }.where).to eq "exclusive"
+      connection.execute("DELETE FROM entities WHERE id = '#{target}'")
+      expect(connection.select_value("SELECT target_id FROM relationships")).to be_nil
+      expect(connection.select_value("SELECT entity_id FROM relationships")).to eq owner
+
+      files = Dir.glob(File.join(destination_root, "db/migrate/*"))
+      generate(EcsRails::Generators::UpgradeGenerator, [])
+      expect(Dir.glob(File.join(destination_root, "db/migrate/*"))).to eq files
+    end
+
+    it "fails a new unique constraint on duplicate legacy data without deleting it" do
+      connection.remove_index(:identifiers, column: %i[slot value])
+      2.times do
+        owner = connection.select_value("INSERT INTO entities (model, created_at) VALUES ('users', now()) RETURNING id")
+        connection.execute("INSERT INTO identifiers (entity_id, slot, value, created_at, updated_at) VALUES ('#{owner}', 'legacy', 'duplicate', now(), now())")
+      end
+      generate(EcsRails::Generators::UpgradeGenerator, [])
+      expect { violating { run_migration("ecs_rails_catalogue", "EcsRailsCatalogue") } }
+        .to raise_error(ActiveRecord::RecordNotUnique)
+      expect(connection.select_values("SELECT value FROM identifiers")).to eq %w[duplicate duplicate]
+    end
+
+    it "accounts for the pre-slot migration on an existing catalogue table" do
+      connection.remove_column(:addresses, :slot)
+      connection.add_index(:addresses, :entity_id, unique: true)
+      owner = connection.select_value("INSERT INTO entities (model, created_at) VALUES ('users', now()) RETURNING id")
+      connection.execute("INSERT INTO addresses (entity_id, line1, created_at, updated_at) VALUES ('#{owner}', 'Legacy', now(), now())")
+      generate(EcsRails::Generators::UpgradeGenerator, [])
+      expect(migration_paths("ecs_rails_catalogue")).to be_empty
+      run_migration("ecs_rails_add_slots", "EcsRailsAddSlots")
+      expect(connection.select_all("SELECT line1, slot FROM addresses").to_a).to eq [{ "line1" => "Legacy", "slot" => "" }]
+      expect(EcsRails::Catalogue::Address.schema.to_ruby_diff(table_name: :addresses, connection: connection)).to eq ""
+    end
+
+    it "stops before a pending slot migration or class file is written on mismatch" do
+      connection.remove_column(:addresses, :slot)
+      connection.add_index(:addresses, :entity_id, unique: true)
+      connection.change_column_default(:counters, :count, 7)
+      File.delete(File.join(destination_root, "app/entities/components/counter.rb"))
+      expect { generate(EcsRails::Generators::UpgradeGenerator, []) }.to raise_error(/counters.count default/)
+      expect(migration_paths("ecs_rails_add_slots")).to be_empty
+      expect(file?("app/entities/components/counter.rb")).to eq false
+    end
+
+    it "does not mistake a catalogue table missing its attributes for a legacy marker" do
+      EcsRails::Catalogue::Address.schema.columns.each { |column| connection.remove_column(:addresses, column.name) }
+      owner = connection.select_value("INSERT INTO entities (model, created_at) VALUES ('users', now()) RETURNING id")
+      connection.execute("INSERT INTO addresses (entity_id, created_at, updated_at) VALUES ('#{owner}', now(), now())")
+      generate(EcsRails::Generators::UpgradeGenerator, [])
+      expect(migration_paths("ecs_rails_shared_markers")).to be_empty
+      run_migration("ecs_rails_catalogue", "EcsRailsCatalogue")
+      expect(connection.select_value("SELECT entity_id FROM addresses")).to eq owner
+      expect(EcsRails::Catalogue::Address.schema.to_ruby_diff(table_name: :addresses, connection: connection)).to eq ""
+    end
+
+    it "diagnoses an array column changed to a scalar" do
+      connection.remove_index(:tags, column: :names)
+      connection.change_column_default(:tags, :names, nil)
+      connection.change_column(:tags, :names, :string, array: false, using: "names::text")
+      expect { generate(EcsRails::Generators::UpgradeGenerator, []) }
+        .to raise_error(/tags.names array.*false.*true/)
+    end
+
+    it "diagnoses a missing UUID primary key constraint" do
+      connection.execute("ALTER TABLE addresses DROP CONSTRAINT addresses_pkey")
+      expect { generate(EcsRails::Generators::UpgradeGenerator, []) }
+        .to raise_error(/addresses.primary key.*nil.*id/)
+    end
+
+    it "diagnoses a pre-slot table without the required legacy unique index" do
+      connection.remove_column(:addresses, :slot)
+      connection.add_index(:addresses, :entity_id)
+      expect { generate(EcsRails::Generators::UpgradeGenerator, []) }
+        .to raise_error(/addresses pre-slot upgrade needs an unconditional unique index/)
+      expect(migration_paths("ecs_rails_add_slots")).to be_empty
+    end
+
+    it "never moves the shared markers table when its class file is missing" do
+      File.delete(File.join(destination_root, "app/entities/components/marker.rb"))
+      generate(EcsRails::Generators::UpgradeGenerator, %w[--sets commerce])
+      expect(migration_paths("ecs_rails_shared_markers")).to be_empty
+    end
+
     it "does not overwrite an application's edited class" do
       File.write(File.join(destination_root, "app/entities/components/text.rb"), "# edited\n")
 

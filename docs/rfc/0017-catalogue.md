@@ -142,3 +142,22 @@ table and adds a missing column, and the data moves run after it).
   execution spec used to generate a bespoke `Email`.
 - The demo is untouched here. ECS-17 rebuilds the forum on the catalogue and
   is where these components meet real views.
+
+
+## Upgrade structure amendment — 2026-09-12 (ECS-29)
+
+The initial diff compared only column names and index column lists. Upgrade now
+preflights live schema metadata before writing files. It verifies the common
+component columns/UUID primary key, declaration types/defaults/nullability and
+type parameters, index uniqueness/access method/predicate, and validated foreign
+keys to entities.id with the required delete behavior. Missing compatible
+columns and constraints generate additive migrations; incompatible structures
+raise precise repair/backfill diagnostics. No coercion or constraint replacement
+is inferred. Extra application columns and indexes remain untouched.
+
+The existing slot migration is accounted for separately, and known catalogue
+tables cannot be reclassified as legacy markers/relationships merely because
+columns are missing. See [the verification design](../design/catalogue-upgrade-verification.md)
+for normalization boundaries and the preserved-data checks. `Schema#to_ruby_diff`
+now takes a live `connection:` instead of arrays of column/index names; names
+alone cannot establish compatibility.

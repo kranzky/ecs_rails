@@ -168,31 +168,18 @@ module EcsRails
         lines.join("\n")
       end
 
-      # The `add_column` / `add_index` source that brings an existing table up to
-      # this declaration, given what the table already has. Empty when nothing
-      # is missing. Used by `ecs_rails:upgrade` for a catalogue table that exists
-      # but predates a column or index added in a later gem version.
+      # Additive migration source after verifying the live catalogue structure.
+      # Existing incompatible definitions raise before any migration is written.
       #
       # @param table_name [String, Symbol]
-      # @param existing_columns [Array<String>] the table's current column names
-      # @param existing_indexes [Array<Array<String>>] each index's column names
+      # @param connection [ActiveRecord::ConnectionAdapters::AbstractAdapter]
+      # @param slot_upgrade [Boolean] an earlier migration will add the slot
       # @param indent [Integer]
-      # @return [String] possibly empty
-      def to_ruby_diff(table_name:, existing_columns:, existing_indexes:, indent: 4)
-        pad = " " * indent
-        lines = []
-        columns.each do |column|
-          next if existing_columns.include?(column.name.to_s)
-
-          lines << "#{pad}add_column :#{table_name}, :#{column.name}, :#{column.type}#{render_options(column.options)}"
-        end
-        indexes.each do |index|
-          next if existing_indexes.include?(index.columns.map(&:to_s))
-
-          cols = index.columns.size == 1 ? ":#{index.columns.first}" : "[#{index.columns.map { |c| ":#{c}" }.join(', ')}]"
-          lines << "#{pad}add_index :#{table_name}, #{cols}#{render_options(index.options)}"
-        end
-        lines.join("\n")
+      # @return [String] empty when every required structure is current
+      # @raise [SchemaMismatch] an explicit reviewed repair is required
+      def to_ruby_diff(table_name:, connection:, slot_upgrade: false, indent: 4)
+        SchemaDiff.new(self, table_name: table_name, connection: connection,
+                       slot_upgrade: slot_upgrade).to_ruby(indent: indent)
       end
 
       private
@@ -390,6 +377,7 @@ module EcsRails
   end
 end
 
+require "ecs_rails/catalogue/schema_diff"
 require "ecs_rails/catalogue/relationship"
 require "ecs_rails/catalogue/marker"
 require "ecs_rails/catalogue/name"
