@@ -15,6 +15,12 @@ candidate package and verifies the generated upgrade preserves those rows.
 Separate gem installation directories distinguish the two packages even while
 the unreleased candidate still carries version 0.2.2.
 
+Temporary hosts disable eager loading while generators and migrations prepare
+the application, then enable it for every verification runner. An old app cannot
+eager-load its relationship declarations before the upgrade generator writes
+the new Relationship class. Explicit configuration makes this sequence identical
+locally and on CI, where Rails otherwise enables test eager loading via `CI`.
+
 Package checks create uniquely named databases through the supplied PostgreSQL
 connection, keep ownership of those names, and drop only those databases in
 cleanup. They never reset a developer's working demo. The demo has its own test

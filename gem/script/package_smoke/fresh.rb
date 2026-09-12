@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+raise "Package verification must eager-load at boot" unless Rails.application.config.eager_load
 raise "Loaded checkout source instead of installed package" unless File.realpath(Gem.loaded_specs.fetch("ecs_on_rails").full_gem_path).start_with?(File.realpath(ENV.fetch("ECS_SMOKE_GEM_HOME")) + "/")
 raise "Unexpected JSON major" unless Gem.loaded_specs.fetch("json").version < Gem::Version.new("3")
 raise "Expected one install migration" unless Rails.root.glob("db/migrate/*.rb").size == 1

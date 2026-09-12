@@ -48,7 +48,7 @@ class PackageSmoke
 
   private
 
-  def command(*arguments, chdir:, gem_home: @candidate_home, database: nil)
+  def command(*arguments, chdir:, gem_home: @candidate_home, database: nil, preparing: false)
     environment = {
       "GEM_HOME" => gem_home,
       "GEM_PATH" => ([gem_home] + @gem_paths).join(File::PATH_SEPARATOR),
@@ -56,6 +56,7 @@ class PackageSmoke
       "BUNDLE_DEPLOYMENT" => nil, "BUNDLE_APP_CONFIG" => nil,
       "BUNDLE_IGNORE_CONFIG" => "1", "BUNDLE_WITHOUT" => nil,
       "RAILS_ENV" => "test", "ECS_SMOKE_GEM_HOME" => gem_home,
+      "ECS_SMOKE_PREPARING" => preparing ? "1" : nil,
       "DATABASE_URL" => database
     }
     output, status = Bundler.with_unbundled_env do
@@ -88,6 +89,16 @@ class PackageSmoke
     command(RbConfig.ruby, "-e", "gem 'railties', ARGV.shift; load Gem.bin_path('railties', 'rails')",
             @rails_version, "new", path, "--minimal", "--skip-bundle", "--skip-git",
             "--skip-bootsnap", "--skip-asset-pipeline", "--skip-javascript", "--database=postgresql", chdir: @directory, gem_home: home)
+    # Generators must create the new classes before the upgraded app can load
+    # them. Final runners boot with eager loading on, independent of CI defaults.
+    File.open(File.join(path, "config/environments/test.rb"), "a") do |file|
+      file.puts <<~RUBY
+
+        Rails.application.configure do
+          config.eager_load = ENV["ECS_SMOKE_PREPARING"] != "1"
+        end
+      RUBY
+    end
     File.write(File.join(path, "Gemfile"), <<~GEMFILE)
       source "https://rubygems.org"
       gem "rails", "= #{@rails_version}"
@@ -101,7 +112,8 @@ class PackageSmoke
 
   def rails(path, database, *arguments, home: @candidate_home)
     command(RbConfig.ruby, "bin/rails", *arguments,
-            chdir: path, gem_home: home, database: database)
+            chdir: path, gem_home: home, database: database,
+            preparing: ["generate", "db:migrate"].include?(arguments.first))
   end
 
   def write(path, relative, contents)

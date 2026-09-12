@@ -171,6 +171,10 @@ catalogue component. `rails g ecs_rails:component Widget size:integer` is the
 escape hatch for a bespoke table.
 
 After updating the gem, run `rails g ecs_rails:upgrade` and review its migrations.
+Run the generator in an environment with eager loading disabled (development by
+default): an old app needs the generated component classes before it can fully
+boot with the new gem. After migrating and updating marker declarations, verify
+the completed app with `bin/rails zeitwerk:check`.
 It verifies the existing catalogue's columns, unique/partial indexes and foreign
 keys, then generates compatible additions. An incompatible definition reports
 its table, actual properties and expected properties before writing files;
