@@ -46,7 +46,8 @@ jobs:
           bundler-cache: true
           working-directory: gem
       - name: Resolved versions
-        run: bundle exec ruby -e 'require "rails"; puts "Ruby #{RUBY_VERSION}, Rails #{Rails.version}"'
+        run: |
+          bundle exec ruby -e 'require "rails"; puts "Ruby #{RUBY_VERSION}, Rails #{Rails.version}"'
       - name: Gem specifications on PostgreSQL
         run: bundle exec rspec --format progress
       - name: Packaged quickstart and published 0.2.2 upgrade
