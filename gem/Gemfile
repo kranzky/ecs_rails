@@ -7,6 +7,10 @@ gemspec
 gem "rake", "~> 13.0"
 
 group :development, :test do
+  # ActiveSupport 8.1 passes JSON.parse a positional options hash; JSON 3
+  # requires keywords. Keep CI on the compatible series until ECS-30 verifies
+  # the supported Rails/dependency matrix and packaged install flows.
+  gem "json", "< 3"
   gem "pg", "~> 1.5"
   # EcsRails::Catalogue::Password uses has_secure_password, which needs bcrypt
   # in the application. Not a gem dependency — the catalogue must not impose

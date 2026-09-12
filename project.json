@@ -202,7 +202,7 @@
     },
     {
       "date": "2026-09-12",
-      "summary": "ECS-24: enforce declared relationship target types during normal component validation, covering ID writers, flat mass assignment and independently loaded Relationship saves. Wrong-type and nonexistent IDs return component-shaped errors through save/save!; object assignment guards, subclasses, nil/nullified targets and preloaded target reuse are preserved. Added 12 gem regression examples and one real-demo regression. Verified 846 gem examples, 21 demo examples, YARD 100%, Rails eager loading, six HTTP pages and gem packaging. Updated architecture, RFC-0012 amendment, changelog and friction log.",
+      "summary": "ECS-24: enforce declared relationship target types during normal component validation, covering ID writers, flat mass assignment and independently loaded Relationship saves. Wrong-type and nonexistent IDs return component-shaped errors through save/save!; object assignment guards, subclasses, nil/nullified targets and preloaded target reuse are preserved. Added 12 gem regression examples and one real-demo regression. Verified 846 gem examples, 21 demo examples, YARD 100%, Rails eager loading, six HTTP pages and gem packaging. Updated architecture, RFC-0012 amendment, changelog and friction log. CI exposed an upstream ActiveSupport 8.1/JSON 3 incompatibility in four existing State specs; constrain the development/test Gemfile to JSON < 3 pending the ECS-30 compatibility work.",
       "humanMinutes": 0,
       "aiMinutes": 15,
       "costs": []
