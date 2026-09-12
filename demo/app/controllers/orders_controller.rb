@@ -3,7 +3,7 @@
 class OrdersController < ApplicationController
   def index
     @user = User.find(params[:user_id])
-    @orders = @user.orders.includes_components(Identifier, Money, State).order(created_at: :desc)
+    @orders = paginate_list(@user.orders.order(created_at: :desc, id: :asc)).includes_components(Identifier, Money, State)
   end
 
   def show

@@ -45,7 +45,7 @@
 
 <% unless @post.draft? %>
   <section style="margin-top:2rem">
-    <h2 class="section-title">Comments · <%= @comments.size %></h2>
+    <h2 class="section-title">Comments · <%= @comments.total_count %></h2>
 
     <div class="card">
       <% if @comments.empty? %>
@@ -68,6 +68,8 @@
           </div>
         <% end %>
       <% end %>
+
+    <%= paginate @comments, window: 1, outer_window: 1 %>
 
       <hr class="divider">
       <%= form_with url: post_comments_path(@post), method: :post do |f| %>

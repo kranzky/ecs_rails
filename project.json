@@ -248,6 +248,13 @@
       "humanMinutes": 0,
       "aiMinutes": 20,
       "costs": []
+    },
+    {
+      "date": "2026-09-12",
+      "summary": "ECS-31: bounded demo index and growing detail lists with standard Kaminari 24-row pages, final UUID sort ties, preserved filters and total counts, normalized malformed pages and clamped out-of-range bookmarks. Pagination precedes component/relationship preloads; seller staff and product navigation remain independent. Added 20 request examples across all affected lists, including an allocation check showing unchanged loaded rows when market data doubles from 49 to 98 products. Verified 70 demo examples, 924 gem examples, eager loading, YARD 100%, thirteen live HTTP routes and browser pagination appearance. Prepared an isolated multi-page review database and candidate launcher on port 3026. No gem API or migration changes.",
+      "humanMinutes": 0,
+      "aiMinutes": 20,
+      "costs": []
     }
   ]
 }

@@ -57,10 +57,10 @@ class Product < ApplicationEntity
   end
 
   SORTS = {
-    "newest"     => ->(scope) { scope.order(created_at: :desc) },
+    "newest"     => ->(scope) { scope.order(created_at: :desc, id: :asc) },
     "price_asc"  => ->(scope) { scope.order_by_price(:asc) },
     "price_desc" => ->(scope) { scope.order_by_price(:desc) },
-    "top_rated"  => ->(scope) { scope.order_by_component(Rating, :stars, :desc).order(created_at: :desc) }
+    "top_rated"  => ->(scope) { scope.order_by_component(Rating, :stars, :desc).order(created_at: :desc, id: :asc) }
   }.freeze
 
   def self.sorted(key)

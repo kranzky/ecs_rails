@@ -4,16 +4,16 @@ class GroupsController < ApplicationController
   def index
     # includes_components(Text) preloads all three Text slots (name,
     # description, rules), one query each.
-    @groups = Group.all.includes_components(Text)
+    @groups = paginate_list(Group.order(created_at: :asc, id: :asc)).includes_components(Text)
   end
 
   def show
     @group = Group.find(params[:id])
     # Members: the inverse of Membership's :group relationship (RFC-0015), a
     # real collection. The member name is a two-hop preload.
-    @memberships = @group.memberships
+    @memberships = paginate_list(@group.memberships.order(created_at: :asc, id: :asc))
                          .includes_components(Role)
-                         .preload(user_relationship: { target: :name })
+                         .preload(user_relationship: { target: [:name, :avatar_image] })
     @candidates = User.all.includes_components(Name)
   end
 

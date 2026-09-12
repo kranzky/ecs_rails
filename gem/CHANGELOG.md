@@ -105,6 +105,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Bounded demo lists** (ECS-31): market, bulletin, people, sellers, groups,
+  order history and growing detail lists use 24-row Kaminari pages. Stable
+  UUID tie-breakers prevent ambiguous ordering; navigation retains filters,
+  normalizes invalid pages and preserves total counts. Component and
+  relationship preloads apply only to the selected page.
+
 - The Rails-compatible JSON `< 3` constraint is now a runtime dependency,
   protecting installed gem consumers as well as development bundles (ECS-30).
   CI covers each Rails 7.1/7.2/8.0/8.1 series, Ruby 3.2 through 4.0 representative

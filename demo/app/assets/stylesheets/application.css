@@ -323,3 +323,15 @@ kbd, code { font-family: var(--mono); font-size: .88em; background: var(--surfac
 .table td { padding: .6rem .5rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
 .table tfoot td { border-bottom: 0; padding-top: .8rem; }
 .table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* --- list pagination ----------------------------------------------------- */
+.pagination { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin: 1.5rem 0; }
+.pagination a, .pagination .current, .pagination .gap {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 2.5rem; min-height: 2.5rem; padding: .4rem .65rem; border-radius: .5rem;
+}
+.pagination a { border: 1px solid var(--border); color: var(--text); }
+.pagination a:hover { background: var(--brand-soft); }
+.pagination a:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
+.pagination .current { background: var(--brand); color: white; font-weight: 700; }
+.pagination .gap { color: var(--muted); }

@@ -11,8 +11,8 @@ class PostsController < ApplicationController
     @sort = params[:sort] == "likes" ? "likes" : "newest"
     posts = Post.published.searching(@query)
     posts = posts.most_liked if @sort == "likes"
-    @posts = posts.includes_components(Text, Counter)
-                  .preload(author_relationship: { target: :name })
+    @posts = paginate_list(posts).includes_components(Text, Counter)
+                  .preload(author_relationship: { target: [:name, :avatar_image] })
   end
 
   def show
@@ -20,10 +20,9 @@ class PostsController < ApplicationController
     # Comments on this post — the inverse association (RFC-0015), a real
     # collection, with the component DSL chained on. The author name is a
     # two-hop preload (kept explicit, an RFC-0013 non-goal).
-    @comments = @post.comments
+    @comments = paginate_list(@post.comments.order(created_at: :asc, id: :asc))
                      .includes_components(Text, Counter)
-                     .preload(author_relationship: { target: :name })
-                     .order(created_at: :asc)
+                     .preload(author_relationship: { target: [:name, :avatar_image] })
     @comment = Comment.new
     @authors = User.all
   end

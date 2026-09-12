@@ -12,7 +12,7 @@
 </div>
 
 <section style="margin-top:2rem">
-  <h2 class="section-title">Members · <%= @memberships.size %></h2>
+  <h2 class="section-title">Members · <%= @memberships.total_count %></h2>
   <div class="card">
     <% if @memberships.empty? %>
       <p style="color:var(--muted);margin:0 0 1rem">No members yet.</p>
@@ -31,6 +31,7 @@
     <% end %>
 
     <hr class="divider">
+    <%= paginate @memberships, window: 1, outer_window: 1 %>
     <%= form_with url: group_memberships_path(@group), method: :post do |f| %>
       <div class="grid grid--2">
         <div class="field" style="margin:0">

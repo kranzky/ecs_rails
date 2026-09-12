@@ -7,6 +7,16 @@ class ApplicationController < ActionController::Base
 
   private
 
+  # ECS-31: normalize before querying an offset. Kaminari owns the page/count
+  # behavior; an out-of-range bookmark lands on the last available page.
+  # Call before preloading so only the chosen page allocates component rows.
+  def paginate_list(scope, param: :page)
+    value = params[param].to_s
+    number = value.match?(/\A[1-9][0-9]{0,8}\z/) ? value.to_i : 1
+    page = scope.page(number)
+    page.out_of_range? ? scope.page([page.total_pages, 1].max) : page
+  end
+
   # This is a public demo — anyone can post — so cap incoming text lengths
   # server-side (the form `maxlength` only stops honest users). Trims and
   # truncates; nil stays nil.
