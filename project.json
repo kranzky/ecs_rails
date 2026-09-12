@@ -227,6 +227,13 @@
       "humanMinutes": 0,
       "aiMinutes": 10,
       "costs": []
+    },
+    {
+      "date": "2026-09-12",
+      "summary": "ECS-28: reproduced concurrent checkout document-number collisions with separate PostgreSQL connections. Coordinated basket edits/checkout with a shared basket lock and singleton basket creation with a customer lock; stock locks actual Counter rows in product order. Basket revisions and Order request Identifiers provide completed-result replay, stale-form rejection and rollback-safe retry without migrations. Document series use transaction advisory locks and numeric maxima. Added 13 concurrency/lifecycle examples and three rendered request examples. Verified 50 demo examples in test mode and randomized order, 894 gem examples, YARD 100%, eager loading, packaging and nine HTTP routes. An inherited RAILS_ENV=development caused an initial existing-suite demo seed reset; caught via request tests, disclosed to the user, and changed the helper to reject non-test environments before boot. Recorded lock order, numbering tradeoffs and the simulated-payment boundary.",
+      "humanMinutes": 0,
+      "aiMinutes": 15,
+      "costs": []
     }
   ]
 }

@@ -6,7 +6,10 @@ class CheckoutsController < ApplicationController
     @basket = @user.basket
     return redirect_to(user_basket_path(@user), alert: "The basket is empty.") if @basket.nil? || @basket.items.none?
 
-    @total = @basket.total
+    @basket.with_lock do
+      @revision = @basket.revision
+      @total = @basket.total
+    end
   end
 
   def create
@@ -16,6 +19,7 @@ class CheckoutsController < ApplicationController
 
     order = Demo::Checkout.call(
       basket: basket,
+      revision: params[:checkout].fetch(:revision, "").to_s,
       card_number: params[:checkout][:card_number],
       shipping: address_params(:shipping),
       billing: params[:checkout][:same_billing] == "1" ? address_params(:shipping) : address_params(:billing)

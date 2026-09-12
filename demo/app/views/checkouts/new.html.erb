@@ -7,6 +7,7 @@
 </div>
 
 <%= form_with url: user_checkout_path(@user), method: :post do |f| %>
+  <%= f.hidden_field "checkout[revision]", value: @revision %>
   <div class="grid grid--2">
     <% %w[shipping billing].each do |slot| %>
       <% address = @user.public_send("#{slot}_address") %>

@@ -105,6 +105,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Demo checkout and basket edits now coordinate on the basket; stock updates
+  lock the actual Counter rows in product order (ECS-28). Submitted revisions
+  identify completed orders so successful retries return the original result,
+  stale forms are rejected, and declines can retry without partial changes.
+  Order/invoice allocation uses transaction advisory locks and numeric suffixes.
+  No new demo migration is required. Demo specs refuse non-test environments.
+
 - Demo price filters and ordering now treat an absent Money row as the displayed
   zero price, matching persisted free products (ECS-27). The product-specific
   queries use a slot-scoped left join and `COALESCE`, with stable price ties;

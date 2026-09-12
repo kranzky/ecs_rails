@@ -930,3 +930,29 @@ directions, category/listing composition, another Money slot, and unchanged gem
 presence semantics. All 34 demo examples pass; combined catalogue filters/sorts
 return HTTP 200. A small application query was enough: no migration or new gem
 query option. The slot's unique index keeps the join from duplicating products.
+
+
+## Concurrent checkout and retries (ECS-28) — 2026-09-12
+
+Separate PostgreSQL connections reproduced an unhandled duplicate document
+number when two buyers checked out concurrently, even for different products.
+The demo now locks each basket before reading it, and all controller item edits
+use the same lock. Customer locking protects first-time basket creation. Stock
+coordination locks Counter rows in product UUID order, including against direct
+Counter updates; missing stock stays virtual zero.
+
+A Counter revision on Basket and an Identifier request on Order provide replay
+without a new table: a repeated successful submission returns its original order,
+a stale uncompleted form is rejected, and a declined attempt can retry. Numbering
+uses transaction advisory locks per series and a numeric maximum, including
+past six digits. This serializes successful document allocation; it is an
+explicit small-demo tradeoff, not a general payment-processing framework. See
+[the design note](design/checkout-concurrency.md) for lock order and boundaries.
+
+**Demo verdict.** All 50 demo examples pass, including 13 committed concurrency
+and lifecycle examples and three rendered request examples. Queues and observed
+database lock waits replace sleeps. The 894 gem examples, YARD 100%, eager
+loading, packaging and nine HTTP routes pass. One install migration remains.
+The request tests also exposed an inherited development Rails environment: the
+old helper only refused production. It now refuses every non-test environment
+before boot; run the demo suite with `RAILS_ENV=test`.

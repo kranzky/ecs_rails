@@ -1,16 +1,29 @@
 # frozen_string_literal: true
 
 module Demo
-  # Sequential document numbers from an Identifier slot. Entities have UUID
-  # primary keys, so there is no natural incrementing number; "max + 1" inside
-  # the caller's transaction, with Identifier's unique (slot, value) index as
-  # the backstop, is the demo's answer (design §5, item 8).
+  # Sequential identifiers without another migration. Each series has a fixed
+  # PostgreSQL advisory lock held until the caller commits the inserted number.
+  # The unique Identifier index remains the backstop for uncoordinated writers.
   module Numbering
+    SERIES = { "order_number" => [1, "ORD"], "invoice_number" => [2, "INV"] }.freeze
+    LOCK_NAMESPACE = 28_025
+
     module_function
 
     def next(slot, prefix)
-      last = Identifier.where(slot: slot).maximum(:value).to_s.delete("^0-9").to_i
-      format("%s-%06d", prefix, last + 1)
+      key, expected_prefix = SERIES.fetch(slot)
+      raise ArgumentError, "unexpected document prefix" unless prefix == expected_prefix
+
+      Identifier.connection_pool.with_connection do |connection|
+        raise ArgumentError, "allocate and save document numbers in one transaction" unless connection.transaction_open?
+
+        connection.execute("SELECT pg_advisory_xact_lock(#{LOCK_NAMESPACE}, #{key})")
+        # Text MAX puts 999999 after 1000000. Only this series' numeric suffix
+        # participates, so six digits is padding, not an allocation limit.
+        last = Identifier.where(slot: slot).where("value ~ ?", "^#{prefix}-[0-9]+$")
+                         .maximum(Arel.sql("split_part(value, '-', 2)::bigint")) || 0
+        format("%s-%06d", prefix, last + 1)
+      end
     end
   end
 end
