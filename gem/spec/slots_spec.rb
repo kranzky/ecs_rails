@@ -324,10 +324,12 @@ RSpec.describe "labelled components (slots)" do
       generated = Solo.generated_component_methods.instance_methods(false).sort
 
       expect(generated).to eq %i[
-        business_address business_address? business_address_country business_address_line1
+        build_business_address business_address business_address? business_address=
+        business_address_country business_address_line1
         business_address_line1= business_address_one_line business_address_postcode
         business_address_postcode= business_address_region business_address_region=
-      ]
+        create_business_address create_business_address! reload_business_address reset_business_address
+      ].sort
     end
 
     it "routes flat mass assignment per slot" do
@@ -339,12 +341,15 @@ RSpec.describe "labelled components (slots)" do
     end
 
     describe "delegate: false" do
-      it "generates the reader and predicate only" do
+      it "generates component operations and presence without delegated state" do
         stub_const("Supplier", Class.new(ApplicationEntity))
         Supplier.component Address, prefix: :remit, delegate: false
         generated = Supplier.generated_component_methods.instance_methods(false).sort
 
-        expect(generated).to eq %i[remit_address remit_address?]
+        expect(generated).to eq %i[
+          build_remit_address create_remit_address create_remit_address! reload_remit_address
+          remit_address remit_address? remit_address= reset_remit_address
+        ].sort
       end
 
       it "is recorded on the declaration" do

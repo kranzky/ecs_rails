@@ -897,3 +897,20 @@ carrying catalogue Name and Email components. The regression uses the demo's
 actual `name_given` and `email_address` vocabulary. All 22 demo examples pass,
 eager loading passes, and six main pages return HTTP 200. No application code
 or migration was needed. Reading an unset relationship still creates nothing.
+
+
+## Component replacement and caches (ECS-26) — 2026-09-12
+
+Replacing an Email through `user.email=` after an earlier read used to insert
+beside the existing row, violating the singleton index. Component assignment
+now destroys and replaces the row atomically, with the declared owner and slot,
+and makes the reader and association cache agree. A failed replacement keeps
+the old row; a savepoint also protects callers that rescue inside a transaction.
+
+**Demo verdict.** The real catalogue Email replaces cleanly through the user's
+reader, delegation and reload, with exactly one row. All 23 demo examples pass;
+eager loading and six HTTP pages pass. Attribute updates through the reader are
+still the recommended path when row identity should survive. Generated
+build/create helpers now reject calls with that guidance; reload/reset clear
+both caches. Inverse relationship collections retain their Rails APIs. No demo
+implementation change or migration was needed.

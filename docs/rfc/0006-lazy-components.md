@@ -3,6 +3,36 @@
 **Status:** Implemented
 **Depends on:** RFC-0004
 
+## Amendment: component association operations (ECS-26, 2026-09-12)
+
+The recommended update remains `user.email.assign_attributes(address: "new@example.com")`
+followed by `user.save!`, or the delegated `user.update!(email_address: ...)`.
+These preserve the component row's identity and participate in owner validation.
+
+The generated association API has this explicit contract:
+
+| Operation | Contract |
+| --- | --- |
+| `email` | Memoised component reader; always returns a component, possibly virtual. |
+| `email = component` | On a persisted owner, atomically destroy the old row and save its replacement. On a new owner, defer persistence until owner save. An untouched default-only replacement remains virtual. |
+| `email = nil` | Remove the current row; subsequent reads return a fresh virtual component. |
+| `build_email`, `create_email`, `create_email!` | Raise `EcsRails::InvalidComponent` with guidance to update through the reader. These separate Rails persistence paths do not participate in the lazy contract. |
+| `reload_email`, `reset_email` | Discard both association and component caches. Reload returns the current component or a virtual one; reset leaves the next read to load it. |
+
+The same rules apply to labelled readers (`business_address`) and relationship
+backing components. Replacement stamps the declared slot and owner; a component
+owned by another entity or persisted in another slot cannot be reassigned.
+Wrong component types are rejected intentionally. Validation failure while
+replacing on a persisted owner raises `ActiveRecord::RecordInvalid` and keeps
+the original row and reader. On a new owner, invalid pending state fails through
+the usual `save`/`save!` contract. Destroy callbacks run on explicit replacement.
+
+Replacement participates in an outer transaction; after an outer rollback,
+reload the owner to discard in-memory transaction state, as with ordinary Rails
+records. Raw `association(...)` mutation and validation-bypassing database writes
+remain outside this public component lifecycle API. Entity deletion still uses
+the database cascade, and inverse relationship collection/build APIs are unchanged.
+
 ## Goal
 
 A component should not require a database row if all values equal defaults.

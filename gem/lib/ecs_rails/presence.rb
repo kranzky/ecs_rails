@@ -149,7 +149,7 @@ module EcsRails
         # not decide it: `remove` on an absent marker leaves one behind without
         # loading anything, and the association says so.
         association = association(name)
-        return !association.target.nil? if association.loaded?
+        return association.target&.persisted? || false if association.loaded?
 
         # Bare existence check: no row is instantiated, so nothing is loaded and
         # nothing is dirtied. One query per component, as everywhere else in the

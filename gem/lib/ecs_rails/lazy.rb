@@ -104,6 +104,60 @@ module EcsRails
         association(name).target = nil
       end
 
+      # Replaces one declared component without nullifying its required owner
+      # FK or inserting alongside the existing singleton (RFC-0006, ECS-26).
+      # Public for the generated writer; application code uses that writer.
+      #
+      # @param name [Symbol] component reader
+      # @param slot [String] declaration's slot
+      # @param value [EcsRails::Component, nil] replacement, or nil to remove
+      # @return [EcsRails::Component, nil]
+      # @raise [EcsRails::InvalidComponent] for a wrong type or owner/slot
+      # @raise [ActiveRecord::RecordInvalid] when a replacement fails validation
+      # @api private
+      def ecs_replace_component(name, slot, value)
+        component_association = association(name)
+        expected = component_association.klass
+        unless value.nil? || value.is_a?(expected)
+          raise InvalidComponent, "#{name}= expects #{expected.name} or nil"
+        end
+
+        if value
+          other_owner = (value.entity_id && value.entity_id != id) ||
+                        (value.entity && value.entity != self)
+          other_slot = value.persisted? && value.slot != slot
+          if other_owner || other_slot
+            raise InvalidComponent, "#{name}= cannot move a component from another owner or slot"
+          end
+          value.entity = self
+          value.slot = slot
+        end
+
+        previous = public_send(name)
+        begin
+          if persisted?
+            # A savepoint keeps a failed replacement atomic even when the
+            # caller rescues it inside a larger transaction and continues.
+            self.class.transaction(requires_new: true) do
+              previous.destroy! if previous.persisted? && previous != value
+              value.save! if value && (value.persisted? || value.ecs_dirty?)
+            end
+          end
+        rescue StandardError
+          component_association.target = previous
+          (@ecs_components ||= {})[name] = previous
+          raise
+        end
+
+        component_association.target = value
+        if value
+          (@ecs_components ||= {})[name] = value
+        else
+          @ecs_components&.delete(name)
+        end
+        value
+      end
+
       private
 
       # An in-memory component with every attribute at its default and entity_id

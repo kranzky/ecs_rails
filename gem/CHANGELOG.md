@@ -105,6 +105,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Component assignment now replaces a singleton atomically and updates both
+  the lazy memo and association cache (ECS-26), including labelled slots.
+  Invalid replacements preserve the old row; new owners defer persistence,
+  default-only replacements remain virtual, and nil removes the row. Cross-owner
+  and persisted cross-slot moves are rejected. Component reload/reset helpers
+  clear both caches; generated build/create helpers now raise an intentional
+  error directing callers to reader-based attribute updates.
+
 - Explicitly assigned new relationship targets now save with their owner in
   one transaction instead of being silently dropped (ECS-25). The lazy
   cascade recognizes pending targets, and Rails autosave validates and saves
