@@ -291,12 +291,13 @@ RSpec.describe "method delegation" do
       Solo.component Email
       generated = Solo.generated_component_methods.instance_methods(false).sort
 
-      # #email is the reader (RFC-0006); #email? is the presence predicate
-      # (RFC-0009); everything else is Email's delegation under ADR-0016.
+      # Besides delegation, RFC-0006 owns the reader and association-operation
+      # wrappers (ECS-26); RFC-0009 owns the presence predicate.
       expect(generated).to eq %i[
-        email email? email_address email_address= email_send_welcome_email
-        email_verified email_verified= email_who_am_i
-      ]
+        build_email create_email create_email! email email? email= email_address
+        email_address= email_send_welcome_email email_verified email_verified=
+        email_who_am_i reload_email reset_email
+      ].sort
     end
 
     it "delegates exactly Name's own methods and state accessors, prefixed" do
@@ -304,11 +305,12 @@ RSpec.describe "method delegation" do
       Solo.component Name
       generated = Solo.generated_component_methods.instance_methods(false).sort
 
-      # #name is the reader; #name? is the presence predicate (RFC-0009).
+      # The association-operation wrappers are pinned alongside delegation.
       expect(generated).to eq %i[
-        name name? name_combine name_first name_first= name_full_name name_initials
-        name_last name_last= name_title name_title=
-      ]
+        build_name create_name create_name! name name? name= name_combine
+        name_first name_first= name_full_name name_initials name_last name_last=
+        name_title name_title= reload_name reset_name
+      ].sort
     end
 
     it "delegates exactly Email's bare set under prefix: false" do
@@ -317,7 +319,8 @@ RSpec.describe "method delegation" do
       generated = Solo.generated_component_methods.instance_methods(false).sort
 
       expect(generated)
-        .to eq %i[address address= email email? send_welcome_email verified verified= who_am_i]
+        .to eq %i[address address= build_email create_email create_email! email email? email=
+                  reload_email reset_email send_welcome_email verified verified= who_am_i].sort
     end
   end
 
@@ -592,15 +595,16 @@ RSpec.describe "method delegation" do
 
       expect { Team.component Sponsor, prefix: false }
         .to raise_error(EcsRails::DelegationConflict) do |error|
-          expect(error.message).to include "prefix: false", "sponsor_sponsor", "except: [:sponsor]", "belongs_to"
+          expect(error.message).to include "prefix: false", "sponsor_sponsor", "except: [:sponsor, :sponsor=,", "build_sponsor", "belongs_to"
         end
     end
 
     it "resolves cleanly when the colliding method is excepted" do
-      # `except: [:sponsor]` drops the belongs_to reader/writer, so the component
-      # reader survives and `team.sponsor` returns the Sponsor component.
+      # Exclude the belongs_to reader and its operations explicitly, so the
+      # component's reader and replacement/cache operations survive (ECS-26).
       stub_const("Team", Class.new(ApplicationEntity))
-      Team.component Sponsor, prefix: false, except: [:sponsor]
+      Team.component Sponsor, prefix: false,
+                     except: %i[sponsor sponsor= build_sponsor create_sponsor create_sponsor! reload_sponsor reset_sponsor]
 
       team = Team.create!
       expect(team.sponsor).to be_a Sponsor

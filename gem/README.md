@@ -48,6 +48,27 @@ Delegated methods carry the component's name — `user.email_address`,
 `user.name_first` — so two components can share an attribute without a clash.
 `component PublishState, prefix: false` opts a declaration back to bare names.
 
+To update a component, use ordinary attribute assignment through its reader:
+
+```ruby
+user.email.assign_attributes(address: "new@example.com")
+user.save!  # validates and saves touched components together
+# Or: user.update!(email_address: "new@example.com")
+```
+
+`user.email = Email.new(address: "replacement@example.com")` replaces the row
+atomically on a saved user; on a new user it waits for `user.save!`. Default-only
+components stay virtual. Assigning `nil` removes the row; the reader still returns
+a virtual Email. Components cannot move between owners or persisted slots.
+Replacement validation failure raises `ActiveRecord::RecordInvalid` and keeps
+the previous row; after an outer transaction rollback, reload the user.
+
+`reload_email` and `reset_email` clear both caches. The generated `build_email`,
+`create_email` and `create_email!` helpers raise `EcsRails::InvalidComponent`
+with guidance to use the reader, because those separate persistence paths bypass
+the lazy lifecycle. Inverse relationship APIs such as `user.posts.create!` remain
+ordinary Rails associations.
+
 A component can be declared more than once, under labels — a *slot*:
 
 ```ruby

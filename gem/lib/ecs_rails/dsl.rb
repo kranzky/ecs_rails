@@ -163,6 +163,7 @@ module EcsRails
       delegated = delegation_map(component_class, slot, options)
       detect_delegation_conflict!(component_class, slot, delegated)
       detect_reader_collision!(component_class, slot, delegated)
+      detect_component_operation_collision!(component_class, slot, delegated)
 
       # Registered first, so that the registry's own duplicate check (RFC-0002)
       # is what stops a doubled `component` line — before any method is defined.
@@ -178,6 +179,7 @@ module EcsRails
 
       # Must follow the has_one: see #generated_component_methods.
       define_component_reader(component_class, slot)
+      define_component_operations(component_class, slot)
 
       # RFC-0005: the delegating methods, into the same module as the reader.
       define_component_delegation(component_class, slot, delegated)
@@ -322,6 +324,38 @@ module EcsRails
 
       generated_component_methods.define_method(name) do
         ecs_component(name, slot_value) { super() }
+      end
+    end
+
+    # RFC-0006's ECS-26 amendment: Rails' has_one writers/builders otherwise
+    # bypass both the lazy cascade and its memo. Keep the supported operations
+    # explicit and leave inverse relationship associations on their native API.
+    def define_component_operations(component_class, slot)
+      name = reader_name_for(component_class, slot)
+      slot_value = slot.to_s
+      mod = generated_component_methods
+
+      mod.define_method(:"#{name}=") do |value|
+        ecs_replace_component(name, slot_value, value)
+      end
+
+      %W[build_#{name} create_#{name} create_#{name}!].each do |method|
+        mod.define_method(method) do |*|
+          raise InvalidComponent,
+                "#{method} bypasses lazy components; use #{name}.assign_attributes(...) " \
+                "and save the entity, or #{name}= to replace the component"
+        end
+      end
+
+      mod.define_method(:"reload_#{name}") do
+        @ecs_components&.delete(name)
+        super()
+        public_send(name)
+      end
+
+      mod.define_method(:"reset_#{name}") do
+        @ecs_components&.delete(name)
+        super()
       end
     end
 
@@ -602,14 +636,38 @@ module EcsRails
             delegation_conflict_message(component_class, slot, owners[clash], clash, delegated[clash])
     end
 
-    # Entity-level names something other than a component declaration has
-    # claimed, mapped to a description of the claimant. Empty here; extended by
+    # Structural association operations, mapped to their claimant. Extended by
     # EcsRails::Relationships (extended after this module, so its override wins
     # and calls `super`) with each relationship's four accessors. Conflict and
     # reader-collision detection fold these in, so `relates_to :author` and a
     # later bare `component Author` cannot both own `#author`.
     def ecs_reserved_names
-      {}
+      component_declarations.each_with_object({}) do |declaration, reserved|
+        component_operation_names(declaration.reader_name).each do |method|
+          reserved[method] = "component association for #{declaration.reader_name}"
+        end
+      end
+    end
+
+    def component_operation_names(reader)
+      %W[#{reader}= build_#{reader} create_#{reader} create_#{reader}! reload_#{reader} reset_#{reader}].map(&:to_sym)
+    end
+
+    # These wrappers now live beside delegation in the generated module. A
+    # delegated method must never silently replace a wrapper, or vice versa
+    # (ADR-0004). Check before registering or generating anything.
+    def detect_component_operation_collision!(component_class, slot, delegated)
+      reader = reader_name_for(component_class, slot)
+      siblings = component_declarations.reject do |declaration|
+        declaration.component_class_name == component_class.name && declaration.slot == slot
+      end
+      taken = siblings.flat_map { |declaration| [declaration.reader_name] + delegation_map_for(declaration).keys }
+      clash = component_operation_names(reader).find { |method| (taken + delegated.keys).include?(method) }
+      return unless clash
+
+      raise DelegationConflict,
+            "##{clash} is reserved for the #{reader} component association; " \
+            "choose another prefix or exclude the delegated method"
     end
 
     # A component reader (`post.author`) is structural — it is how you reach the
@@ -672,13 +730,17 @@ module EcsRails
     # `belongs_to`), or exclude it. `except:` takes the component's own method
     # name, which is why the map's value is passed alongside the clashing key.
     def reader_collision_message(component_class, slot, method, component_method)
+      base = component_method.to_s.chomp("=")
+      excluded = [base]
+      excluded.concat(component_operation_names(base).select { |operation| component_class.method_defined?(operation) })
+      except_names = excluded.map { |name| ":#{name}" }.join(", ")
       "##{method} on #{name} is both a component reader and a method delegated " \
         "from #{component_class.name}. A reader name is reserved. Drop " \
         "`prefix: false` so the method is delegated as " \
         "#{reader_name_for(component_class, slot)}_#{component_method}, rename the " \
         "method — for a relationship component, name the association for its " \
         "target (e.g. `belongs_to :user`) rather than the component — or exclude " \
-        "it with `component #{component_class.name}, except: [:#{component_method.to_s.chomp("=")}]`."
+        "it with `component #{component_class.name}, except: [#{except_names}]`."
     end
 
     # The message ADR-0004 specifies: the method, both components, the entity,
@@ -729,7 +791,11 @@ module EcsRails
               # ApplicationEntity (RFC-0003) — too far from convention for Rails
               # to find the inverse itself. Naming it means `user.email.entity`
               # is `user`, with no second query.
-              inverse_of: :entity
+              inverse_of: :entity,
+              # The lazy cascade owns validation and persistence, including
+              # replacements on new owners. Native has_one autosave would save
+              # a default-only virtual merely because it is in the cache.
+              autosave: false, validate: false
     end
 
     def validate_component_class!(component_class)

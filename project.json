@@ -213,6 +213,13 @@
       "humanMinutes": 0,
       "aiMinutes": 10,
       "costs": []
+    },
+    {
+      "date": "2026-09-12",
+      "summary": "ECS-26: define component association operations and implement atomic replacement with owner/slot checks, savepoint rollback protection and synchronized component/association caches. Persisted owners save replacements immediately; new owners defer to the lazy cascade and default-only components stay virtual. Nil removes a component. Generated build/create helpers reject calls intentionally with reader-update guidance; reload/reset clear both caches. Disabled native component has_one autosave/validation so the lazy cascade remains authoritative and corrected presence for virtual association targets. Added 29 regression examples, a catalogue-demo replacement case and updated exact generated-method sets. Verified 894 gem examples, 23 demo examples, YARD 100%, eager loading, package build and six HTTP pages. Documented contract and recommended usage in RFC-0006, architecture, README, changelog and friction log. Reserved association operation names against delegated-method collisions in both declaration orders; collision guidance now explicitly excludes a conflicting association reader and its generated operations.",
+      "humanMinutes": 0,
+      "aiMinutes": 15,
+      "costs": []
     }
   ]
 }

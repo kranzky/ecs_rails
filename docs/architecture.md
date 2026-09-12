@@ -160,6 +160,13 @@ touched components in the owner's transaction; invalid targets prevent the
 save. Reading an unset relationship or clearing the assignment creates no row
 (RFC-0012, ECS-25 amendment).
 
+Component assignment (`user.email = Email.new(...)`) replaces that singleton
+atomically on a persisted owner and synchronizes its caches. On a new owner it
+defers to the lazy save cascade; default-only replacements stay virtual. Use
+reader-based attribute updates to preserve the row's identity. Generated
+build/create helpers are unsupported and raise intentionally; reload/reset
+helpers clear both caches. See RFC-0006's ECS-26 amendment for the full contract.
+
 ### Validation
 
 A virtual, non-dirty component is **not validated**. `User.create!` succeeds
