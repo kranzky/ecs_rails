@@ -255,6 +255,13 @@
       "humanMinutes": 0,
       "aiMinutes": 20,
       "costs": []
+    },
+    {
+      "date": "2026-09-12",
+      "summary": "ECS-32: replaced whole-Text-table grouping and per-owner lookups with 100-owner ActiveRecord batches, per-class declaration checks, bounded slot-ordered text values and batched existing SearchVectors. Preserved entity-blind eligibility, complete documents and vector IDs using the existing reindex! API. Seven new specs cover uneven boundaries, many slots, nil text, unfamiliar types, skipped owners, repeated runs and SQL discovery. Verified 77 demo and 924 gem examples, eager loading and YARD 100%. Reproducible owned-database benchmarks at 250/2500 owners produce identical baseline/batched document checksums; at 2500 owner reads drop 2500 to 26, total SQL 8501 to 4076, and peak RSS 182.8 to 123.3 MiB. Recorded single-trial and large-owner limitations. Prepared candidate on port 3027 using isolated review data.",
+      "humanMinutes": 0,
+      "aiMinutes": 15,
+      "costs": []
     }
   ]
 }

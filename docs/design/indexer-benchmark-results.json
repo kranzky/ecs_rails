@@ -1,0 +1,88 @@
+{
+  "environment": {
+    "date": "2026-09-12",
+    "architecture": "arm64",
+    "postgresql": "14.15 (Homebrew)",
+    "measurement": "macOS /usr/bin/time -l, fresh Ruby process per mode; fixture setup excluded",
+    "fixture": "3 text slots per owner; 20% ineligible groups; persisted vectors for eligible owners; 80 repetitions of four words per slot",
+    "trials_per_case": 1
+  },
+  "results": [
+    {
+      "mode": "baseline",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 250,
+      "texts": 750,
+      "indexed": 200,
+      "batch_size": 100,
+      "seconds": 1.231,
+      "allocated_objects": 286135,
+      "queries": {
+        "total": 851,
+        "text_reads": 1,
+        "owner_reads": 250,
+        "vector_reads": 400
+      },
+      "document_sha256": "434cd78a0e81b57a241e15ca40613a635645a21cb9fb17c85e58bdc5c300db70",
+      "peak_rss_bytes": 113393664
+    },
+    {
+      "mode": "batched",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 250,
+      "texts": 750,
+      "indexed": 200,
+      "batch_size": 100,
+      "seconds": 0.671,
+      "allocated_objects": 181305,
+      "queries": {
+        "total": 409,
+        "owner_reads": 3,
+        "text_reads": 3,
+        "vector_reads": 203
+      },
+      "document_sha256": "434cd78a0e81b57a241e15ca40613a635645a21cb9fb17c85e58bdc5c300db70",
+      "peak_rss_bytes": 121061376
+    },
+    {
+      "mode": "baseline",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 2500,
+      "texts": 7500,
+      "indexed": 2000,
+      "batch_size": 100,
+      "seconds": 10.141,
+      "allocated_objects": 1952910,
+      "queries": {
+        "total": 8501,
+        "text_reads": 1,
+        "owner_reads": 2500,
+        "vector_reads": 4000
+      },
+      "document_sha256": "00b181071ab42088e84e515d506489c3b57842e0e4db72c0a79bdf96c06dfd94",
+      "peak_rss_bytes": 191627264
+    },
+    {
+      "mode": "batched",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 2500,
+      "texts": 7500,
+      "indexed": 2000,
+      "batch_size": 100,
+      "seconds": 6.776,
+      "allocated_objects": 934770,
+      "queries": {
+        "total": 4076,
+        "owner_reads": 26,
+        "text_reads": 25,
+        "vector_reads": 2025
+      },
+      "document_sha256": "00b181071ab42088e84e515d506489c3b57842e0e4db72c0a79bdf96c06dfd94",
+      "peak_rss_bytes": 129335296
+    }
+  ]
+}

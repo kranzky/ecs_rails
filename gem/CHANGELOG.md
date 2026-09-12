@@ -105,6 +105,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Bounded demo indexing** (ECS-32): the component indexer batches 100 owners,
+  reads every eligible owner's text slots together, and batches owner discovery
+  and existing vector reads. Preserves slot ordering, declaration eligibility
+  and vector identity without loading the full Text table.
+
 - **Bounded demo lists** (ECS-31): market, bulletin, people, sellers, groups,
   order history and growing detail lists use 24-row Kaminari pages. Stable
   UUID tie-breakers prevent ambiguous ordering; navigation retains filters,
