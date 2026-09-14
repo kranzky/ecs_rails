@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# A listing owned by a Company. Nine catalogue components, one relationship,
+# A listing owned by a Company. Ten catalogue components, one relationship,
 # one inverse — and no migration. The price is Money under the slot `price`,
 # the SKU an Identifier (unique per slot at the database), stock a Counter,
 # the listing lifecycle a State, categories a Tags with an allow-list, and the

@@ -7,12 +7,16 @@ require "active_support/security_utils"
 
 module EcsRails
   module Catalogue
-    # A single-use secret: password reset, invitation, API key — one slot each.
+    # A revocable secret: password reset, invitation, API key — one slot each.
     # Stores a **digest**, never the value (the `generates_token_for` shape):
     # generate once, show once, verify against the digest.
     #
     #   raw = user.reset_token.generate!(expires_in: 1.hour)   # give this to the user
-    #   user.reset_token.verify(raw)                           # => true, once, until it expires
+    #   user.reset_token.verify(raw)                           # => true while valid
+    #   user.reset_token.revoke!                               # the caller consumes/revokes it
+    #
+    # Verification does not consume the token. A single-use workflow must
+    # coordinate verification, its action and revocation in the application.
     module Token
       extend Definition
 

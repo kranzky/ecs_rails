@@ -3,9 +3,9 @@
 An Entity–Component–System reimagining of ActiveRecord that stays idiomatic to
 Ruby on Rails.
 
-> The full API below is implemented and tested (534 examples on real
-> PostgreSQL). A companion bulletin-board-and-marketplace app is built entirely on it and runs
-> live at **[ecs-rails.kranzky.com](https://ecs-rails.kranzky.com)**. See the
+> This README describes the **unreleased 0.3.0 API on `main`**, tested on real
+> PostgreSQL. Published 0.2.2 has the earlier API; use a source checkout for
+> the examples below. The companion demo is in `demo/`. See the
 > [v0.1 retrospective](https://github.com/kranzky/ecs_rails/blob/main/docs/retrospective-v0.1.md)
 > for the full story of how it was designed.
 
@@ -19,16 +19,8 @@ components that are composed onto it.
 class User < ApplicationEntity
   component Name
   component Email
-  component Avatar
+  component Image, prefix: :avatar
   marker :moderator            # a marker: no data, presence is the meaning
-end
-
-class Email < ApplicationComponent
-  validates :address, presence: true
-
-  def send_welcome_email
-    # self is the Email, never the User
-  end
 end
 ```
 
@@ -38,15 +30,15 @@ user.email                     # => #<Email> — virtual, not persisted
 user.email_address = "a@b.com" # delegated: the Email component, prefixed
 user.save!                     # now `emails` gets a row
 
-user.email.send_welcome_email  # behaviour lives on the component
+user.name.initials            # behaviour lives on the component
 user.errors[:"email.address"]  # component errors merge onto the entity
 
-User.create!(name_first: "Ada", email_address: "a@b.com")  # flat keys route too
+User.create!(name_given: "Ada", email_address: "a@b.com")  # flat keys route too
 ```
 
 Delegated methods carry the component's name — `user.email_address`,
-`user.name_first` — so two components can share an attribute without a clash.
-`component PublishState, prefix: false` opts a declaration back to bare names.
+`user.name_given` — so two components can share an attribute without a clash.
+`component Email, prefix: false` opts a declaration back to bare names.
 
 To update a component, use ordinary attribute assignment through its reader:
 
@@ -90,10 +82,15 @@ one of their tables in a single migration. After that, composing entities from
 them needs no migration at all: a slot names the role.
 
 ```ruby
+class Company < ApplicationEntity
+  component Text, prefix: :name
+end
+
 class Product < ApplicationEntity
   component Text,       prefix: :title      # product.title (the String); product.title_text (the Text)
   component Money,      prefix: :price      # product.price_money.to_s => "USD 19.99"
   component Identifier, prefix: :sku        # product.sku, unique per slot
+  component Rating                         # product.rating_stars
   component State,      prefix: :listing, states: %w[draft listed delisted]
   relates_to :seller, Company
   marker :featured
@@ -105,11 +102,11 @@ so declaring one is pure Ruby:
 
 ```ruby
 class Post < ApplicationEntity
+  component Text, prefix: :title
+  component Text, prefix: :body
+  component Counter, prefix: :likes
+  component State, prefix: :publish, states: %w[draft published]
   relates_to :author, User                  # post.author, post.author=, post.author_id
-end
-
-class Invoice < ApplicationEntity
-  relates_to :order, Order, unique: true    # at most one Invoice per Order, DB-enforced
 end
 
 class User < ApplicationEntity
@@ -120,24 +117,29 @@ class Order < ApplicationEntity
   has_one :invoice, via: :order             # needs the child's unique: true
 end
 
+class Invoice < ApplicationEntity
+  relates_to :order, Order, unique: true    # at most one Invoice per Order, DB-enforced
+end
+
 user.posts.create!(title: "Hello")
 Post.with_related(:author, user).includes_related(:author)
 ```
 
-Every v0.1 capability, working today:
+Presence, querying and preloading compose with these declarations:
 
 ```ruby
 # Lazy components — no row until a value differs from its default.
-user.avatar.persisted?                       # => false, costs no INSERT
+user.avatar_image.persisted?                  # => false, costs no INSERT
 
 # Presence / markers — a user IS a moderator when the row exists.
-user.add(:moderator); user.moderator?        # => true
+user.add(:moderator)
+user.moderator?                              # => true
 user.remove(:moderator)
 User.with_marker(:moderator)
 
 # Query by composition — avoids AR's .with (CTEs); scopes to the entity model.
-Post.with_component(PublishState, state: "published")
-User.without_component(Avatar)
+Post.with_component(State, prefix: :publish, status: "published")
+User.without_component(Image, prefix: :avatar)
 Product.with_component(Money, prefix: :price) { where("amount_cents < ?", 5000) }
 Product.order_by_component(Rating, :stars, :desc)   # sort by a component's value
 
@@ -145,23 +147,26 @@ Product.order_by_component(Rating, :stars, :desc)   # sort by a component's valu
 # Destroy children as entities: basket.items.each(&:destroy)
 
 # Preload to bound the query count on a list view.
-Post.with_component(PublishState).includes_components(Title, Body, Likes)
+Post.with_component(State, prefix: :publish, status: "published")
+    .includes_components(Text, Counter)
 ```
 
-Components are shared by *type*, so `Likes` behaves identically on a `Post` and
-a `Comment` — reuse without STI and without polymorphic associations.
+Components are shared by *type*, so a `Counter` in the `likes` slot behaves
+identically on a `Post` and a `Comment`. Entity identity uses a model
+discriminator; state and behaviour live in the reusable components.
 
 ## Getting started
 
 ```ruby
-# Gemfile — note the packaging name differs from the require path (see Names)
-gem "ecs_on_rails"
+# Gemfile — point at the gem directory in your local main checkout.
+# The source is needed for the unreleased API documented above.
+gem "ecs_on_rails", path: "/path/to/ecs_rails/gem"
 ```
 
 ```sh
 bundle install
 rails g ecs_rails:install                    # the core set; --sets core commerce for more
-rails db:migrate                             # the last migration you need
+rails db:migrate                             # one install migration for catalogue composition
 ```
 
 Entities go in `app/entities`, components in `app/entities/components`
@@ -169,6 +174,7 @@ Entities go in `app/entities`, components in `app/entities/components`
 install generator wires the autoloading and writes a one-line class per
 catalogue component. `rails g ecs_rails:component Widget size:integer` is the
 escape hatch for a bespoke table.
+Gem upgrades and bespoke components can require further migrations.
 
 After updating the gem, run `rails g ecs_rails:upgrade` and review its migrations.
 Run the generator in an environment with eager loading disabled (development by
@@ -213,9 +219,9 @@ lockfile. This tests released versions, not future Ruby/Rails releases.
 - **[Architecture](https://github.com/kranzky/ecs_rails/blob/main/docs/architecture.md)** — the invariants. Start here.
 - **[v0.1 retrospective](https://github.com/kranzky/ecs_rails/blob/main/docs/retrospective-v0.1.md)** — what was built, what
   the demo found, what's next.
-- **[ADRs](https://github.com/kranzky/ecs_rails/tree/main/docs/adr)** — why the design is the way it is (14 decisions,
-  several amended by their own demo).
-- **[RFCs](https://github.com/kranzky/ecs_rails/tree/main/docs/rfc)** — the 13 features, each one commit.
+- **[Source walkthrough](https://github.com/kranzky/ecs_rails/blob/main/docs/source-walkthrough.md)** — follow composition, validation, checkout and indexing through the code.
+- **[ADRs](https://github.com/kranzky/ecs_rails/tree/main/docs/adr)** — why the design is the way it is.
+- **[RFCs](https://github.com/kranzky/ecs_rails/tree/main/docs/rfc)** — feature contracts and their amendments.
 - **[Backlog](https://github.com/kranzky/ecs_rails/blob/main/docs/backlog.md)** — what deliberately isn't built yet.
 - **[Friction log](https://github.com/kranzky/ecs_rails/blob/main/docs/friction-log.md)** — the demo's running verdict on
   the API.

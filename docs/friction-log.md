@@ -1077,3 +1077,31 @@ and query plans; no new API is justified by this run. See
 All 924 gem examples, 77 demo examples, eager loading and YARD 100% pass. The
 benchmark uses separate worker processes, so its additional Product slots and
 conventional tables never enter the normal demo. One install migration remains.
+
+## ECS-36 — make the source a readable example
+
+**Problem.** Consumer examples still named pre-catalogue components, generated
+comments blurred file layout with schema behavior, and some lifecycle comments
+described work already completed. Checkout mixed its main sequence with address
+snapshot and payment details; its header incorrectly described entity-independent
+processing.
+
+**Change.** Reviewed declarations, generated templates, catalogue methods, query
+and preload paths, controllers, services, views and the DSL/lazy/validation code
+needed to explain them. Extracted checkout's order creation and payment steps,
+made billing selection and Period branching explicit, and named indexer owners
+clearly. Corrected catalogue examples, virtual-read costs, undeclared queries,
+revocable token semantics, layout and current validation comments. Kept the
+transaction, reload, collision and Rails-method guard rationale. Added the
+[consumer source walkthrough](source-walkthrough.md).
+
+**Verdict.** The application paths read as ordinary Rails and Ruby, with dynamic
+method generation confined to the existing DSL. No public contract, schema,
+private framework hook or dependency changed. A new separate-billing request
+example passed before refactoring; same-billing assertions also pin invoice
+snapshots. All 924 gem and 78 demo examples pass, eager loading passes, and YARD
+is 100%. Packaged fresh installation and upgrade pass on local Ruby 3.4.5 /
+Rails 8.1.3. Ten live HTTP routes return 200. The performance smoke verifies
+equivalent behavior and all twelve workload/representation warm SQL counts
+match the ECS-33 smoke; this review makes no latency claim. Quickstart expansion
+and performance improvements remain their separately tracked tasks.

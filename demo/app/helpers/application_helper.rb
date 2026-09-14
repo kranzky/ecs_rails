@@ -21,7 +21,7 @@ module ApplicationHelper
     user.name.initials.presence || "?"
   end
 
-  # A round avatar chip. Uses the Avatar component's url if set, else initials.
+  # A round avatar chip. Uses the avatar Image slot's url if set, else initials.
   def avatar_for(user, klass: "avatar")
     url = user&.avatar_image_url
     style = url.present? ? "background-image:url(#{url})" : nil

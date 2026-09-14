@@ -8,7 +8,7 @@ module EcsRails
     #
     #   component Tags, prefix: :topics, allow: %w[ruby rails ecs]
     #   post.topics_tags.add("ruby")
-    #   Post.with_component(Tags, prefix: :topics).merge(Tags.tagged("ruby"))
+    #   Post.with_component(Tags, prefix: :topics) { tagged("ruby") }
     module Tags
       extend Definition
 

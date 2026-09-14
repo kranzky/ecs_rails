@@ -4,14 +4,12 @@ module EcsRails
   # Validation error merging: `entity.valid?` reflects its components' validity,
   # and `entity.errors` reads naturally in a Rails form.
   #
-  # Implements RFC-0007. Closes the gap RFC-0006 left explicit (see its "Status"
-  # section): the save/save! contract was already atomic, but it held *by
-  # accident* — the after_save cascade's `component.save!` raised, and `save`
-  # rescued it. `valid?` itself did not yet know a dirty component was bad.
+  # Implements RFC-0007. Validates loaded persisted/dirty components before
+  # the save cascade runs, leaving untouched virtual components alone.
   #
   #   user = User.create!
   #   user.email.address = "not-an-email"
-  #   user.valid?                       # => false        (now, not just on save)
+  #   user.valid?                       # => false
   #   user.errors[:"email.address"]     # => ["is invalid"]
   #   user.errors.full_messages         # => ["Email address is invalid"]
   #   user.save                         # => false, and inserts nothing

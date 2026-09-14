@@ -23,8 +23,9 @@ module EcsRails
   # Scopes, validations, callbacks and associations all work as normal: this is
   # a plain AR model that happens to hang off an entity.
   #
-  # The one sanctioned exception to "knows nothing about entity subclasses" is a
-  # relationship component's `class_name:` — see ADR-0006.
+  # Relationship target types are supplied by the owner's declaration as slot
+  # options; the shared Relationship component does not name domain classes
+  # (ADR-0017).
   class Component < ActiveRecord::Base
     self.abstract_class = true
 
@@ -45,7 +46,7 @@ module EcsRails
     # of its own — but EcsRails::Entity sets table_name to "entities", so the
     # generated query is an ordinary select against that table. The loaded row's
     # `model` column then decides which subclass to instantiate, via
-    # Entity.discriminate_class_for_record. That is what makes `email.entity`
+    # Entity.instantiate_instance_of (ADR-0008's amendment). This makes `email.entity`
     # return a User rather than an ApplicationEntity (RFC-0003, ADR-0008).
     #
     # `optional: false` is explicit rather than inherited from

@@ -210,23 +210,13 @@ module EcsRails
           # for exactly this reason.
           component.entity_id = id
 
-          # Bang, so a failure is loud. This is a deliberate, temporary wart:
-          # non-bang `entity.save` will raise RecordInvalid rather than return
-          # false when a dirty component is invalid.
-          #
-          # The alternative is ActiveRecord's own autosave idiom, `raise
-          # ActiveRecord::Rollback`. It is worse here. Rollback raised from an
-          # after_save is swallowed by the transaction that save itself opened,
-          # so `entity.save!` would return nil and raise *nothing at all* — a
-          # silent failure to write, which is the one outcome a bang method must
-          # never have. (`throw :abort` is not an option either: after_ callbacks
-          # cannot halt a chain, and it escapes as an UncaughtThrowError.)
-          #
-          # RFC-0007 is what fixes this properly: once a dirty component's errors
-          # merge onto the entity, `entity.valid?` is false and non-bang `save`
-          # returns false before ever reaching this callback — leaving the bang
-          # here as belt-and-braces, which is exactly the role the equivalent
-          # line plays in ActiveRecord's autosave.
+          # RFC-0007 merges component errors before this callback: ordinary
+          # invalid input makes entity.save return false and save! raise. Keep
+          # the bang here as a final guard if validation fails during the
+          # cascade, so the transaction rolls back and the failure is visible.
+          # Raising ActiveRecord::Rollback here would be swallowed by the save
+          # transaction and could make save! fail silently. The original
+          # callback trade-off is recorded in RFC-0006 and RFC-0007.
           component.save!
         end
       end

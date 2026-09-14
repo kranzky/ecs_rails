@@ -65,9 +65,9 @@ module EcsRails
       @registry ||= Registry.new
     end
 
-    # The process-wide generator configuration (ADR-0010). Layout only — the
-    # runtime does not consult it; the generators and the initializer they emit
-    # do.
+    # The process-wide configuration: generator layout (ADR-0010) and the host
+    # app's Relationship/Marker class names, which are also read at runtime
+    # (ADR-0017/0018).
     #
     # @return [EcsRails::Config] the singleton configuration
     # @see #configure

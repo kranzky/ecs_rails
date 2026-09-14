@@ -6,9 +6,10 @@
 # to exactly one entity. It may hold behaviour as well as data, and it must
 # never reference an entity subclass.
 #
-# Generate one with:
+# The install generator supplies the catalogue components. For a bespoke
+# component with its own table, generate a new name:
 #
-#   rails g ecs_rails:component Email address:string verified:boolean
+#   rails g ecs_rails:component Widget size:integer
 #
 # See docs/architecture.md §1.
 class ApplicationComponent < EcsRails::Component

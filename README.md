@@ -24,7 +24,7 @@ components composed onto it.
 class User < ApplicationEntity
   component Name
   component Email
-  component Avatar
+  component Image, prefix: :avatar
 end
 
 class Email < ApplicationComponent
@@ -45,7 +45,7 @@ user.save!                     # now `emails` gets a row
 user.email.send_welcome_email  # behaviour lives on the component
 Email.where(verified: false)   # components are queried directly
 
-User.create!(name_first: "Ada", email_address: "a@b.com")  # flat keys route too
+User.create!(name_given: "Ada", email_address: "a@b.com")  # flat keys route too
 ```
 
 Components are **lazy**: if every attribute equals its default, no row exists.
