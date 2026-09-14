@@ -36,6 +36,7 @@ class PackageSmoke
       end
       install(package, @candidate_home)
       fresh_install
+      entity_layout
       legacy_upgrade
     end
     puts "Package smoke passed: Ruby #{RUBY_VERSION}, Rails #{@rails_version}."
@@ -147,13 +148,26 @@ class PackageSmoke
     blocks = File.read(File.join(@gem_root, "README.md")).scan(/<!-- #{section}:file ([\w\/.]+) -->\n```\w+\n(.*?)```/m)
     raise "Missing README files for #{section}" if blocks.empty?
 
-    blocks.each { |relative, contents| write(path, relative, contents) }
+    blocks.each do |relative, contents|
+      target = File.join(path, relative)
+      if section == "quickstart" && relative.start_with?("app/entities/")
+        generated = File.read(target)
+        # The tutorial adds links/markers by hand, but keeps every generated
+        # component declaration. Check those before applying the documented edit.
+        unless generated.lines.grep(/^  component /) == contents.lines.grep(/^  component /)
+          raise "Generated declarations differ from the README: #{relative}"
+        end
+      end
+      write(path, relative, contents)
+    end
   end
 
   def fresh_install
     url = database("fresh")
     path = application("fresh", version: @candidate_version, home: @candidate_home)
     readme_commands(path, url, "quickstart", "install")
+    readme_commands(path, url, "quickstart", "entities")
+    readme_commands(path, url, "entity", "person")
     readme_files(path, "quickstart")
     readme_commands(path, url, "quickstart", "run")
     fixture(path, "fresh")
@@ -167,6 +181,28 @@ class PackageSmoke
     readme_commands(path, url, "bespoke", "run")
     fixture(path, "bespoke")
     rails(path, url, "runner", "script/bespoke.rb")
+  end
+
+  # Prove configured paths and both kinds of namespace through real Zeitwerk,
+  # with a catalogue-only schema and no preloaded fixture constants.
+  def entity_layout
+    url = database("layout")
+    path = application("layout", version: @candidate_version, home: @candidate_home)
+    write(path, "config/initializers/ecs_layout.rb", 'EcsRails.configure { |config| config.entities_path = "app/models" }')
+    rails(path, url, "generate", "ecs_rails:install")
+    rails(path, url, "db:migrate")
+    write(path, "app/models/components/business/contact_email.rb", <<~RUBY)
+      module Business
+        class ContactEmail < ApplicationComponent
+          include EcsRails::Catalogue::Email
+          self.table_name = "emails"
+        end
+      end
+    RUBY
+    rails(path, url, "generate", "ecs_rails:entity", "CRM/Person", "name", "work:Business::ContactEmail", "home:address")
+    fixture(path, "entity_layout")
+    rails(path, url, "runner", "script/entity_layout.rb")
+    rails(path, url, "zeitwerk:check")
   end
 
   def legacy_upgrade
