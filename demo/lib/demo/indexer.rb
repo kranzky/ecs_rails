@@ -1,14 +1,10 @@
 # frozen_string_literal: true
 
 module Demo
-  # The demo's second system, beside the geocoder the marketplace will add: an
-  # entity-blind full-text indexer. It never names an entity class. It reads the
-  # `texts` component table — every Text slot of every entity — and rebuilds
-  # each entity's SearchVector from all of them. Posts get their title and body
-  # indexed; a Group would get its name, description and rules; a User its bio.
-  # Whether an entity *declares* SearchVector is the entity's business; the
-  # indexer only writes where a virtual or persisted SearchVector already makes
-  # sense, i.e. for entities that declare it.
+  # A full-text system independent of concrete entity types. It reads all Text
+  # slots for each owner and rebuilds a SearchVector only when that owner's
+  # class declares one. New entity types participate through their declarations;
+  # the system needs no list of product, post or other domain classes.
   module Indexer
     module_function
 
@@ -29,24 +25,24 @@ module Demo
     end
 
     def reindex_batch(entities)
-      eligible = []
-      entities.group_by(&:class).each do |type, owners|
-        eligible.concat(owners) if type.components.include?(SearchVector)
+      eligible_entities = []
+      entities.group_by(&:class).each do |entity_class, owners|
+        eligible_entities.concat(owners) if entity_class.components.include?(SearchVector)
       end
-      return 0 if eligible.empty?
+      return 0 if eligible_entities.empty?
 
-      entity_ids = eligible.map(&:id)
+      entity_ids = eligible_entities.map(&:id)
       # Only values are needed; avoid allocating Text models for every slot.
       values_by_entity = Text.where(entity_id: entity_ids).order(:slot)
                              .pluck(:entity_id, :value).group_by(&:first)
       vectors_by_entity = SearchVector.where(entity_id: entity_ids, slot: "").index_by(&:entity_id)
 
-      eligible.each do |entity|
+      eligible_entities.each do |entity|
         vector = vectors_by_entity[entity.id] || SearchVector.new(entity: entity)
         values = values_by_entity.fetch(entity.id, []).map(&:last)
         vector.reindex!(*values)
       end
-      eligible.size
+      eligible_entities.size
     end
     private_class_method :reindex_batch
   end
