@@ -1105,3 +1105,32 @@ Rails 8.1.3. Ten live HTTP routes return 200. The performance smoke verifies
 equivalent behavior and all twelve workload/representation warm SQL counts
 match the ECS-33 smoke; this review makes no latency claim. Quickstart expansion
 and performance improvements remain their separately tracked tasks.
+
+## ECS-34 — onboarding that runs as written
+
+**Problem.** The gem README described the API before showing a working app,
+while the demo still had Rails' placeholder README. Lifecycle boundaries and
+release/source differences were scattered through design history, and the
+package smoke's separate tutorial fixtures could drift from consumer examples.
+
+**Change.** Lead with a contacts directory built from ordinary entity files,
+Name, Email, labelled Address/Image, Text, markers and a relationship. A small
+EmailDirectory system reads across Contact and Company; a Rails page renders
+preloaded values. Explain virtual values/presence, first-read queries,
+replacement/cache helpers, new/invalid relationship targets and the distinction
+between database cascades, component callbacks and inverse-link deletion.
+Document a migrated Temperature escape hatch and published-0.2.2 upgrade.
+Replace the demo scaffold with setup/reset/test commands and a guided journey.
+Root navigation and the source walkthrough now point to consumer onboarding.
+
+**Verdict.** Package checks extract marked code and Rails commands directly
+from the README and verify persisted results, the page, one install migration,
+a second bespoke migration and upgrade data/identity preservation. All pass
+locally on Ruby 3.4.5 / Rails 8.1.3. A separate normal Rails app with the local
+path gem produces the expected tutorial output and renders Ada on port 3030.
+Fresh demo db:prepare seeds data, repeating it preserves every entity ID, and
+an explicit reset restores counts with new IDs. Nine demo routes plus the
+contacts page return 200. All 924 gem examples, 78 demo examples, eager loading
+and YARD 100% pass. No runtime API, schema or dependency changed. The entity
+generator remains separate work; hand-written declarations make this guide
+usable with the current API.

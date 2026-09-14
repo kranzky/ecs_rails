@@ -1,199 +1,330 @@
 # ECS Rails
 
-An Entity–Component–System reimagining of ActiveRecord that stays idiomatic to
-Ruby on Rails.
+Compose ordinary Rails models from reusable components. Install their tables
+once; add entity types, labelled slots, relationships and markers in Ruby.
 
-> This README describes the **unreleased 0.3.0 API on `main`**, tested on real
-> PostgreSQL. Published 0.2.2 has the earlier API; use a source checkout for
-> the examples below. The companion demo is in `demo/`. See the
-> [v0.1 retrospective](https://github.com/kranzky/ecs_rails/blob/main/docs/retrospective-v0.1.md)
-> for the full story of how it was designed.
+> This guide uses the **unreleased 0.3.0 API on main**. Published **0.2.2** has
+> the earlier API and does not provide this catalogue. Use the source checkout
+> below for this tutorial. The gem version stays unchanged until release.
 
-## The idea
+## Quickstart: a contacts directory
 
-Replace one-table-per-model with one-table-per-component. An entity is a
-lightweight identity row; all state and behaviour live in small, reusable
-components that are composed onto it.
+You need Ruby 3.2 or newer, Bundler, Rails 7.1–8.x and a running PostgreSQL
+server. Your PostgreSQL role must be able to create databases. Use a new app
+and database for this tutorial; the script creates example records each run.
 
+From a directory where you keep projects:
+
+```sh
+git clone https://github.com/kranzky/ecs_rails.git
+rails new contacts --minimal --database=postgresql
+cd contacts
+bundle add ecs_on_rails --path ../ecs_rails/gem
+```
+
+Install the catalogue, then create and migrate the app's database:
+
+<!-- quickstart:commands install -->
+```sh
+bin/rails generate ecs_rails:install --sets core commerce
+bin/rails db:create db:migrate
+```
+
+The generator writes `ApplicationEntity`, `ApplicationComponent`, catalogue
+classes and an initializer under `app/entities` and `config/initializers`.
+Components are top-level constants even though their files live in
+`app/entities/components`. The install migration creates the selected catalogue
+tables. This tutorial selects `core commerce` to include Money; omitting
+`--sets` installs just `core`.
+
+Create **app/entities/contact.rb**:
+
+<!-- quickstart:file app/entities/contact.rb -->
 ```ruby
-class User < ApplicationEntity
+class Contact < ApplicationEntity
   component Name
   component Email
+  component Address, prefix: :home
   component Image, prefix: :avatar
-  marker :moderator            # a marker: no data, presence is the meaning
+  marker :featured
+  has_many :notes, via: :author
 end
 ```
 
-```ruby
-user = User.create!            # one row in `entities`, no component rows
-user.email                     # => #<Email> — virtual, not persisted
-user.email_address = "a@b.com" # delegated: the Email component, prefixed
-user.save!                     # now `emails` gets a row
+Create **app/entities/company.rb**. A company's name is a labelled Text, while
+Name holds a person's given/family names:
 
-user.name.initials            # behaviour lives on the component
-user.errors[:"email.address"]  # component errors merge onto the entity
-
-User.create!(name_given: "Ada", email_address: "a@b.com")  # flat keys route too
-```
-
-Delegated methods carry the component's name — `user.email_address`,
-`user.name_given` — so two components can share an attribute without a clash.
-`component Email, prefix: false` opts a declaration back to bare names.
-
-To update a component, use ordinary attribute assignment through its reader:
-
-```ruby
-user.email.assign_attributes(address: "new@example.com")
-user.save!  # validates and saves touched components together
-# Or: user.update!(email_address: "new@example.com")
-```
-
-`user.email = Email.new(address: "replacement@example.com")` replaces the row
-atomically on a saved user; on a new user it waits for `user.save!`. Default-only
-components stay virtual. Assigning `nil` removes the row; the reader still returns
-a virtual Email. Components cannot move between owners or persisted slots.
-Replacement validation failure raises `ActiveRecord::RecordInvalid` and keeps
-the previous row; after an outer transaction rollback, reload the user.
-
-`reload_email` and `reset_email` clear both caches. The generated `build_email`,
-`create_email` and `create_email!` helpers raise `EcsRails::InvalidComponent`
-with guidance to use the reader, because those separate persistence paths bypass
-the lazy lifecycle. Inverse relationship APIs such as `user.posts.create!` remain
-ordinary Rails associations.
-
-A component can be declared more than once, under labels — a *slot*:
-
-```ruby
-class User < ApplicationEntity
-  component Address                      # user.address, user.address_line1
-  component Address, prefix: :business   # user.business_address, user.business_address_line1
-  component Phone,   prefix: :mobile     # user.mobile_phone
-end
-
-user.business_address.line1 = "1 St Georges Tce"
-user.save!                               # one row per slot, in one `addresses` table
-User.with_component(Address, prefix: :business, region: "WA")
-```
-
-**The catalogue.** Twenty-five standard components ship in the gem —
-`Name`, `Email`, `Address`, `Phone`, `Text`, `Money`, `State`, `Counter`,
-`Tags`, `Token`, `Period`, ... — and `rails g ecs_rails:install` creates every
-one of their tables in a single migration. After that, composing entities from
-them needs no migration at all: a slot names the role.
-
+<!-- quickstart:file app/entities/company.rb -->
 ```ruby
 class Company < ApplicationEntity
   component Text, prefix: :name
-end
-
-class Product < ApplicationEntity
-  component Text,       prefix: :title      # product.title (the String); product.title_text (the Text)
-  component Money,      prefix: :price      # product.price_money.to_s => "USD 19.99"
-  component Identifier, prefix: :sku        # product.sku, unique per slot
-  component Rating                         # product.rating_stars
-  component State,      prefix: :listing, states: %w[draft listed delisted]
-  relates_to :seller, Company
-  marker :featured
+  component Email
 end
 ```
 
-Cross-entity links are rows in one `relationships` table, created at install,
-so declaring one is pure Ruby:
+Create **app/entities/note.rb**. Links use an installed shared table:
 
+<!-- quickstart:file app/entities/note.rb -->
 ```ruby
-class Post < ApplicationEntity
-  component Text, prefix: :title
+class Note < ApplicationEntity
   component Text, prefix: :body
-  component Counter, prefix: :likes
-  component State, prefix: :publish, states: %w[draft published]
-  relates_to :author, User                  # post.author, post.author=, post.author_id
+  relates_to :author, Contact
 end
-
-class User < ApplicationEntity
-  has_many :posts, via: :author             # the parent side: a real collection of Posts
-end
-
-class Order < ApplicationEntity
-  has_one :invoice, via: :order             # needs the child's unique: true
-end
-
-class Invoice < ApplicationEntity
-  relates_to :order, Order, unique: true    # at most one Invoice per Order, DB-enforced
-end
-
-user.posts.create!(title: "Hello")
-Post.with_related(:author, user).includes_related(:author)
 ```
 
-Presence, querying and preloading compose with these declarations:
+Create **app/services/email_directory.rb** (create the directory too). A system
+is just Ruby operating on components. This one reads addresses from any entity
+type without knowing Contact or Company:
 
+<!-- quickstart:file app/services/email_directory.rb -->
 ```ruby
-# Lazy components — no row until a value differs from its default.
-user.avatar_image.persisted?                  # => false, costs no INSERT
-
-# Presence / markers — a user IS a moderator when the row exists.
-user.add(:moderator)
-user.moderator?                              # => true
-user.remove(:moderator)
-User.with_marker(:moderator)
-
-# Query by composition — avoids AR's .with (CTEs); scopes to the entity model.
-Post.with_component(State, prefix: :publish, status: "published")
-User.without_component(Image, prefix: :avatar)
-Product.with_component(Money, prefix: :price) { where("amount_cents < ?", 5000) }
-Product.order_by_component(Rating, :stars, :desc)   # sort by a component's value
-
-# Inverses: `dependent:` removes link rows, never the child entities.
-# Destroy children as entities: basket.items.each(&:destroy)
-
-# Preload to bound the query count on a list view.
-Post.with_component(State, prefix: :publish, status: "published")
-    .includes_components(Text, Counter)
+class EmailDirectory
+  def self.call
+    Email.where.not(address: nil).order(:address).distinct.pluck(:address)
+  end
+end
 ```
 
-Components are shared by *type*, so a `Counter` in the `likes` slot behaves
-identically on a `Post` and a `Comment`. Entity identity uses a model
-discriminator; state and behaviour live in the reusable components.
+Create **script/quickstart.rb**:
 
-## Getting started
-
+<!-- quickstart:file script/quickstart.rb -->
 ```ruby
-# Gemfile — point at the gem directory in your local main checkout.
-# The source is needed for the unreleased API documented above.
-gem "ecs_on_rails", path: "/path/to/ecs_rails/gem"
+contact = Contact.create!
+puts contact.email.persisted?          # false: a virtual component
+puts contact.email.verified            # false: its column default
+
+contact.update!(name_given: "Ada", name_family: "Lovelace",
+                email_address: "ada@example.test", home_address_country: "AU")
+contact.add(:featured)
+contact.notes.create!(body: "Met at Ruby meetup")
+Company.create!(name: "Analytical Engines", email_address: "hello@example.test")
+
+puts contact.name.initials             # AL: behavior on the component
+puts contact.notes.sole.body           # Met at Ruby meetup
+puts Contact.with_component(Address, prefix: :home, country: "AU").count # 1
+puts Contact.with_marker(:featured).count # 1
+puts EmailDirectory.call              # ada@example.test, then hello@example.test
 ```
 
+Run it:
+
+<!-- quickstart:commands run -->
 ```sh
-bundle install
-rails g ecs_rails:install                    # the core set; --sets core commerce for more
-rails db:migrate                             # one install migration for catalogue composition
+bin/rails runner script/quickstart.rb
+bin/rails zeitwerk:check
 ```
 
-Entities go in `app/entities`, components in `app/entities/components`
-([configurable](https://github.com/kranzky/ecs_rails/blob/main/docs/adr/0010-entity-component-directory-layout.md)); the
-install generator wires the autoloading and writes a one-line class per
-catalogue component. `rails g ecs_rails:component Widget size:integer` is the
-escape hatch for a bespoke table.
-Gem upgrades and bespoke components can require further migrations.
+There is still one migration. `name_given` delegates to `name.given`;
+`home_address_country` delegates to the labelled Address. A primary attribute
+also gets the bare slot name: `note.body` is the string, `note.body_text` is
+its component. The relationship reader `note.author` returns a Contact or nil.
 
-After updating the gem, run `rails g ecs_rails:upgrade` and review its migrations.
-Run the generator in an environment with eager loading disabled (development by
-default): an old app needs the generated component classes before it can fully
-boot with the new gem. After migrating and updating marker declarations, verify
-the completed app with `bin/rails zeitwerk:check`.
-It verifies the existing catalogue's columns, unique/partial indexes and foreign
-keys, then generates compatible additions. An incompatible definition reports
-its table, actual properties and expected properties before writing files;
-prepare an explicit repair/backfill migration and rerun upgrade. It never
-converts existing values or replaces constraints automatically. New constraints
-still validate existing rows when the generated migration runs.
+### Render the directory
+
+Create **app/controllers/contacts_controller.rb**:
+
+<!-- quickstart:file app/controllers/contacts_controller.rb -->
+```ruby
+class ContactsController < ApplicationController
+  def index
+    @contacts = Contact.order(:id).preload(:name, :email)
+  end
+end
+```
+
+Create **app/views/contacts/index.html.erb**:
+
+<!-- quickstart:file app/views/contacts/index.html.erb -->
+```erb
+<h1>Contacts</h1>
+<% @contacts.each do |contact| %>
+  <p><%= contact.name_given %>: <%= contact.email_address %></p>
+<% end %>
+```
+
+Replace **config/routes.rb**:
+
+<!-- quickstart:file config/routes.rb -->
+```ruby
+Rails.application.routes.draw do
+  root "contacts#index"
+end
+```
+
+Run `bin/rails server` and open <http://localhost:3000>. You should see
+**Ada: ada@example.test**. For a larger working application, follow the
+[demo setup](https://github.com/kranzky/ecs_rails/blob/main/demo/README.md).
+
+## Presence, values and query costs
+
+An absent component reader returns a virtual object with database column
+defaults. **A first read on a saved entity may issue a SELECT even when no row
+exists.** The reader caches the result; preloading can avoid per-entity reads.
+`contact.avatar_image.persisted?` is false until that slot has a stored row.
+`contact.has?(Image, prefix: :avatar)` checks persisted presence; a virtual
+object's Ruby truthiness does not imply presence.
+
+Saving an entity persists touched components whose values differ from defaults.
+An untouched virtual component skips validation; touched components validate and
+merge errors onto the entity. `save` returns false for invalid input, and `save!`
+raises `ActiveRecord::RecordInvalid`. Blank strings differ from nil defaults;
+normalize optional form fields with `.presence` when blank should mean absent.
+Changing a persisted component back to defaults does not automatically delete it.
+
+`with_component` and `without_component` filter **stored rows**, not virtual
+values. For example, a virtual Counter reads zero but does not match a query for
+a stored Counter with `count: 0`. Component queries need not be declared on the
+entity and can match independently stored rows. Markers make presence explicit:
+`add(:featured)`, `remove(:featured)` and `featured?`.
+
+Use ordinary Rails association preloads for the slots a page reads, as the
+controller above does. `includes_components(Address)` loads all declared Address
+slots. Relationship targets can be nested with
+`Note.preload(author_relationship: { target: :name })`. See the
+[performance comparison](https://github.com/kranzky/ecs_rails/blob/main/docs/design/performance-comparison.md)
+for measured costs.
+
+## Updating, replacing and deleting
+
+Prefer reader updates followed by an entity save:
+
+```ruby
+contact.email.assign_attributes(address: "new@example.test")
+contact.save!
+# Equivalent delegated update:
+contact.update!(email_address: "new@example.test")
+```
+
+| Component operation | Behavior |
+| --- | --- |
+| `contact.email` | Returns a cached component, possibly virtual. |
+| `contact.email = Email.new(address: "replacement@example.test")` | Replaces atomically and immediately on a saved owner; waits for owner save on a new owner. Default-only replacements remain virtual. |
+| `contact.email = nil` | Removes the row; the next reader returns a virtual component. |
+| `contact.reload_email` / `contact.reset_email` | Discard both component and association caches. Reload reads immediately; reset defers the read. |
+| `contact.build_email`, `create_email`, `create_email!` | Intentionally raise `EcsRails::InvalidComponent`; use the reader or delegated update. |
+
+Replacement preserves the original row if validation fails, raising
+`ActiveRecord::RecordInvalid` on a saved owner. Wrong types, another owner's
+component and moving a persisted component between slots are rejected. After
+an outer transaction rolls back, reload the owner before using its cached state.
+Raw association mutation and validation-bypassing writes are outside this contract.
+
+**Relationships.** `note.author = Contact.new(...)` saves that new target, its
+touched components and the link in the owner's transaction when `note.save!`
+runs. An invalid target prevents the save. Wrong-type objects raise on assignment;
+wrong-type or missing IDs fail validation, exposed under
+`note.errors["author_relationship.target"]`. Nil is allowed; reading an unset
+link or assigning then clearing a new target creates no target or link row.
+Targets accept subclasses of the declared class. The foreign key protects
+existence, but writes bypassing validation also bypass the Ruby target-type check.
+
+**Deletion.** Destroying an entity deletes its component rows through PostgreSQL
+`ON DELETE CASCADE`, bypassing those components' destroy callbacks. Explicit
+`contact.email.destroy` runs component destroy callbacks and resets the owner
+reader to virtual defaults. Replacement also runs the old component's destroy
+callbacks, then makes the replacement available through the reader. Destroying a relationship's
+target nullifies `target_id`; reload a previously cached owner to observe it.
+The referring entity survives.
+
+Inverse collection APIs such as `contact.notes.create!` are supported Rails
+associations. Deleting from an inverse collection removes the **link**, not the
+child entity. `dependent: :destroy` / `:delete_all` on an inverse also applies to
+link rows. To destroy the notes themselves, explicitly call
+`contact.notes.each(&:destroy)` before destroying the contact. Choose this in the
+application: invoices, for example, may need to survive their former owner.
+
+## When another migration is needed
+
+“Zero migrations” means **composition from the installed catalogue**. New slots,
+markers and entity types reuse those tables. New catalogue schema versions and
+bespoke storage still need migrations.
+
+For a bespoke temperature reading, run:
+
+<!-- bespoke:commands install -->
+```sh
+bin/rails generate ecs_rails:component Temperature celsius:decimal
+bin/rails db:migrate
+```
+
+Inspect the generated migration before running it; decimal precision, scale and
+defaults are application choices. The generator also writes a model and an
+RSpec example (running that spec requires an RSpec Rails setup). Create
+**app/entities/weather_station.rb**:
+
+<!-- bespoke:file app/entities/weather_station.rb -->
+```ruby
+class WeatherStation < ApplicationEntity
+  component Temperature
+end
+```
+
+Create **script/temperature.rb**:
+
+<!-- bespoke:file script/temperature.rb -->
+```ruby
+station = WeatherStation.create!(temperature_celsius: 21.5)
+puts station.reload.temperature.celsius # 21.5
+```
+
+<!-- bespoke:commands run -->
+```sh
+bin/rails runner script/temperature.rb
+bin/rails zeitwerk:check
+```
+
+This app now has a second migration and a dedicated `temperatures` table.
+
+## Upgrading an existing installation
+
+Back up the database and try the upgrade on a copy first. For published 0.2.2,
+change the Gemfile entry to the source path above, then run `bundle update
+ecs_on_rails`. Use development (without eager loading) for generation: an old
+app needs the new generated classes before it can fully boot. Set
+`RAILS_ENV=development` in your shell, then run:
+
+<!-- upgrade:commands generate -->
+```sh
+bin/rails generate ecs_rails:upgrade
+```
+
+Choose `--sets core commerce` if the app needs Money. Review the generated
+migrations, then run:
+
+<!-- upgrade:commands migrate -->
+```sh
+bin/rails db:migrate
+```
+
+The upgrade moves old relationship backing tables and marker rows into shared
+tables, preserving their IDs and links. Replace old marker declarations such as
+`component Moderator` with `marker :moderator`, update `add(Moderator)` /
+`remove(Moderator)` calls to symbols, and remove the obsolete marker class file
+after migration. Review the generator's output for your app's names. Bespoke
+components remain; do not remove their classes.
+
+<!-- upgrade:commands verify -->
+```sh
+bin/rails zeitwerk:check
+bin/rails generate ecs_rails:upgrade
+```
+
+Also run your application's tests. Repeating the generator on the completed
+schema should produce no new migration. Upgrade checks column definitions,
+unique/partial indexes and foreign keys before writing files. Incompatible
+structures need an explicit repair/backfill migration; the generator does not
+convert values or silently replace constraints. New constraints validate existing
+rows when the migration runs. See the
+[upgrade design](https://github.com/kranzky/ecs_rails/blob/main/docs/rfc/0017-catalogue.md).
 
 ## Compatibility checks
 
 The gem requires Ruby >= 3.2 and Rails >= 7.1, < 9. The representative CI matrix
 covers Ruby/Rails 3.2/7.1, 3.2/7.2, 3.3/8.0, 3.2/8.1, 3.4/8.1 and 4.0/8.1,
 resolving current patches within each Rails minor. It runs PostgreSQL gem specs
-and packaged fresh-install/0.2.2-upgrade checks for each entry. The demo suite,
+and packaged fresh-install/0.2.2-upgrade checks for each entry. The package
+check extracts the marked code and Rails command blocks from this README,
+then verifies the tutorial's stored results, rendered page and bespoke component. The demo suite,
 eager loading and a 100% public-API documentation gate run separately.
 
 JSON is constrained to version 2 because supported Rails decoders still use
@@ -216,7 +347,7 @@ lockfile. This tests released versions, not future Ruby/Rails releases.
 
 ## Documentation
 
-- **[Architecture](https://github.com/kranzky/ecs_rails/blob/main/docs/architecture.md)** — the invariants. Start here.
+- **[Architecture](https://github.com/kranzky/ecs_rails/blob/main/docs/architecture.md)** — the invariants and design background.
 - **[v0.1 retrospective](https://github.com/kranzky/ecs_rails/blob/main/docs/retrospective-v0.1.md)** — what was built, what
   the demo found, what's next.
 - **[Source walkthrough](https://github.com/kranzky/ecs_rails/blob/main/docs/source-walkthrough.md)** — follow composition, validation, checkout and indexing through the code.

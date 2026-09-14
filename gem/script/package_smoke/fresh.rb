@@ -5,16 +5,22 @@ raise "Loaded checkout source instead of installed package" unless File.realpath
 raise "Unexpected JSON major" unless Gem.loaded_specs.fetch("json").version < Gem::Version.new("3")
 raise "Expected one install migration" unless Rails.root.glob("db/migrate/*.rb").size == 1
 
-contact = Contact.create!
-raise "Reading inserted a component" if contact.email.persisted?
-contact.update!(name_given: "Ada", email_address: "ada@example.test", shipping_address_country: "AU")
-contact.featured = true
-contact.save!
-note = Note.create!(author: contact, body: "Composed without another migration")
-raise "Flat assignment lost an email" unless contact.reload.email_address == "ada@example.test"
-raise "Labelled slot was lost" unless contact.shipping_address.country == "AU"
-raise "Marker query failed" unless Contact.with_marker(:featured).exists?(contact.id)
-raise "Relationship query failed" unless Contact.find(contact.id).notes.sole.id == note.id
+# The actual README runner created these rows in a separate process. Verify
+# persisted outcomes so an attractive but non-working example fails CI.
+contact = Contact.sole
+raise "Flat assignment lost a name/email" unless contact.name.initials == "AL" && contact.email_address == "ada@example.test"
+raise "Labelled slot was lost" unless contact.home_address.country == "AU"
+raise "Marker query failed" unless Contact.with_marker(:featured).sole.id == contact.id
+raise "Component query failed" unless Contact.with_component(Address, prefix: :home, country: "AU").sole.id == contact.id
+raise "Relationship/inverse failed" unless contact.notes.sole.body == "Met at Ruby meetup" && Note.sole.author == contact
+raise "Primary value failed" unless Company.sole.name == "Analytical Engines"
+raise "System missed an entity type" unless EmailDirectory.call == ["ada@example.test", "hello@example.test"]
+raise "Reading persisted the avatar" if contact.avatar_image.persisted? || contact.has?(Image, prefix: :avatar)
+empty = Contact.create!
+raise "Virtual default changed" unless empty.email.verified == false && !empty.email.persisted?
+empty.save!
+raise "Saving a virtual default inserted a row" if Email.exists?(entity_id: empty.id)
+empty.destroy!
 
 Rails.application.eager_load!
 require "rack/mock"

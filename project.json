@@ -276,6 +276,13 @@
       "humanMinutes": 0,
       "aiMinutes": 25,
       "costs": []
+    },
+    {
+      "date": "2026-09-14",
+      "summary": "ECS-34: replaced API-first onboarding with an executable contacts tutorial, cross-entity email directory and rendered Rails page. Added lifecycle/association/relationship/deletion guidance, a bespoke Temperature example and explicit published-0.2.2 upgrade steps; replaced the demo scaffold with setup, reset, test and guided-journey instructions. Package smoke executes actual README blocks and verifies stored outcomes, rendering, one install plus bespoke migration, and upgrade identity preservation. Verified source-path Rails setup, clean demo seed/repeat/reset semantics, ten HTTP routes, 924 gem and 78 demo examples, eager loading and YARD 100%. Prepared the tutorial review candidate on port 3030. No runtime API/schema/dependency changes.",
+      "humanMinutes": 0,
+      "aiMinutes": 20,
+      "costs": []
     }
   ]
 }

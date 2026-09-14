@@ -9,6 +9,7 @@ require "open3"
 require "pg"
 require "rubygems/package"
 require "securerandom"
+require "shellwords"
 require "tmpdir"
 require "uri"
 
@@ -113,7 +114,7 @@ class PackageSmoke
   def rails(path, database, *arguments, home: @candidate_home)
     command(RbConfig.ruby, "bin/rails", *arguments,
             chdir: path, gem_home: home, database: database,
-            preparing: ["generate", "db:migrate"].include?(arguments.first))
+            preparing: ["generate", "db:create", "db:migrate"].include?(arguments.first))
   end
 
   def write(path, relative, contents)
@@ -126,41 +127,46 @@ class PackageSmoke
     write(path, "script/#{name}.rb", File.read(File.join(@fixtures, "#{name}.rb")))
   end
 
+  # Marked README blocks are the tutorial's source, not copies maintained in a
+  # fixture. Run commands as argument arrays so documentation is never a shell
+  # program, and fail if a required block disappears.
+  def readme_commands(path, url, section, name)
+    marker = "#{section}:commands #{name}"
+    blocks = File.read(File.join(@gem_root, "README.md")).scan(/<!-- #{Regexp.escape(marker)} -->\n```sh\n(.*?)```/m)
+    raise "Expected one README block: #{marker}" unless blocks.size == 1
+
+    blocks.first.first.lines.reject { |line| line.strip.empty? }.each do |line|
+      executable, *arguments = Shellwords.split(line)
+      raise "Expected bin/rails in #{marker}" unless executable == "bin/rails"
+
+      rails(path, url, *arguments)
+    end
+  end
+
+  def readme_files(path, section)
+    blocks = File.read(File.join(@gem_root, "README.md")).scan(/<!-- #{section}:file ([\w\/.]+) -->\n```\w+\n(.*?)```/m)
+    raise "Missing README files for #{section}" if blocks.empty?
+
+    blocks.each { |relative, contents| write(path, relative, contents) }
+  end
+
   def fresh_install
     url = database("fresh")
     path = application("fresh", version: @candidate_version, home: @candidate_home)
-    rails(path, url, "generate", "ecs_rails:install", "--sets", "core", "commerce")
-    rails(path, url, "db:migrate")
-    write(path, "app/entities/contact.rb", <<~CODE)
-      class Contact < ApplicationEntity
-        component Name
-        component Email
-        component Address, prefix: :shipping
-        marker :featured
-        has_many :notes, via: :author
-      end
-    CODE
-    write(path, "app/entities/note.rb", <<~CODE)
-      class Note < ApplicationEntity
-        component Text, prefix: :body
-        relates_to :author, Contact
-      end
-    CODE
-    write(path, "app/controllers/contacts_controller.rb", <<~CODE)
-      class ContactsController < ApplicationController
-        def index
-          @contacts = Contact.includes_components(Name, Email)
-        end
-      end
-    CODE
-    write(path, "app/views/contacts/index.html.erb", '<h1>Contacts</h1><% @contacts.each do |contact| %><p><%= contact.name_given %>: <%= contact.email_address %></p><% end %>')
-    write(path, "config/routes.rb", 'Rails.application.routes.draw { root "contacts#index" }')
+    readme_commands(path, url, "quickstart", "install")
+    readme_files(path, "quickstart")
+    readme_commands(path, url, "quickstart", "run")
     fixture(path, "fresh")
     rails(path, url, "runner", "script/fresh.rb")
-    rails(path, url, "zeitwerk:check")
     before = Dir.glob(File.join(path, "db/migrate/*"))
-    rails(path, url, "generate", "ecs_rails:upgrade", "--sets", "core", "commerce")
+    readme_commands(path, url, "upgrade", "generate")
     raise "Current package generated another migration" unless Dir.glob(File.join(path, "db/migrate/*")) == before
+
+    readme_commands(path, url, "bespoke", "install")
+    readme_files(path, "bespoke")
+    readme_commands(path, url, "bespoke", "run")
+    fixture(path, "bespoke")
+    rails(path, url, "runner", "script/bespoke.rb")
   end
 
   def legacy_upgrade
@@ -184,15 +190,14 @@ class PackageSmoke
     gemfile = File.join(path, "Gemfile")
     File.write(gemfile, File.read(gemfile).sub('gem "ecs_on_rails", "= 0.2.2"', "gem \"ecs_on_rails\", \"= #{@candidate_version}\""))
     command(RbConfig.ruby, "-S", "bundle", "update", "ecs_on_rails", "--local", chdir: path)
-    rails(path, url, "generate", "ecs_rails:upgrade")
-    rails(path, url, "db:migrate")
+    readme_commands(path, url, "upgrade", "generate")
+    readme_commands(path, url, "upgrade", "migrate")
     write(path, "app/entities/member.rb", "class Member < ApplicationEntity\n  component Handle\n  marker :moderator\nend\n")
     File.delete(File.join(path, "app/entities/components/moderator.rb"))
     fixture(path, "upgraded")
     rails(path, url, "runner", "script/upgraded.rb")
-    rails(path, url, "zeitwerk:check")
     before = Dir.glob(File.join(path, "db/migrate/*"))
-    rails(path, url, "generate", "ecs_rails:upgrade")
+    readme_commands(path, url, "upgrade", "verify")
     raise "Repeated upgrade generated another migration" unless Dir.glob(File.join(path, "db/migrate/*")) == before
   end
 end

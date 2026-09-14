@@ -8,6 +8,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Executable onboarding** (ECS-34): the gem README starts with a contacts
+  tutorial covering composition, querying, a cross-entity system and rendering.
+  Package CI executes its actual snippets, upgrade commands and bespoke storage
+  example. The demo guide documents setup, resets, tests and a guided journey;
+  lifecycle guidance covers virtual reads, replacements, targets and deletion.
+
 - **Source walkthrough and readability review** (ECS-36): follow installation,
   composition, checkout and entity-independent indexing through the gem and demo.
   Simplified checkout orchestration and Period branching; corrected catalogue
