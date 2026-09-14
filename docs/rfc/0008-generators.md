@@ -117,3 +117,33 @@ convention; the RSpec assumption was implicit; the migration class name was
 unspecified.
 
 **New open question:** is the PostgreSQL floor 13+? If so, drop `pgcrypto`.
+
+## Amendment: reference-only entity generator (ECS-11)
+
+`bin/rails generate ecs_rails:entity Person name email mobile:phone work:phone home:address`
+writes only `app/entities/person.rb`, inheriting `ApplicationEntity`. Positional
+references retain their order. `component` selects a default slot;
+`label:component` selects a labelled slot. Components may be snake_case or
+CamelCase, with `/` or `::` namespaces. Labels use the DSL's lowercase method
+segment syntax. The command resolves existing concrete component classes through
+Rails autoloading; it never creates components, tables or migrations.
+
+Generation validates names, references and duplicate component/slot pairs before
+writing. Missing references point to install/upgrade with the needed catalogue
+sets or the bespoke component generator. Other DSL method conflicts remain
+reported when the generated declaration loads; advanced delegation and slot
+options are ordinary Ruby edits. No temporary entity class or registry mutation
+is needed to generate source.
+
+The configured entity path and Rails namespace handling apply. Namespaced entity
+source uses absolute component references to avoid lexical shadowing. Existing
+files use Thor's normal conflict/skip/force flow; unrelated existing constants
+are checked through Rails' generator collision check. Destroying generated files
+can run without resolving their former components. Relationship and marker flags
+are deferred; add those declarations directly to the generated class.
+
+Checks cover exact output, namespaces, configured paths, invalid/missing/abstract
+references, duplicates, collision handling, dry runs and reversal. The packaged
+fresh-app check runs the documented quickstart and Person commands, eagerly loads
+the results and persists independent Phone and Address slots after one install
+migration.

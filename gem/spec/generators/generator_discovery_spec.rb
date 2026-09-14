@@ -17,6 +17,11 @@ RSpec.describe "generator discovery" do
       .to eq(EcsRails::Generators::ComponentGenerator)
   end
 
+  it "resolves ecs_rails:entity" do
+    expect(Rails::Generators.find_by_namespace("entity", "ecs_rails"))
+      .to eq(EcsRails::Generators::EntityGenerator)
+  end
+
   # ADR-0017 removed it: a relationship needs no table of its own.
   it "no longer resolves ecs_rails:relationship" do
     expect(Rails::Generators.find_by_namespace("relationship", "ecs_rails")).to be_nil
