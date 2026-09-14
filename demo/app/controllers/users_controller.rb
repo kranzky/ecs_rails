@@ -22,7 +22,7 @@ class UsersController < ApplicationController
     # Flat mass assignment (ADR-0016): each prefixed key is a delegated writer,
     # so ActiveRecord routes it to the right component and the save cascade
     # persists only the components that ended up dirty. `.presence` matters: a
-    # blank bio must stay nil (the column default) or the Bio component is
+    # blank bio must stay nil (the column default) or the bio Text slot is
     # dirtied by "" and gets a row for nothing.
     user = User.new(
       name_given: cap(user_params[:first], 50),

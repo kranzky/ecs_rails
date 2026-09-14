@@ -32,6 +32,23 @@ RSpec.describe "checkout submissions", type: :request do
     expect(user.orders.count).to eq 1
     expect(product.reload.stock).to eq 4
     expect(order.shipping_address.line1).to eq "1 Main St"
+    expect(order.billing_address.line1).to eq "1 Main St"
+    expect(order.invoice.billing_address.line1).to eq "1 Main St"
+  end
+
+  it "keeps separate billing details and normalizes address fields before snapshotting" do
+    params = form_params(basket.revision)
+    params[:checkout].merge!(same_billing: "0", billing: { line1: "  PO Box 42  ", line2: "  ", locality: "x" * 90 })
+
+    post user_checkout_path(user), params: params
+
+    order = user.orders.sole
+    expect(response).to redirect_to(order_path(order))
+    expect(order.shipping_address.line1).to eq "1 Main St"
+    expect(order.billing_address.line1).to eq "PO Box 42"
+    expect(order.billing_address.line2).to be_nil
+    expect(order.billing_address.locality).to eq "x" * 80
+    expect(order.invoice.billing_address.line1).to eq "PO Box 42"
   end
 
   it "rejects missing and invalid revisions without placing an order" do

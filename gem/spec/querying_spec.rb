@@ -16,8 +16,8 @@ require "spec_helper"
 #     attribute-condition and injection-safety tests.
 #   - Post declares Name and Avatar, for the chain/AND and NOT EXISTS tests.
 #   - PublishState is declared on NO entity but owns a `state` column, so it
-#     exercises "querying a component the entity does not declare is a valid,
-#     always-empty query, not an error" (RFC-0010).
+#     exercises queries without declarations, both with and without stored rows
+#     (RFC-0010).
 RSpec.describe "component query DSL" do
   describe "with_component" do
     it "returns entities that have the component row" do
@@ -120,7 +120,7 @@ RSpec.describe "component query DSL" do
         .to be_a ActiveRecord::Relation
     end
 
-    it "is a valid, always-empty query for a component the entity does not declare" do
+    it "returns no matches for an undeclared component with no stored rows" do
       Post.create!
       # PublishState is declared on no entity, and no rows exist: not an error,
       # just empty (RFC-0010).

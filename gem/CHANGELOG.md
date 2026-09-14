@@ -8,6 +8,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Source walkthrough and readability review** (ECS-36): follow installation,
+  composition, checkout and entity-independent indexing through the gem and demo.
+  Simplified checkout orchestration and Period branching; corrected catalogue
+  examples, generated comments and lifecycle/query/token documentation to match
+  existing behavior. No API, schema or dependency changes.
+
 - **Reproducible performance evidence** (ECS-33): the companion demo includes
   equivalent ECS/conventional Rails catalogue, detail, checkout, indexing and
   slot-preload workloads, behavioral verification and a CI smoke run. Published

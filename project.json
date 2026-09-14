@@ -269,6 +269,13 @@
       "humanMinutes": 0,
       "aiMinutes": 25,
       "costs": []
+    },
+    {
+      "date": "2026-09-14",
+      "summary": "ECS-36: reviewed consumer declarations, generators, catalogue behavior, query/render paths and supporting DSL internals. Simplified checkout orchestration, billing selection, indexer names and Period branching; corrected stale catalogue, virtual-read, query, token, layout and validation examples/comments. Added consumer source walkthrough covering installation/composition, checkout and entity-independent indexing. Separate-billing regression passed before refactoring; verified 924 gem and 78 demo examples, eager loading, YARD 100%, packaged fresh install/upgrade and ten HTTP routes. Benchmark equivalence passes with unchanged warm SQL counts across all twelve cases. Prepared candidate launcher on port 3029; no API/schema/dependency changes.",
+      "humanMinutes": 0,
+      "aiMinutes": 25,
+      "costs": []
     }
   ]
 }

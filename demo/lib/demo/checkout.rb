@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 module Demo
-  # The marketplace's first transactional System: a PORO that turns a Basket
-  # into a paid Order with an Invoice, in one database transaction. It touches
-  # nine entity types' components and no entity subclass beyond the ones it
-  # creates. Everything that could change later is COPIED onto the order —
-  # addresses, unit prices, titles — never linked (design §4).
+  # A transactional application service: turns a Basket into a paid Order and
+  # Invoice. It knows the marketplace's entity types and coordinates their
+  # components; Demo::Indexer shows a system independent of concrete types.
+  # Addresses, unit prices and titles are copied onto the order so later edits
+  # cannot change the sale. All writes happen in the basket's transaction.
   #
   # Basket revisions identify submissions; completed repeats return the original
   # order. Locks and request records belong to this application (ECS-28).
@@ -36,33 +36,44 @@ module Demo
         raise Error, "the basket is empty" if items.empty?
         stocks = lock_stock(items)
 
-        order = Order.new(customer: @basket.customer, checkout_request: request,
-                          order_number: Numbering.next("order_number", "ORD"))
-        order.shipping_address.assign_attributes(@shipping.slice(*ADDRESS_FIELDS))
-        order.billing_address.assign_attributes(@billing.slice(*ADDRESS_FIELDS))
-        order.save!
-
+        order = create_order(request)
         total = items.reduce(Money.new(amount_cents: 0, currency: "USD")) do |sum, item|
           sum + add_line(order, item, stocks)  # Money#+ guards the currency
         end
-        order.total_money.assign_attributes(amount_cents: total.amount_cents, currency: total.currency)
-        order.fulfilment_state.status = "pending"
-        order.save!
-
-        PaymentGateway.charge!(order.total_money, card_number: @card_number)   # raises → rollback
-        order.fulfilment_state.transition!(:paid, event: "pay")
-
+        pay_order(order, total)
         Invoice.issue_for(order)
         @basket.clear!
         order
       end
-    rescue PaymentGateway::Declined => e
-      raise Error, "Payment failed: #{e.message}"
-    rescue Money::CurrencyMismatch => e
-      raise Error, "The basket mixes currencies: #{e.message}"
+    rescue PaymentGateway::Declined => error
+      raise Error, "Payment failed: #{error.message}"
+    rescue Money::CurrencyMismatch => error
+      raise Error, "The basket mixes currencies: #{error.message}"
     end
 
     private
+
+    # Allocate the number and save the address snapshots while the caller holds
+    # the transaction. Numbering's advisory lock lasts through the commit.
+    def create_order(request)
+      order = Order.new(customer: @basket.customer, checkout_request: request,
+                        order_number: Numbering.next("order_number", "ORD"))
+      order.shipping_address.assign_attributes(@shipping.slice(*ADDRESS_FIELDS))
+      order.billing_address.assign_attributes(@billing.slice(*ADDRESS_FIELDS))
+      order.save!
+      order
+    end
+
+    def pay_order(order, total)
+      order.total_money.assign_attributes(amount_cents: total.amount_cents, currency: total.currency)
+      order.fulfilment_state.status = "pending"
+      order.save!
+
+      # A decline raises inside the same transaction, rolling back every line,
+      # stock change and snapshot before an invoice can be issued.
+      PaymentGateway.charge!(order.total_money, card_number: @card_number)
+      order.fulfilment_state.transition!(:paid, event: "pay")
+    end
 
     def submission_revision
       return @basket.revision if @revision.nil?

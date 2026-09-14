@@ -2,7 +2,7 @@
 
 <div class="page-head">
   <h1>Market</h1>
-  <p>Listed products from every seller. Every filter below is one <code>with_component</code> clause; the sort is <code>order_by_component</code>.</p>
+  <p>Listed products from every seller. Component filters compose with Rails scopes; price queries include products whose price is the virtual default of zero.</p>
 </div>
 
 <%= form_with url: products_path, method: :get, class: "filters" do |f| %>

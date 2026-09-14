@@ -56,7 +56,7 @@ module EcsRails
     # ActiveRecord and treated as data, never SQL (ADR-0011).
     #
     # The component need *not* be declared on this entity: querying a component
-    # the entity never declares is a valid, always-empty query, not an error.
+    # the entity never declares is valid and matches any stored rows (RFC-0010).
     #
     # @example Filtering by a component's attributes
     #   Post.with_component(PublishState, state: "published")
@@ -258,10 +258,10 @@ module EcsRails
 
     # A queryable component is any concrete EcsRails::Component. Unlike the
     # presence API (RFC-0009), it need NOT be declared on this entity: querying
-    # `Post.with_component(Avatar)` when Post has no Avatar is a valid,
-    # always-empty query, not an error (RFC-0010) — and keeps the DSL from
-    # needing the registry. Anything that is not a concrete component raises
-    # InvalidComponent, before any database work.
+    # `Post.with_component(Avatar)` is valid even without that declaration. It
+    # matches stored rows, if any (RFC-0010), without consulting the registry.
+    # Anything that is not a concrete component raises InvalidComponent before
+    # any database work.
     def ecs_validate_queryable_component!(component_class)
       unless component_class.is_a?(Class) && component_class < EcsRails::Component
         raise InvalidComponent,

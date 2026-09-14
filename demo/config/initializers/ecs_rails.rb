@@ -3,8 +3,8 @@
 # ECS Rails directory layout (ADR-0010).
 #
 # entities_path is the single knob: entities live here, components live in its
-# `components` subdirectory. Set it to "app/models" to restore the old
-# single-directory layout (no collapse is needed then, since nothing nests).
+# `components` subdirectory. Set it to "app/models" to put entities there and
+# components in app/models/components; the collapse below is still needed.
 EcsRails.configure do |config|
   config.entities_path = "app/entities"
 end

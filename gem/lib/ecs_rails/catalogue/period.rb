@@ -29,7 +29,11 @@ module EcsRails
       # @param other [Period, Range<Time>]
       # @return [Boolean] whether the two periods share any instant
       def overlaps?(other)
-        other_start, other_end = other.respond_to?(:starts_at) ? [other.starts_at, other.ends_at] : [other.begin, other.end]
+        other_start, other_end = if other.respond_to?(:starts_at)
+          [other.starts_at, other.ends_at]
+        else
+          [other.begin, other.end]
+        end
         return false if starts_at.nil? || other_start.nil?
 
         (ends_at.nil? || other_start < ends_at) && (other_end.nil? || starts_at < other_end)

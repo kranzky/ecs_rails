@@ -98,11 +98,9 @@ module EcsRails
     # Singleton methods are inherited, so every entity subclass answers it.
     extend DSL
 
-    # The `relates_to` DSL (RFC-0012): cross-entity links, decided by ADR-0013.
-    # Extended after DSL because it is built on `component` — it dynamically
-    # defines a backing component class and declares it — and reuses DSL's own
-    # private reader/delegation resolution for its collision check. See
-    # EcsRails::Relationships.
+    # The `relates_to` DSL (RFC-0012, ADR-0017): each link is a labelled slot
+    # of the shared Relationship component. Extended after DSL because it uses
+    # `component` and its reader/delegation collision checks.
     extend Relationships
 
     # The component query DSL (RFC-0010): with_component / without_component.

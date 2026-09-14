@@ -17,7 +17,7 @@ module Demo
 
       posts = [
         [ada,   "Composable domain models",  "Entities are identity; components carry the state and behaviour. It reads like plain Rails.", "published"],
-        [grace, "On lazy components",        "A component costs nothing until a value differs from its default. No row, no query, no ceremony.", "published"],
+        [grace, "On lazy components",        "A component has no stored row until a value differs from its default. Reading may query; preloading keeps lists efficient.", "published"],
         [alan,  "Markers without STI",       "A user *is* a moderator exactly when the row exists. Presence is the whole meaning.", "published"],
         [katherine, "Querying by composition", "with_component filters entities by what they're made of, and scopes to the entity type for free.", "published"],
         [grace, "A rough draft",             "Not ready for the world yet — still thinking this one through.", "draft"]

@@ -22,8 +22,8 @@ module EcsRails
   # and `ecs_rails:upgrade`. (`ecs_rails:relationship` was removed by ADR-0017:
   # a relationship needs no table of its own.)
   #
-  # They read {EcsRails.config} to place their files (ADR-0010). The gem runtime
-  # never consults that config — only these do.
+  # They read the layout in {EcsRails.config} to place their files (ADR-0010).
+  # The runtime separately uses its Relationship/Marker class-name settings.
   module Generators
     # `rails g ecs_rails:install`
     #

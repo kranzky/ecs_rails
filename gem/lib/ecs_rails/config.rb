@@ -18,14 +18,14 @@ module EcsRails
   # `relates_to` and `marker`, on every call, so a reloaded constant is picked
   # up. They exist for the one app whose domain already has a `Relationship` or
   # a `Marker`; everyone else leaves the defaults.
-  # @example Restoring the pre-ADR-0010 single-directory layout
+  # @example Placing entities under app/models (components remain in a subdirectory)
   #   # config/initializers/ecs_rails.rb
   #   EcsRails.configure { |config| config.entities_path = "app/models" }
   #
   # @see EcsRails.configure
   class Config
     # Entities land here; the default is the ADR-0010 layout. Set it to
-    # `"app/models"` to restore the pre-ADR-0010 single-directory layout.
+    # `"app/models"` to place entities there and components in its subdirectory.
     #
     # @return [String] the directory entities are generated into
     attr_accessor :entities_path
