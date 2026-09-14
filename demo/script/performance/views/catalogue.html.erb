@@ -1,0 +1,10 @@
+<h1>Catalogue</h1>
+<p><%= total %> matching products; first page</p>
+<% products.each do |product| %>
+  <article data-id="<%= product[:id] %>">
+    <h2><%= product[:title] %></h2>
+    <p><%= product[:seller] %> · <%= product[:tags].join(", ") %></p>
+    <p><%= product[:currency] %> <%= format("%.2f", product[:amount_cents] / 100.0) %></p>
+    <p><%= product[:stars] %> stars · <%= product[:review_count] %> reviews · <%= product[:stock] %> in stock</p>
+  </article>
+<% end %>

@@ -262,6 +262,13 @@
       "humanMinutes": 0,
       "aiMinutes": 15,
       "costs": []
+    },
+    {
+      "date": "2026-09-14",
+      "summary": "ECS-33: added a reproducible owned-PostgreSQL benchmark comparing actual ECS demo code with conventional Rails across catalogue/detail rendering, committed checkout, indexing and all/selected-slot projections. Verified equivalent rendered output, filters/order, virtual prices, documents, commit visibility, decline rollback, replay, stock and snapshots before measurement. Published raw samples, schema/index sizes, EXPLAIN plans, hardware and limitations for 100/1000/5000 products with 20 warm repetitions; conventional Rails is faster and allocates less in every measured workload. At 5000 products ECS selected-slot projection falls from 20.20 to 5.68 ms and 11378 to 2626 allocations using existing Rails preloads. Added CI smoke/artifact. Verified 924 gem and 77 demo examples, eager loading and YARD 100%; built candidate package and prepared review launcher on port 3028. No gem API or production migration changes.",
+      "humanMinutes": 0,
+      "aiMinutes": 25,
+      "costs": []
     }
   ]
 }

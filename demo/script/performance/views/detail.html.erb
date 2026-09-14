@@ -1,0 +1,15 @@
+<article data-id="<%= product[:id] %>">
+  <h1><%= product[:title] %></h1>
+  <p><%= product[:seller] %> · <%= product[:sku] %> · <%= product[:status] %></p>
+  <p><%= product[:currency] %> <%= format("%.2f", product[:amount_cents] / 100.0) %></p>
+  <p><%= product[:stars] %> stars · <%= product[:stock] %> in stock · <%= product[:tags].join(", ") %></p>
+  <p><%= product[:body] %></p>
+</article>
+<h2><%= total %> reviews</h2>
+<% reviews.each do |review| %>
+  <article data-id="<%= review[:id] %>">
+    <p><%= review[:author] %> · <%= review[:stars] %> stars · <%= review[:date] %></p>
+    <% if review[:avatar] %><img src="<%= review[:avatar] %>" alt=""><% end %>
+    <p><%= review[:body] %> · <%= review[:likes] %> likes</p>
+  </article>
+<% end %>
