@@ -1,8 +1,8 @@
 # Reading an ECS Rails application
 
 This walkthrough follows the unreleased 0.3.0 source. Start with the
-[gem README](../gem/README.md#getting-started) for installation, then follow
-these three paths through the companion demo. You can understand the application
+[gem README](../gem/README.md#quickstart-a-contacts-directory) for installation,
+then follow these three paths through the companion demo. You can understand the application
 without starting with the gem's metaprogramming.
 
 ## From installation to an entity
@@ -107,5 +107,5 @@ and Rails-generated method guards explain correctness constraints. Read their
 linked ADRs/RFCs before changing those boundaries. The ECS-36 review preserves
 these contracts and dependencies, simplifies checkout's orchestration and
 Period's branching, and corrects examples and comments that had drifted from
-the catalogue API. Quickstart expansion remains ECS-34; performance changes
-have their own 0.4.0 issues.
+the catalogue API. The executable quickstart and demo setup are documented in
+their READMEs; performance changes have their own 0.4.0 issues.

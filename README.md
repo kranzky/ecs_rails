@@ -9,7 +9,7 @@ Ruby on Rails.
 > [ecs-rails.kranzky.com](https://ecs-rails.kranzky.com). See the
 > [v0.1 retrospective](docs/retrospective-v0.1.md) and the launch post,
 > ["Composing Rails"](docs/blog/composing-rails.md). **v2 is under way** on
-> `main`: *zero migrations after install* —
+> `main`: *zero migrations for composition from the installed catalogue* —
 > [ADR-0017](docs/adr/0017-shared-relationships-table.md),
 > [ADR-0018](docs/adr/0018-catalogue-in-the-gem.md) — tracked in Linear team
 > ECS and released once, as 0.3.0.
@@ -27,13 +27,6 @@ class User < ApplicationEntity
   component Image, prefix: :avatar
 end
 
-class Email < ApplicationComponent
-  validates :address, presence: true
-
-  def send_welcome_email
-    # self is the Email, never the User
-  end
-end
 ```
 
 ```ruby
@@ -42,22 +35,21 @@ user.email                     # => #<Email> — virtual, not persisted
 user.email_address = "a@b.com" # delegated to the Email component, prefixed
 user.save!                     # now `emails` gets a row
 
-user.email.send_welcome_email  # behaviour lives on the component
+user.name.initials            # behaviour lives on the component
 Email.where(verified: false)   # components are queried directly
 
 User.create!(name_given: "Ada", email_address: "a@b.com")  # flat keys route too
 ```
 
-Components are **lazy**: if every attribute equals its default, no row exists.
-They are shared by *type*, so `Likes` behaves identically on a `Post` and a
-`Comment` — no STI for state, no polymorphic associations, no inheritance.
+Components are **lazy**: reading an absent component returns virtual defaults;
+only a value differing from its default needs a new row. The first read may
+query. Components are shared by type: a Counter can serve a Post's likes or a
+Product's stock in different labelled slots.
 
-Systems are plain Ruby objects that process components without ever loading an
-entity:
-
-```ruby
-Email.pending.find_each(&:send_welcome_email)
-```
+Systems are plain Ruby objects operating on components across entity types.
+Follow the executable **[contacts quickstart](gem/README.md#quickstart-a-contacts-directory)**
+to install, compose, query, run a system and render a page. For the full sample
+application, use **[the demo setup](demo/README.md)**.
 
 ## Layout
 
@@ -93,11 +85,12 @@ Core Team gems.
 
 ## Start here
 
-**[docs/architecture.md](docs/architecture.md)** — the invariants. Everything
-else refers back to it.
+Start with the [quickstart](gem/README.md#quickstart-a-contacts-directory) or
+[demo guide](demo/README.md). Read the [source walkthrough](docs/source-walkthrough.md)
+when you want to follow the implementation.
 
-Then [the ADRs](docs/adr/) for why the design is the way it is, and
-[the RFCs](docs/rfc/) for what's built and what's next.
+The [architecture](docs/architecture.md), [ADRs](docs/adr/) and [RFCs](docs/rfc/)
+provide the invariants, design decisions and feature contracts.
 
 Worth knowing up front, because the honest version is more useful than the pitch:
 
@@ -107,7 +100,7 @@ Worth knowing up front, because the honest version is more useful than the pitch
 - **[ADR-0003](docs/adr/0003-virtual-components-skip-validation.md)** — a
   component can't require its own presence. That's the entity's business.
 - **[ADR-0005](docs/adr/0005-one-component-per-entity.md)** — one component
-  instance per entity, always. The biggest constraint the design imposes.
+  instance per entity **per slot**. Labels allow the same type to be reused.
 
 ## Development
 
