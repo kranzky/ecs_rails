@@ -1047,3 +1047,33 @@ for batching (115.5 vs 108.1 MiB); these single-process observations include
 Rails boot and are not universal performance claims. The bounded unit is a
 batch's text bytes, so a single enormous owner can still be expensive. See
 [reproduction and raw measurements](design/batched-indexer.md).
+
+## ECS-33 — measure the cost of composition
+
+**Problem.** Bounded SQL counts did not explain latency, allocation or storage
+costs relative to conventional Rails. Type-wide preloads also load every slot,
+even when a consumer needs only title and stock.
+
+**Change.** An owned-database runner installs the actual demo schema, adds a
+conventional counterpart, seeds equivalent deterministic data, and verifies
+rendering, filters/order, virtual zero prices, complete search vectors, committed
+checkout, decline rollback, replay, stock and immutable snapshots. Fresh Ruby
+workers measure six workloads with separate first calls and warm distributions.
+CI runs a 100-product equivalence/timing smoke and uploads the result; local
+measurements cover 100, 1,000 and 5,000 products. Both schemas, raw samples,
+table/index sizes and read plans are checked in beside the methodology.
+
+**Verdict.** Conventional Rails is faster and allocates less throughout this
+experiment. At 5,000 products, median ECS/conventional checkout is 55.59/14.32 ms
+and indexing is 2,973.74/1,541.85 ms. Existing association-name preloads reduce
+the ECS title/stock projection from 20.20 to 5.68 ms, 13 to 3 reads and 11,378 to
+2,626 allocations. Populated table/index totals are 48.680/24.602 MiB; the ECS
+figure includes the whole installed catalogue. These are local, warm-database,
+mostly populated, slot-heavy workloads, not production capacity or sparse-domain
+claims. Follow-ups target actual preload needs, vector reloads, checkout reads
+and query plans; no new API is justified by this run. See
+[the report and raw data](design/performance-comparison.md).
+
+All 924 gem examples, 77 demo examples, eager loading and YARD 100% pass. The
+benchmark uses separate worker processes, so its additional Product slots and
+conventional tables never enter the normal demo. One install migration remains.

@@ -17,6 +17,8 @@ Rails.
    change.
 3. **[rfc/](rfc/)** — what gets built, one feature at a time.
 4. **[backlog.md](backlog.md)** — what deliberately isn't being built.
+5. **[Performance comparison](design/performance-comparison.md)** — reproducible
+   ECS/conventional Rails workloads, measured costs, query plans and limitations.
 
 ## Architecture Decision Records
 

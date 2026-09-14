@@ -96,6 +96,13 @@ jobs:
       - run: bin/rails db:prepare
       - run: bundle exec rspec
       - run: bin/rails zeitwerk:check
+      - name: Equivalent ECS and conventional Rails benchmark smoke
+        run: bundle exec ruby script/compare_performance.rb --smoke --output ../tmp/performance-smoke.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: performance-comparison-smoke
+          path: tmp/performance-smoke.json
+          if-no-files-found: error
 
   documentation:
     name: public API documentation

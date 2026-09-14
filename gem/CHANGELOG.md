@@ -8,6 +8,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Reproducible performance evidence** (ECS-33): the companion demo includes
+  equivalent ECS/conventional Rails catalogue, detail, checkout, indexing and
+  slot-preload workloads, behavioral verification and a CI smoke run. Published
+  local measurements include latency distributions, allocations, SQL, storage
+  and query plans at 100/1,000/5,000 products. See
+  [the comparison](../docs/design/performance-comparison.md) for costs and
+  limitations; no gem API or production schema change.
+
 - **Component queries beyond equality, and ordering** (RFC-0018).
   `with_component` takes a block run on the component's relation
   (`{ where("amount_cents < ?", 5000) }`, `{ tagged("ruby") }`,
