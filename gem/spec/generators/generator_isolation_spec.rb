@@ -18,6 +18,7 @@ RSpec.describe "generator load isolation" do
   {
     "install" => "EcsRails::Generators::InstallGenerator",
     "component" => "EcsRails::Generators::ComponentGenerator",
+    "entity" => "EcsRails::Generators::EntityGenerator",
     "upgrade" => "EcsRails::Generators::UpgradeGenerator"
   }.each do |name, const|
     it "loads #{name}_generator.rb without a pre-loaded ActiveRecord" do

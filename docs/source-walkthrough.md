@@ -16,6 +16,10 @@ its class name and the gem supplies behavior and schema. Compare the demo's
 Zeitwerk collapse keeps component constants top-level even though their files
 live under `components/`.
 
+The [entity generator](../gem/lib/generators/ecs_rails/entity/entity_generator.rb)
+turns references such as `name home:address` into ordinary declarations without
+adding storage. The quickstart runs it before adding links and markers in Ruby.
+
 [Product](../demo/app/entities/product.rb) is the useful next file. Its title
 and body are two slots of Text, its price is Money, and its seller is a
 relationship to Company. `product.title` returns Text's primary value;

@@ -99,6 +99,24 @@ It indexes complete Text documents for owners that declare SearchVector and
 prints the number processed. New eligible entity types need no changes to the
 system's code.
 
+## Compose another entity
+
+From `demo/`, the catalogue is already installed. Generate a Person with two
+Phone slots and an Address:
+
+```sh
+RAILS_ENV=development bin/rails generate ecs_rails:entity Person name email mobile:phone work:phone home:address
+RAILS_ENV=development bin/rails runner 'person = Person.create!(name_given: "Grace", mobile_phone_e164: "+12025550101", work_phone_e164: "+12025550102"); puts person.reload.mobile_phone'
+RAILS_ENV=development bin/rails zeitwerk:check
+```
+
+This adds `app/entities/person.rb` and no migration. Use the same `DATABASE_URL`
+as your development server if you configured one. The new type is available in
+the console; the existing People page lists User records and does not acquire a
+new interface automatically. Remove the example records with `Person.destroy_all`
+in the console before `bin/rails destroy ecs_rails:entity Person` removes the
+class file. The generator does not delete data.
+
 ## Tests and checks
 
 Use a **separate test database**. The tests reset data and include committed

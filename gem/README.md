@@ -37,7 +37,17 @@ Components are top-level constants even though their files live in
 tables. This tutorial selects `core commerce` to include Money; omitting
 `--sets` installs just `core`.
 
-Create **app/entities/contact.rb**:
+Generate the three entity classes from installed components:
+
+<!-- quickstart:commands entities -->
+```sh
+bin/rails generate ecs_rails:entity Contact name email home:address avatar:image
+bin/rails generate ecs_rails:entity Company name:text email
+bin/rails generate ecs_rails:entity Note body:text
+```
+
+The generator writes only Ruby classes. Add the marker and inverse relationship
+to **app/entities/contact.rb**, so its declarations read:
 
 <!-- quickstart:file app/entities/contact.rb -->
 ```ruby
@@ -51,7 +61,7 @@ class Contact < ApplicationEntity
 end
 ```
 
-Create **app/entities/company.rb**. A company's name is a labelled Text, while
+The generated **app/entities/company.rb** is ready to use. A company's name is a labelled Text, while
 Name holds a person's given/family names:
 
 <!-- quickstart:file app/entities/company.rb -->
@@ -62,7 +72,8 @@ class Company < ApplicationEntity
 end
 ```
 
-Create **app/entities/note.rb**. Links use an installed shared table:
+Add `relates_to :author, Contact` to **app/entities/note.rb**. Links use an
+installed shared table:
 
 <!-- quickstart:file app/entities/note.rb -->
 ```ruby
@@ -154,6 +165,43 @@ end
 Run `bin/rails server` and open <http://localhost:3000>. You should see
 **Ada: ada@example.test**. For a larger working application, follow the
 [demo setup](https://github.com/kranzky/ecs_rails/blob/main/demo/README.md).
+
+## Generating more entities
+
+After installing and migrating, this command writes `app/entities/person.rb`:
+
+<!-- entity:commands person -->
+```sh
+bin/rails generate ecs_rails:entity Person name email mobile:phone work:phone home:address
+```
+
+```ruby
+class Person < ApplicationEntity
+  component Name
+  component Email
+  component Phone, prefix: :mobile
+  component Phone, prefix: :work
+  component Address, prefix: :home
+end
+```
+
+References name **existing component classes**, not database column types.
+`name` or `Name` selects the default slot; `home:address` selects an Address
+labelled `home`. Use `/` or `::` for namespaces, such as `CRM/Person` and
+`billing/contact_email`. The entity goes under the configured `entities_path`;
+components resolve through the app's normal autoloading, including renamed or
+bespoke classes. Namespaced output uses absolute component references.
+
+Missing components produce install/upgrade/`--sets` guidance and the bespoke
+component escape hatch. Invalid references and duplicate component/slot pairs
+fail before writing. Other method/delegation conflicts are reported by the DSL
+when the class loads; edit ordinary Ruby for `only:`, `except:`, slot options,
+relationships and markers. Run `bin/rails zeitwerk:check` after editing.
+
+Existing files use Rails/Thor's conflict handling; `--skip` preserves them,
+`--force` overwrites, and `--pretend` previews. `bin/rails destroy ecs_rails:entity
+Person` removes the generated file, not its database records. The generator emits
+no migration, component file or empty spec.
 
 ## Presence, values and query costs
 
@@ -380,7 +428,7 @@ Set `DATABASE_URL` to point the suite at a different database.
 | RubyGems gem | `ecs_on_rails` |
 | Ruby module | `EcsRails` |
 | `require` | `ecs_rails` |
-| Generators | `ecs_rails:install`, `:component`, `:upgrade` |
+| Generators | `ecs_rails:install`, `:component`, `:entity`, `:upgrade` |
 
 Only the published gem name differs. RubyGems collapses `-`, `_` and case when
 comparing names, so `ecs-rails`, `ecs_rails` and `ecsrails` are one name — and

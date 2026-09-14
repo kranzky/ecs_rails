@@ -8,6 +8,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Entity generator** (ECS-11): `rails generate ecs_rails:entity Person name
+  email mobile:phone work:phone home:address` writes a plain entity class from
+  existing components, including labelled slots and namespaces. Validates names,
+  concrete references and duplicates before writing; respects configured paths
+  and normal file collision handling. Emits no migration. Quickstart/package
+  checks now exercise generated classes and independent persisted slots.
+
 - **Executable onboarding** (ECS-34): the gem README starts with a contacts
   tutorial covering composition, querying, a cross-entity system and rendering.
   Package CI executes its actual snippets, upgrade commands and bespoke storage

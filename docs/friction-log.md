@@ -1134,3 +1134,29 @@ contacts page return 200. All 924 gem examples, 78 demo examples, eager loading
 and YARD 100% pass. No runtime API, schema or dependency changed. The entity
 generator remains separate work; hand-written declarations make this guide
 usable with the current API.
+
+## ECS-11 — generate declarations without generating storage
+
+**Problem.** The quickstart needed users to type repetitive entity declarations,
+while Rails' ordinary model generator implies a new table. Slot labels and
+existing catalogue classes needed a concise, reference-only command.
+
+**Change.** `ecs_rails:entity` writes only the named entity file, with components
+in argument order and `label:component` expanded to `prefix:`. It resolves
+concrete classes through normal autoloading, rejects malformed names and duplicate
+component/slot pairs before writes, and reports install/sets or bespoke-generator
+guidance for missing references. Configured paths, namespaces, renamed components,
+Thor skip/force/pretend and reversal are covered. It adds no temporary entity,
+registry mutation, dependency or private framework hook. Relationships, markers
+and advanced delegation options remain ordinary Ruby edits.
+
+**Verdict.** Twenty-seven new specs bring the gem suite to 951 passing examples;
+78 demo examples, eager loading and YARD 100% pass. Package checks execute the
+updated README's generated Contact/Company/Note declarations and exact Person
+command. An untouched generated Person persists independent mobile/work Phone
+slots and an Address after one install migration. A separate fresh app verifies
+app/models, a namespaced entity and a namespaced component via Zeitwerk. Published
+0.2.2 upgrade checks still pass. The generated Person candidate on port 3032
+renders both numbers and the home country; nine demo routes also return 200.
+The new spec group isolates the existing Person fixture from other feature specs;
+the complete suite passes with the previously failing randomized seed.

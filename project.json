@@ -283,6 +283,13 @@
       "humanMinutes": 0,
       "aiMinutes": 20,
       "costs": []
+    },
+    {
+      "date": "2026-09-14",
+      "summary": "ECS-11: added reference-only entity generator with labelled slots, namespaces, configured paths, concrete-reference validation, duplicate rejection and Thor collision/pretend/reversal behavior. Updated executable quickstart, demo guide and RFC amendment. Twenty-seven new specs bring gem checks to 951 passing examples; 78 demo examples, eager loading and YARD 100% pass. Packaged fresh apps verify generated declarations, exact Person command, independent Phone/Address slots after one migration, custom paths/namespaces and published-0.2.2 upgrade. Prepared generated Person candidate on port 3032 and verified it plus nine demo routes. No schema, dependency or private framework-hook changes.",
+      "humanMinutes": 0,
+      "aiMinutes": 20,
+      "costs": []
     }
   ]
 }
