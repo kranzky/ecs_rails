@@ -31,13 +31,22 @@ module EcsRails
         [lat, lng] if geocoded?
       end
 
-      # Sets the coordinate and stamps `geocoded_at`.
+      # Records a lookup's answer: sets the coordinate and stamps `geocoded_at`.
+      # A lookup that found nothing is recorded as `locate(nil, nil)` — the
+      # stamp still says the address was tried, so a system need not retry it
+      # until the address changes, and stale coordinates never outlive it.
       #
-      # @param lat [Numeric]
-      # @param lng [Numeric]
+      # `at:` defaults to now. A geocoding system that decides staleness by
+      # comparing `geocoded_at` with the address's `updated_at` should pass
+      # the `updated_at` it read instead: an edit landing while the lookup runs
+      # is then still newer than the stamp, and the next run recomputes it.
+      #
+      # @param lat [Numeric, nil]
+      # @param lng [Numeric, nil]
+      # @param at [Time] the moment (or address version) the answer describes
       # @return [void]
-      def locate(lat, lng)
-        assign_attributes(lat: lat, lng: lng, geocoded_at: Time.current)
+      def locate(lat, lng, at: Time.current)
+        assign_attributes(lat: lat, lng: lng, geocoded_at: at)
       end
     end
   end
