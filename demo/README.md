@@ -83,21 +83,28 @@ want to retain.
    no network call and charges no real card; a zero total is also declined.
 5. Open the resulting order and invoice. Their copied addresses, titles and
    prices preserve the sale even when the source product changes.
+6. Open **/geocoder** (linked from How it works). One address is waiting and one
+   is a place the simulated gazetteer does not know. Run the geocoder, then edit
+   a person's address and run it again: only that address is redone, for users
+   and sellers alike, and `db/migrate` still holds one file. Coordinates are
+   simulated.
 
 The app uses an **acting-as picker**, not authenticated sessions. It is example
 software, not a production storefront. Follow
 [the source walkthrough](../docs/source-walkthrough.md) for the declarations,
 query/render path, checkout locks and generic indexer.
 
-To run the entity-independent system from the command line:
+To run the entity-independent systems from the command line:
 
 ```sh
 RAILS_ENV=development bin/rails runner 'puts Demo::Indexer.call'
+RAILS_ENV=development bin/rails demo:geocode
 ```
 
-It indexes complete Text documents for owners that declare SearchVector and
-prints the number processed. New eligible entity types need no changes to the
-system's code.
+The indexer rebuilds complete Text documents for owners that declare
+SearchVector; the geocoder fills each Geolocation paired with an Address in
+the same slot. Each prints the number processed. New eligible entity types need
+no changes to either system's code.
 
 ## Compose another entity
 

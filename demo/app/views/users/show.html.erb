@@ -58,6 +58,7 @@
                 <%= f.text_field "contact[#{slot}][#{field}]", value: address.public_send(field), class: "input", maxlength: (field == "country" ? 2 : 80) %>
               </div>
             <% end %>
+            <%= location_note(address, @user.public_send("#{slot}_geolocation")) %>
           </div>
         <% end %>
         <div class="field"><%= f.label "contact[mobile]", "Mobile phone (E.164)" %><%= f.text_field "contact[mobile]", value: @user.mobile_phone.e164, class: "input", placeholder: "+61412345678" %></div>

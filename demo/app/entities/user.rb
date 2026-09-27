@@ -14,6 +14,9 @@ class User < ApplicationEntity
   # phones; the slot tells them apart.
   component Address, prefix: :shipping    # user.shipping_address
   component Address, prefix: :billing     # user.billing_address
+  # Each address slot's pair, filled by Demo::Geocoder (simulated lookup).
+  component Geolocation, prefix: :shipping # user.shipping_geolocation
+  component Geolocation, prefix: :billing  # user.billing_geolocation
   component Phone,   prefix: :mobile      # user.mobile_phone
   component Phone,   prefix: :work        # user.work_phone
   marker :moderator

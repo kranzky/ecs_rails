@@ -1,0 +1,93 @@
+<% content_for :title, "Geocoder" %>
+
+<div class="page-head">
+  <h1>The geocoder: one system, every address</h1>
+  <p><code>Demo::Geocoder</code> gives each <code>Address</code> a
+     <code>Geolocation</code> in the same slot. It reads the
+     <code>addresses</code> table, so sellers' and customers' addresses are
+     handled in one pass, and it never names <code>User</code> or
+     <code>Company</code>.</p>
+</div>
+
+<div class="stack">
+  <div class="notice-draft">
+    <strong>Simulated coordinates.</strong> Lookups use a short built-in list of
+    city centres (<code>Demo::Gazetteer</code>), nudged per address. No service
+    is called, and the points are not real locations.
+  </div>
+
+  <div class="card">
+    <div class="btn-row" style="justify-content:space-between;align-items:center;margin-bottom:.75rem">
+      <h2 class="section-title" style="margin:0">Addresses · <%= @addresses.total_count %></h2>
+      <%= button_to "Run the geocoder", geocoder_path, class: "btn btn--sm btn--primary" %>
+    </div>
+    <p class="hint" style="margin:0 0 .75rem">An address is <em>waiting</em>
+       when its pair is missing or older than the address. Edit an address on a
+       <%= link_to "person's page", users_path %>, come back, and run the
+       geocoder again: only that address is redone. Orders and invoices keep
+       address snapshots with no <code>Geolocation</code> declared, so they are
+       not paired and never geocoded.</p>
+    <div class="table-scroll">
+      <table class="table">
+        <thead>
+          <tr><th scope="col">Owner</th><th scope="col">Slot</th><th scope="col">Address</th><th scope="col">Geolocation</th><th scope="col">State</th></tr>
+        </thead>
+        <tbody>
+          <% @addresses.each do |address| %>
+            <% geolocation = @geolocations[[address.entity_id, address.slot]] %>
+            <% state = geocoding_state(address, geolocation) %>
+            <tr>
+              <td>
+                <span class="badge"><%= address.entity.class.name %></span>
+                <%= link_to owner_label(address.entity), address.entity %>
+              </td>
+              <td><code><%= address.slot.presence || "(default)" %></code></td>
+              <td><%= address.one_line.presence || "—" %></td>
+              <td class="coords">
+                <% if geolocation&.geocoded? %>
+                  <%= coordinates_for(geolocation) %>
+                <% else %>
+                  <span style="color:var(--faint)">—</span>
+                <% end %>
+              </td>
+              <td><%= geocoding_badge(state) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <%= paginate @addresses, window: 1, outer_window: 1 %>
+  </div>
+
+  <div class="grid grid--2">
+    <div class="card">
+      <h3 class="section-title">Declared, not configured</h3>
+      <p class="prose">Pairing is two declarations in the same slot. The
+         geocoder asks each owner's class whether it declares the pair, so a
+         new entity type joins in without a change to the system.</p>
+      <pre class="code-block"><code>class User &lt; ApplicationEntity
+  component Address,     prefix: :shipping
+  component Geolocation, prefix: :shipping
+  component Address,     prefix: :billing
+  component Geolocation, prefix: :billing
+end
+
+class Company &lt; ApplicationEntity
+  component Address
+  component Geolocation
+end</code></pre>
+    </div>
+    <div class="card">
+      <h3 class="section-title">Still one migration</h3>
+      <p class="prose">The <code>geolocations</code> table was created by
+         <code>rails g ecs_rails:install</code> along with the rest of the
+         catalogue. Adding the geocoder needed no new table and no migration.
+         <code>db/migrate</code> holds:</p>
+      <pre class="code-block"><code><% @migrations.each do |name| %><%= name %>
+<% end %></code></pre>
+      <p class="prose" style="margin-bottom:0">Read the
+         <a href="https://github.com/kranzky/ecs_rails/blob/main/demo/lib/demo/geocoder.rb">geocoder's source</a>
+         on GitHub.</p>
+    </div>
+  </div>
+</div>

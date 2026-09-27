@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 # A seller: the storefront a Product belongs to. Composed from the catalogue
-# only — no migration was written for it (ADR-0018). The registered Address sits
-# in the default slot so ECS-8's Geolocation can pair with it by slot.
+# only — no migration was written for it (ADR-0018). The Address and its
+# Geolocation share the default slot; that pairing is all Demo::Geocoder needs.
 class Company < ApplicationEntity
   component Text,  prefix: :name          # company.name
   component Text,  prefix: :description   # company.description
@@ -10,6 +10,7 @@ class Company < ApplicationEntity
   component Email                         # company.email_address
   component Phone                         # company.phone.to_s
   component Address                       # company.address.lines
+  component Geolocation                   # company.geolocation, filled by Demo::Geocoder
 
   has_many :products,    via: :seller                        # company.products
   has_many :employments, via: :company, dependent: :destroy  # company.employments

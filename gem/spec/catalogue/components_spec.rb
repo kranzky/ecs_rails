@@ -106,6 +106,22 @@ RSpec.describe "the catalogue components" do
         expect(thing).not_to be_valid
       end
     end
+
+    it "records a lookup that found nothing, stamped with the version it describes" do
+      klass = entity { component Geolocation, prefix: :registered }
+      thing = klass.create!
+      thing.registered_geolocation.locate(-31.95, 115.86)
+      version = Time.utc(2026, 9, 1, 12, 0, 0)
+      thing.registered_geolocation.locate(nil, nil, at: version)
+      thing.save!
+
+      aggregate_failures do
+        expect(thing.reload.registered_geolocation).not_to be_geocoded
+        expect(thing.registered_geolocation.coordinates).to be_nil
+        expect(thing.registered_geolocation.geocoded_at).to eq version
+        expect(thing.registered_geolocation).to be_persisted
+      end
+    end
   end
 
   describe "Link" do

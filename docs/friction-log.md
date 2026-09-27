@@ -1160,3 +1160,48 @@ app/models, a namespaced entity and a namespaced component via Zeitwerk. Publish
 renders both numbers and the home country; nine demo routes also return 200.
 The new spec group isolates the existing Person fixture from other feature specs;
 the complete suite passes with the previously failing randomized seed.
+
+## ECS-8 — the geocoder, a system over paired slots
+
+**Problem.** The design's central "S" demonstration — one system over every
+entity's addresses — was still a sketch that used an entity reader which does
+not exist (`entity.geolocation(slot:)`) and an Address flag the catalogue lacks.
+Nothing showed a system pairing two components by slot, deciding staleness or
+surviving an overlapping run.
+
+**Change.** `Demo::Geocoder` selects Addresses with no same-`(entity_id, slot)`
+Geolocation stamped at or after the address's `updated_at`, keeps those whose
+owner class declares the pair (`declaration_for(Geolocation, prefix:
+address.slot)`), and records a simulated `Demo::Gazetteer` lookup with the
+catalogue's `locate`. User pairs its shipping and billing slots, Company its
+default slot; Order and Invoice address snapshots stay unpaired. The gem's
+`Geolocation#locate` gains `at:` so the stamp is the address version, not the
+clock. `/geocoder` lists every address's state, runs the system and shows
+`db/migrate`; profile pages show simulated coordinates or why there are none.
+The seed leaves one address waiting and one place not found.
+
+**Verdict.** No new gem API was needed beyond `at:`. Table-level
+`Geolocation.find_or_initialize_by(entity:, slot:)` is ordinary Rails and reads
+better than a dynamic "sibling in slot" reader would. Two frictions, both
+accepted for now:
+
+- **Pairing is a Ruby declaration SQL cannot see**, so unpaired rows (order and
+  invoice snapshots) are rescanned and skipped on every run. Cheap at demo
+  scale; an app with many snapshot addresses would filter the work list by the
+  owners' `entities.model` values. Not justified yet.
+- **Staleness needs a version, and the schema has only timestamps.** Stamping
+  `geocoded_at` with the clock misses an edit that lands mid-lookup; stamping
+  it with the address's `updated_at` is race-free but makes `geocoded_at` mean
+  "the address version described", which `locate`'s documentation now says.
+
+The lazy rule shaped one behaviour: a cleared address form keeps its row with
+every field nil, so the geocoder records it as not found and clears old
+coordinates rather than skipping it. Overlapping runs rely on the
+`(entity_id, slot)` unique index; the losing insert retries once under a
+savepoint, pinned by a two-connection spec. Four systems in (Indexer, Checkout,
+CompanyPolicy, Geocoder), each is still a `module_function` loop or a small
+object — the backlog's case against a System base class holds.
+
+All 952 gem examples (one new) and 98 demo examples (20 new) pass; eager
+loading and YARD 100% pass; the performance smoke still verifies. One install
+migration remains.

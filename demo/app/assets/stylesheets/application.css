@@ -335,3 +335,8 @@ kbd, code { font-family: var(--mono); font-size: .88em; background: var(--surfac
 .pagination a:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
 .pagination .current { background: var(--brand); color: white; font-weight: 700; }
 .pagination .gap { color: var(--muted); }
+
+/* --- geocoder (ECS-8) ------------------------------------------------------ */
+.table-scroll { overflow-x: auto; }
+.table .coords { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.code-block { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-s); padding: 1rem; overflow: auto; }

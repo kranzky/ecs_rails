@@ -161,3 +161,12 @@ columns are missing. See [the verification design](../design/catalogue-upgrade-v
 for normalization boundaries and the preserved-data checks. `Schema#to_ruby_diff`
 now takes a live `connection:` instead of arrays of column/index names; names
 alone cannot establish compatibility.
+
+## Geolocation#locate amendment — 2026-09-27 (ECS-8)
+
+`Geolocation#locate(lat, lng, at: Time.current)` gains the `at:` keyword and
+documents `locate(nil, nil)` as "looked up, nothing found". The demo geocoder
+passes the address's `updated_at` so the stamp names the address version the
+coordinates describe; comparing it with a later `updated_at` is then a
+race-free staleness test. The default keeps the 0.2-era behaviour. No schema
+change.
