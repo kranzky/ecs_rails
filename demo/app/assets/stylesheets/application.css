@@ -339,7 +339,8 @@ kbd, code { font-family: var(--mono); font-size: .88em; background: var(--surfac
 /* --- geocoder (ECS-8) ------------------------------------------------------ */
 .table-scroll { overflow-x: auto; }
 .table .coords { font-variant-numeric: tabular-nums; white-space: nowrap; }
-.code-block { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-s); padding: 1rem; overflow: auto; }
+.code-block { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-s);
+              padding: 1rem; overflow: auto; font-size: .85rem; line-height: 1.55; }
 
 /* --- geocoder map (ECS-44): inline SVG, one unit per degree ------------------ */
 .world-map { display: block; width: 100%; height: auto; background: var(--surface-2);
@@ -372,3 +373,15 @@ kbd, code { font-family: var(--mono); font-size: .88em; background: var(--surfac
 
 .visually-hidden { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
                    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* --- the tour (ECS-35) ------------------------------------------------------ */
+.tour { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem;
+        grid-template-columns: minmax(0, 1fr); } /* code scrolls; the card never widens */
+.tour__step h2 { margin: .1rem 0 .5rem; font-size: 1.2rem; }
+.tour__label { margin: 0; font-size: .78rem; font-weight: 700; letter-spacing: .06em;
+               text-transform: uppercase; color: var(--brand); }
+.tour__action { margin: .75rem 0 0; }
+.tour__action a { font-weight: 600; }
+
+/* Code blocks: the inline `code` chip style must not box every line. */
+pre code { background: none; border: 0; padding: 0; border-radius: 0; font-size: inherit; }
