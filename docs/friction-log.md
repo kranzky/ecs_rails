@@ -1239,3 +1239,38 @@ address table below still names every owner. Page queries: 16 unfiltered, 11
 filtered.
 
 All 110 demo examples (12 new) pass; eager loading passes. The gem is untouched.
+
+## ECS-35 — one journey, one identity, and a page a phone can read
+
+**Problem.** A visitor landed on the forum, although the marketplace and the
+geocoder carry the story. "Who am I?" had four answers: separate Author,
+Commenting as, Reviewing as and Acting as pickers, reset on every form, with
+the basket reached through a user in the URL. The September review had read
+templates but never looked at a rendered page.
+
+**Change.** The root is a four-step tour (compose, use, inspect, extend) that
+quotes each step's declaration and links to the live page; a spec fails if a
+quoted line leaves the source. A session-backed acting-as bar under the
+navigation replaces every per-form picker: posts, comments, reviews, the basket
+and the seller policy use it, and a refusal names who could act instead. A
+scripted review (`demo/script/qa`) rendered 21 pages four ways and seven
+interaction states, ran axe-core and walked the keyboard; the findings and the
+fixes are in [the review](design/demo-qa.md): five colour tokens, landmarks,
+`lang`, heading order, announced errors, underlined inline links, labelled
+basket controls, a skip link, and phone layouts for the header, filters and
+tables.
+
+**Verdict.** None of it touched the gem, and none of it needed to: identity,
+policy and presentation are application concerns, and the entity/component
+split kept them out of the models. The acting-as change was smaller than the
+four pickers it replaced — four controllers (posts, comments, reviews, basket
+items) swapped a `User.find(params[...])` for `acting_user` — which is some
+evidence the domain code was already shaped right. One design nudge worth
+recording: the tour's code excerpts are hand-typed, so a spec checks each
+quoted line against the source. Its minimum-count guard mattered: when code
+blocks gained `tabindex`, its pattern stopped matching, and it failed instead
+of passing with nothing to check.
+Automated checks passed everything they can see; a screen reader and a real
+phone were not used, and the review says so.
+
+All 120 demo examples pass (10 new); the gem is untouched.

@@ -49,3 +49,6 @@ doc/
 
 # Reference material kept locally, not part of the project
 /examples/
+
+# demo QA tooling (ECS-35)
+/demo/script/qa/node_modules/
