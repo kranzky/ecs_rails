@@ -1205,3 +1205,37 @@ object — the backlog's case against a System base class holds.
 All 952 gem examples (one new) and 98 demo examples (20 new) pass; eager
 loading and YARD 100% pass; the performance smoke still verifies. One install
 migration remains.
+
+## ECS-44 — a map of the geocoder's output, filtered by entity type
+
+**Problem.** The geocoder page listed coordinates as numbers. The story the
+system tells — one pass over a component table, whatever owns the rows —
+wanted a picture, and a way to ask "only the users'" of a table that does not
+know what a user is.
+
+**Change.** `/geocoder` draws located Geolocations on an inline SVG world map:
+Natural Earth's public-domain 1:110m land, converted once by
+`script/build_world_map.rb` into one relative path (36 KB, date-line rings
+unwrapped, Antarctica cropped), and markers projected in Ruby with the same
+equirectangular formula. `Demo::WorldMap` merges points within 1.5 degrees into
+one marker and places labels right, then left, then not at all, so none hides
+another label or dot. Filter links count located points per entity model; the
+chosen one narrows both map and address table with
+`Geolocation.where(entity: User.all)`, which the page prints. A list of places
+follows the map for screen readers and narrow screens, where labels hide and
+dots keep a minimum size. No JavaScript, dependency, migration or gem change.
+
+**Verdict.** The entity-side filter is the nicest query in the demo:
+`where(entity: User.all)` is an `IN` over the entity's default scope, so the
+component table stays blind and the type comes from the owner, exactly as
+ADR-0002 intends. Counting points per type needs a join to `entities` and a
+`group("entities.model")` string — the one place the demo names the
+discriminator column. Turning a filter value back into a class uses the gem's
+own read-side rule (`"users".classify.constantize`), guarded by accepting only
+values found in the table. Markers name entity types rather than owners:
+labelling each point with a Name or Text would load components per mixed-type
+owner, and the gem has no preload for a heterogeneous set of entities. The
+address table below still names every owner. Page queries: 16 unfiltered, 11
+filtered.
+
+All 110 demo examples (12 new) pass; eager loading passes. The gem is untouched.

@@ -297,6 +297,13 @@
       "humanMinutes": 0,
       "aiMinutes": 60,
       "costs": []
+    },
+    {
+      "date": "2026-09-27",
+      "summary": "ECS-8 marked Done. Split ECS-35: filed ECS-44 (geocoder map, blocks ECS-35/ECS-19) and ECS-45 (deferred 'How this works' panels). ECS-44: server-rendered SVG world map on /geocoder from Natural Earth 1:110m (public domain) converted by script/build_world_map.rb (36 KB relative path, date-line rings unwrapped); Demo::WorldMap projection, marker merging and non-overlapping label placement; filter links by entity model narrowing map and table via Geolocation.where(entity: User.all); places list for screen readers and phones. No JavaScript, dependency, migration or gem change. 110 demo examples and eager loading pass; desktop light/dark and 500px screenshots reviewed.",
+      "humanMinutes": 0,
+      "aiMinutes": 45,
+      "costs": []
     }
   ]
 }

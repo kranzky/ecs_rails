@@ -109,7 +109,10 @@ edit during a run is picked up by the next. The unique `(entity_id, slot)`
 index resolves overlapping runs; the loser retries onto the winner's row. The
 [geocoder specs](../demo/spec/geocoder_spec.rb) cover repeat runs, edits,
 unknown and blank places, unfamiliar entity types and real two-connection
-overlap. `/geocoder` in the demo shows the before and after.
+overlap. `/geocoder` in the demo shows the before and after, and maps the
+result with [Demo::WorldMap](../demo/lib/demo/world_map.rb). Its filter by
+entity type is `Geolocation.where(entity: User.all)`: the component table stays
+blind to types, and the owner's default scope supplies one.
 
 ## When to open the DSL internals
 

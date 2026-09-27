@@ -340,3 +340,20 @@ kbd, code { font-family: var(--mono); font-size: .88em; background: var(--surfac
 .table-scroll { overflow-x: auto; }
 .table .coords { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .code-block { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-s); padding: 1rem; overflow: auto; }
+
+/* --- geocoder map (ECS-44): inline SVG, one unit per degree ------------------ */
+.world-map { display: block; width: 100%; height: auto; background: var(--surface-2);
+             border: 1px solid var(--border); border-radius: var(--radius-s); }
+.world-map__land { fill: var(--surface); stroke: var(--border); stroke-width: .3; }
+.world-map__marker circle { fill: var(--brand); stroke: var(--surface); stroke-width: .6; }
+.world-map__label { font-size: 4.2px; font-weight: 600; fill: var(--text);
+                    paint-order: stroke; stroke: var(--surface-2); stroke-width: 1.2px; }
+/* Narrow screens: hide labels (the list after the map names every place) and
+   keep dots visible with a brand-coloured stroke that does not shrink with
+   the map. */
+@media (max-width: 619px) {
+  .world-map__label { display: none; }
+  .world-map__marker circle { stroke: var(--brand); stroke-width: 4px; vector-effect: non-scaling-stroke; }
+}
+.map-places { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .35rem 1.25rem; font-size: .92rem; }
+.map-places .count { color: var(--muted); }
