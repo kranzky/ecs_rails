@@ -414,3 +414,9 @@ pre:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
   .table th, .table td { padding-left: .3rem; padding-right: .3rem; }
   .narrow-hide { display: none; }
 }
+
+/* Skip link: hidden until a keyboard user tabs onto it. */
+.skip-link { position: absolute; left: 1rem; top: -3rem; z-index: 20; padding: .5rem .8rem;
+             background: var(--brand); color: var(--brand-ink); border-radius: var(--radius-s); font-weight: 600; }
+.skip-link:focus { top: .75rem; }
+main:focus { outline: none; } /* focused only as the skip link's target */
