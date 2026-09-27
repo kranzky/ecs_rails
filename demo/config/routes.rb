@@ -47,5 +47,8 @@ Rails.application.routes.draw do
   end
   resources :companies, only: %i[index show]
 
+  # An entity-blind system (ECS-8): every address, and a button that runs it.
+  resource :geocoder, only: %i[show create]
+
   get "about" => "pages#about"
 end

@@ -114,6 +114,17 @@ end</code></pre>
   </div>
 
   <div class="card">
+    <h3 class="section-title">Geocoding: one system, every address</h3>
+    <p class="prose" style="margin-bottom:0"><code>Demo::Geocoder</code> gives each
+       <code>Address</code> a <code>Geolocation</code> in the same slot — a seller's
+       address and a customer's shipping and billing addresses in one pass over the
+       <code>addresses</code> table, without naming <code>User</code> or
+       <code>Company</code>. An entity takes part by declaring the pair. Run it, edit
+       an address and run it again on the <%= link_to "geocoder page", geocoder_path %>.
+       Its coordinates are simulated.</p>
+  </div>
+
+  <div class="card">
     <h3 class="section-title">Validation merges onto the entity</h3>
     <p class="prose" style="margin-bottom:0">The <code>Email</code> component
        validates its address; the error surfaces as

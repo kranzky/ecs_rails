@@ -6,4 +6,9 @@ namespace :demo do
     summary = Demo::Reset.call
     puts "Demo database reset: #{summary}."
   end
+
+  desc "Geocode new and changed addresses (simulated lookups)"
+  task geocode: :environment do
+    puts "The geocoder wrote #{Demo::Geocoder.call} Geolocation(s)."
+  end
 end

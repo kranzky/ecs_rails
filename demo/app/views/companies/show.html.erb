@@ -16,6 +16,9 @@
     <dt>Email</dt><dd><%= @company.email_address %></dd>
     <dt>Phone</dt><dd><%= @company.phone.to_s.presence || "—" %></dd>
     <dt>Address</dt><dd><%= safe_join(@company.address.lines, tag.br) %></dd>
+    <% if @company.address.persisted? %>
+      <dt>Location</dt><dd><%= location_note(@company.address, @company.geolocation) %></dd>
+    <% end %>
   </dl>
 </div>
 

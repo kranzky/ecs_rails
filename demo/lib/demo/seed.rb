@@ -43,14 +43,21 @@ module Demo
       end
 
       marketplace(ada: ada, grace: grace, alan: alan, katherine: katherine)
-      commerce(ada: ada, grace: grace, alan: alan)
+      commerce(ada: ada, grace: grace, alan: alan, katherine: katherine)
 
       Demo::Indexer.call
+      Demo::Geocoder.call
+      # Left for the visitor: an address edited after the geocoder ran, so the
+      # geocoder page opens with one row waiting (ECS-8).
+      alan.shipping_address.assign_attributes(line1: "Hollymeade, Adlington Rd", locality: "Wilmslow",
+                                              postcode: "SK9 2BT", country: "GB")
+      alan.save!
 
       "#{User.count} users, #{Post.count} posts (#{Post.published.count} published), " \
         "#{Comment.count} comments, #{Group.count} groups, #{Membership.count} memberships, " \
         "#{Company.count} companies, #{Product.count} products (#{Product.listed.count} listed), " \
-        "#{Review.count} reviews, #{Order.count} orders, #{Invoice.count} invoices"
+        "#{Review.count} reviews, #{Order.count} orders, #{Invoice.count} invoices, " \
+        "#{Geolocation.count} geolocations"
     end
 
     # The marketplace (ECS-22). Ada owns a company AND reviews products from the
@@ -107,7 +114,8 @@ module Demo
 
     # Baskets, checkout and orders (ECS-23). Ada's slots are filled and she has
     # placed an order through the real Checkout system; Alan has a basket.
-    def commerce(ada:, grace:, alan:)
+    # Katherine's address is one the simulated geocoder cannot place.
+    def commerce(ada:, grace:, alan:, katherine:)
       ada.shipping_address.assign_attributes(line1: "12 Ada Lovelace Ln", locality: "Perth", region: "WA", postcode: "6000", country: "AU")
       ada.billing_address.assign_attributes(line1: "PO Box 1815", locality: "Perth", region: "WA", postcode: "6001", country: "AU")
       ada.mobile_phone.e164 = "+61412345678"
@@ -115,6 +123,11 @@ module Demo
       grace.shipping_address.assign_attributes(line1: "1 Nanosecond Way", locality: "Arlington", region: "VA", postcode: "22201", country: "US")
       grace.work_phone.e164 = "+17035550199"
       grace.save!
+      # Hampton is not in the simulated gazetteer: the geocoder records it as
+      # a place not found rather than inventing a point (ECS-8).
+      katherine.shipping_address.assign_attributes(line1: "1 NASA Dr", locality: "Hampton", region: "VA",
+                                                   postcode: "23666", country: "US")
+      katherine.save!
 
       wire  = Product.with_component(Identifier, prefix: :sku, value: "NS-1").first
       paper = Product.with_component(Identifier, prefix: :sku, value: "TP-OCN").first
