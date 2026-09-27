@@ -1,0 +1,10 @@
+<%# A form's validation errors. role="alert" makes a screen reader announce
+    them when the form comes back, instead of leaving them to be found. %>
+<% if record.errors.any? %>
+  <div class="errors" role="alert">
+    <strong><%= pluralize(record.errors.count, "problem") %> stopped this saving:</strong>
+    <ul>
+      <% record.errors.full_messages.each do |message| %><li><%= message %></li><% end %>
+    </ul>
+  </div>
+<% end %>

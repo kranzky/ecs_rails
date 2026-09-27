@@ -39,7 +39,7 @@
 
   <% if @company %>
     <hr class="divider">
-    <h3 class="section-title">Manage this listing</h3>
+    <h2 class="section-title">Manage this listing</h2>
     <p class="hint" style="margin:0 0 .6rem">Owners and managers at <%= @company.name %> may list, delist and edit it; staff may not.</p>
     <% if @may_manage %>
       <%= button_to(@product.listed? ? "Delist" : "List now", (@product.listed? ? delist_product_path(@product) : list_product_path(@product)),

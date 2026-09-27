@@ -2,7 +2,7 @@
     demo has no accounts, and switching needs no password. %>
 <% people = User.order(created_at: :asc, id: :asc).limit(50).includes_components(Name).to_a %>
 <% people.unshift(acting_user) if acting_user && people.exclude?(acting_user) %>
-<div class="acting-bar">
+<aside class="acting-bar" aria-label="Who you are acting as">
   <div class="acting-bar__inner">
     <% if acting_user %>
       <%= form_with url: acting_as_path, method: :patch, class: "acting-bar__form" do |f| %>
@@ -21,4 +21,4 @@
       <span class="acting-bar__hint">Nobody to act as yet. <%= link_to "Add a person", new_user_path %>.</span>
     <% end %>
   </div>
-</div>
+</aside>

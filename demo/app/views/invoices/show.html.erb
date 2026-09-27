@@ -12,16 +12,16 @@
 
   <hr class="divider">
   <div class="grid grid--2">
-    <div><h3 class="section-title">Billed to</h3><p class="contact"><%= byline @order.customer %><br><%= address_block @invoice.billing_address %></p></div>
-    <div><h3 class="section-title">Total</h3><p class="price" style="font-size:1.6rem;margin:0"><%= price_tag @invoice.total_money %></p></div>
+    <div><h2 class="section-title">Billed to</h2><p class="contact"><%= byline @order.customer %><br><%= address_block @invoice.billing_address %></p></div>
+    <div><h2 class="section-title">Total</h2><p class="price" style="font-size:1.6rem;margin:0"><%= price_tag @invoice.total_money %></p></div>
   </div>
 
   <hr class="divider">
   <table class="table">
-    <thead><tr><th>Item</th><th class="num">Unit price</th><th class="num">Qty</th><th class="num">Line</th></tr></thead>
+    <thead><tr><th>Item</th><th class="num narrow-hide">Unit price</th><th class="num">Qty</th><th class="num">Line</th></tr></thead>
     <tbody>
       <% @items.each do |item| %>
-        <tr><td><%= item.title %></td><td class="num"><%= price_tag item.unit_price_money %></td><td class="num"><%= item.quantity %></td><td class="num price"><%= price_tag item.line_total %></td></tr>
+        <tr><td><%= item.title %></td><td class="num narrow-hide"><%= price_tag item.unit_price_money %></td><td class="num"><%= item.quantity %></td><td class="num price"><%= price_tag item.line_total %></td></tr>
       <% end %>
     </tbody>
   </table>

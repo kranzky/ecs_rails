@@ -16,7 +16,7 @@
     <p class="prose">No table was written for <code>User</code>. Each line is a
        component from the catalogue, stored in a table it shares with every
        other entity. A prefix adds a second copy under a named slot.</p>
-<pre class="code-block"><code>class User &lt; ApplicationEntity
+<pre tabindex="0" class="code-block"><code>class User &lt; ApplicationEntity
   component Name
   component Email
   component Address,     prefix: :shipping
@@ -37,7 +37,7 @@ end</code></pre>
     <p class="prose">A product reuses <code>Text</code>, <code>Counter</code> and
        the rest under its own slots. The market's filters and sorting query by
        those components.</p>
-<pre class="code-block"><code>class Product &lt; ApplicationEntity
+<pre tabindex="0" class="code-block"><code>class Product &lt; ApplicationEntity
   component Text,       prefix: :title
   component Money,      prefix: :price
   component Counter,    prefix: :stock
@@ -55,7 +55,7 @@ end</code></pre>
     <p class="prose">Checkout copies the billing address and totals onto the
        invoice. Its <code>Address</code> is the same component a person has,
        so a later change to the person leaves the invoice as it was.</p>
-<pre class="code-block"><code>class Invoice &lt; ApplicationEntity
+<pre tabindex="0" class="code-block"><code>class Invoice &lt; ApplicationEntity
   component Identifier, prefix: :invoice_number
   component Money,      prefix: :total
   component Address,    prefix: :billing
@@ -73,7 +73,7 @@ end</code></pre>
        handles a seller's address and a customer's shipping address in one pass
        without naming either class. Declaring the pair is all an entity does to
        take part. No migration was needed.</p>
-<pre class="code-block"><code># in Demo::Geocoder: every address, whatever owns it
+<pre tabindex="0" class="code-block"><code># in Demo::Geocoder: every address, whatever owns it
 Address.where.not(current.arel.exists)
 
 # in Company, beside its address

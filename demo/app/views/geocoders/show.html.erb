@@ -114,7 +114,7 @@
       <p class="prose">Pairing is two declarations in the same slot. The
          geocoder asks each owner's class whether it declares the pair, so a
          new entity type joins in without a change to the system.</p>
-      <pre class="code-block"><code>class User &lt; ApplicationEntity
+      <pre tabindex="0" class="code-block"><code>class User &lt; ApplicationEntity
   component Address,     prefix: :shipping
   component Geolocation, prefix: :shipping
   component Address,     prefix: :billing
@@ -132,7 +132,7 @@ end</code></pre>
          <code>rails g ecs_rails:install</code> along with the rest of the
          catalogue. Adding the geocoder needed no new table and no migration.
          <code>db/migrate</code> holds:</p>
-      <pre class="code-block"><code><% @migrations.each do |name| %><%= name %>
+      <pre tabindex="0" class="code-block"><code><% @migrations.each do |name| %><%= name %>
 <% end %></code></pre>
       <p class="prose" style="margin-bottom:0">Read the
          <a href="https://github.com/kranzky/ecs_rails/blob/main/demo/lib/demo/geocoder.rb">geocoder's source</a>

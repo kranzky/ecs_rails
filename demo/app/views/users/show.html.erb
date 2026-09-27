@@ -21,7 +21,7 @@
 
   <hr class="divider">
 
-  <h3 class="section-title">Roles — presence via add / remove</h3>
+  <h2 class="section-title">Roles — presence via add / remove</h2>
   <div class="btn-row">
     <% if @user.moderator? %>
       <%= button_to "Remove moderator", user_moderator_path(@user), method: :delete, class: "btn btn--sm btn--danger", form_class: "inline" %>

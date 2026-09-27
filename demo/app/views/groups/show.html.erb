@@ -6,7 +6,7 @@
   <p style="color:var(--muted);margin:0"><%= @group.description %></p>
   <% if @group.rules.present? %>
     <hr class="divider">
-    <h3 class="section-title">House rules</h3>
+    <h2 class="section-title">House rules</h2>
     <p class="prose" style="margin:0;color:var(--muted)"><%= simple_format @group.rules %></p>
   <% end %>
 </div>

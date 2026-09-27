@@ -1,12 +1,5 @@
 <div class="card">
-  <% if @post.errors.any? %>
-    <div class="errors">
-      <strong><%= pluralize(@post.errors.count, "problem") %> stopped this saving:</strong>
-      <ul>
-        <% @post.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
-      </ul>
-    </div>
-  <% end %>
+  <%= render "shared/errors", record: @post %>
 
   <%= form_with url: url, method: method do |f| %>
     <div class="field">

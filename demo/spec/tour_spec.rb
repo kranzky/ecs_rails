@@ -31,7 +31,7 @@ RSpec.describe "the tour", type: :request do
     get root_path
     source = Dir[Rails.root.join("app/entities/*.rb"), Rails.root.join("lib/demo/*.rb")]
              .flat_map { |path| File.readlines(path) }.map { |line| normalise(line) }.to_set
-    quoted = response.body.scan(%r{<pre class="code-block"><code>(.*?)</code></pre>}m).flatten
+    quoted = response.body.scan(%r{<pre[^>]*class="code-block"[^>]*><code>(.*?)</code></pre>}m).flatten
                           .flat_map { |block| block.lines.map { |line| normalise(line) } }
                           .reject { |line| line.empty? || line.start_with?("#") || line == "end" }
 

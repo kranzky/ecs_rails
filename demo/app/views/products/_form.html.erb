@@ -1,12 +1,5 @@
 <div class="card">
-  <% if @product.errors.any? %>
-    <div class="errors">
-      <strong><%= pluralize(@product.errors.count, "problem") %> stopped this saving:</strong>
-      <ul>
-        <% @product.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
-      </ul>
-    </div>
-  <% end %>
+  <%= render "shared/errors", record: @product %>
 
   <%= form_with url: url, method: method do |f| %>
     <%= acting_note("Managing #{@company.name}'s products") %>

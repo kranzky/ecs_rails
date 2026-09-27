@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <title><%= content_for(:title) ? "#{content_for(:title)} · Bulletin" : "Bulletin — built on ECS Rails" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -11,7 +11,7 @@
   </head>
 
   <body>
-    <nav class="site-nav">
+    <nav class="site-nav" aria-label="Main">
       <div class="site-nav__inner">
         <%= link_to root_path, class: "brand" do %>
           <span class="brand__mark">E</span> Bulletin
@@ -31,17 +31,20 @@
     <%= render "layouts/acting_as" %>
     <%= render "layouts/reset_banner" %>
 
-    <% if flash.any? %>
-      <div class="flash">
-        <% flash.each do |type, message| %>
-          <div class="flash__msg flash__msg--<%= type == "alert" ? "alert" : "notice" %>">
-            <%= message %>
-          </div>
-        <% end %>
-      </div>
-    <% end %>
-
-    <main><%= yield %></main>
+    <main>
+      <%# Alerts interrupt a screen reader; notices wait their turn. %>
+      <% if flash.any? %>
+        <div class="flash">
+          <% flash.each do |type, message| %>
+            <% alert = type == "alert" %>
+            <div class="flash__msg flash__msg--<%= alert ? "alert" : "notice" %>" role="<%= alert ? "alert" : "status" %>">
+              <%= message %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+      <%= yield %>
+    </main>
 
     <footer class="site-footer">
       <div class="site-footer__inner">

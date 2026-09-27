@@ -3,12 +3,7 @@
 <div class="page-head"><h1>Add person</h1></div>
 
 <div class="card">
-  <% if @user.errors.any? %>
-    <div class="errors">
-      <strong><%= pluralize(@user.errors.count, "problem") %> stopped this saving:</strong>
-      <ul><% @user.errors.full_messages.each do |m| %><li><%= m %></li><% end %></ul>
-    </div>
-  <% end %>
+  <%= render "shared/errors", record: @user %>
 
   <%= form_with url: users_path, method: :post do |f| %>
     <div class="grid grid--2">
