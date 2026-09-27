@@ -290,6 +290,13 @@
       "humanMinutes": 0,
       "aiMinutes": 20,
       "costs": []
+    },
+    {
+      "date": "2026-09-27",
+      "summary": "ECS-8: added Demo::Geocoder, an entity-blind system pairing each Address with a same-slot Geolocation across users (shipping/billing) and companies, deciding eligibility from declarations so order/invoice snapshots are skipped. Redoes only new or edited addresses (stamp = address updated_at via new Geolocation#locate at:), records unknown/blank places without coordinates, and resolves overlapping runs via the (entity_id, slot) unique index with a savepoint retry. Simulated Demo::Gazetteer lookups; /geocoder page with per-address state, run button and the one-file db/migrate; profile location notes; seed leaves one waiting and one not-found address. 952 gem and 98 demo examples, eager loading, YARD 100% and the performance smoke pass.",
+      "humanMinutes": 0,
+      "aiMinutes": 60,
+      "costs": []
     }
   ]
 }

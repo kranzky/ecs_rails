@@ -96,6 +96,21 @@ complete documents, repeated runs and batch boundaries. Use
 [the performance comparison](design/performance-comparison.md) to understand
 the remaining costs before changing this path.
 
+## A system that pairs components by slot
+
+[Demo::Geocoder](../demo/lib/demo/geocoder.rb) is the short example used in the
+tutorial and screencast. It selects addresses whose same-slot Geolocation is
+missing or older than the address, keeps those whose owner declares the pair,
+and records a [simulated lookup](../demo/lib/demo/gazetteer.rb) with the
+catalogue's `Geolocation#locate`. Users (shipping and billing slots) and
+companies (the default slot) are handled in one pass; orders and invoices keep
+unpaired address snapshots. The stamp is the address's `updated_at`, so an
+edit during a run is picked up by the next. The unique `(entity_id, slot)`
+index resolves overlapping runs; the loser retries onto the winner's row. The
+[geocoder specs](../demo/spec/geocoder_spec.rb) cover repeat runs, edits,
+unknown and blank places, unfamiliar entity types and real two-connection
+overlap. `/geocoder` in the demo shows the before and after.
+
 ## When to open the DSL internals
 
 [DSL](../gem/lib/ecs_rails/dsl.rb) turns declarations into slot-scoped

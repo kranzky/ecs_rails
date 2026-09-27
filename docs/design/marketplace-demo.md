@@ -1,6 +1,6 @@
 # Design: Marketplace demo
 
-**Status:** Built — first cut (sellers, products, catalogue pages with filters and sort, reviews, `CompanyPolicy`) landed 2026-09-04 as Linear ECS-22; second cut (basket, checkout with the simulated gateway, orders, invoices, the user's address/phone slots) landed the same day as ECS-23; geocoder remains ECS-8. Component names below predate the catalogue (`PostalAddress` → `Address`, `Likes` → `Counter`, …); the entities as built are in `demo/app/entities/`. Revised 2026-09-02 for the **zero-migrations** goal
+**Status:** Built — first cut (sellers, products, catalogue pages with filters and sort, reviews, `CompanyPolicy`) landed 2026-09-04 as Linear ECS-22; second cut (basket, checkout with the simulated gateway, orders, invoices, the user's address/phone slots) landed the same day as ECS-23; the geocoder landed as ECS-8 (see the amendment at the end). Component names below predate the catalogue (`PostalAddress` → `Address`, `Likes` → `Counter`, …); the entities as built are in `demo/app/entities/`. Revised 2026-09-02 for the **zero-migrations** goal
 **Depends on:** [RFC-0014](../rfc/0014-plural-components.md) (labelled components — *not yet built*),
 [ADR-0017](../adr/0017-shared-relationships-table.md) (shared relationships table — *not yet built*),
 [ADR-0018](../adr/0018-catalogue-in-the-gem.md) (the catalogue in the gem — *not yet built*),
@@ -598,3 +598,23 @@ and an Order Identifier records its completed request. Stock Counter rows lock
 in product UUID order. Document series use transaction advisory locks and a
 numeric maximum. Payment remains simulated; database rollback cannot reverse a
 real external charge. No new migration or component type is needed.
+
+## Geocoder amendment — 2026-09-27 (ECS-8)
+
+The §4 sketch used an entity reader that does not exist
+(`addr.entity.geolocation(slot:)`) and a `geocoded` flag the catalogue `Address`
+does not have. As built, [Demo::Geocoder](../../demo/lib/demo/geocoder.rb)
+works at the component-table level: its work list is every `Address` with no
+same-`(entity_id, slot)` `Geolocation` whose `geocoded_at` is at least the
+address's `updated_at`, and each pair is `Geolocation.find_or_initialize_by(entity:,
+slot:)`. Eligibility is the owner class declaring `Geolocation` in the
+address's slot (`declaration_for`), so `Order`/`Invoice` address snapshots are
+never paired. `geocoded_at` is stamped with the address's `updated_at` rather
+than the clock (via the new `Geolocation#locate(..., at:)`), so an edit that
+lands during a lookup still reads as newer afterwards. An unknown or blank
+place is recorded as `locate(nil, nil)` and not retried until the address
+changes. Overlapping runs meet the `(entity_id, slot)` unique index; the loser
+retries once under a savepoint and updates the winner's row. Lookups come from
+[Demo::Gazetteer](../../demo/lib/demo/gazetteer.rb), a simulated list of city
+centres. `/geocoder` shows every address's state, runs the system and lists
+`db/migrate` — still one file.

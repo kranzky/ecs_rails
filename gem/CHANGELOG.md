@@ -8,6 +8,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Geocoder system in the demo** (ECS-8): `Demo::Geocoder` pairs every
+  `Address` with a `Geolocation` in the same slot across users (shipping and
+  billing) and companies without naming either, skips owners that declare no
+  pair (order/invoice snapshots), redoes only new or edited addresses, records
+  unknown or blank places without coordinates, and resolves overlapping runs on
+  the `(entity_id, slot)` unique index. Lookups are simulated. The demo's
+  `/geocoder` page shows each address's state, runs it and lists the one
+  migration. `Geolocation#locate` now takes `at:` (default `Time.current`) so a
+  system can stamp the address version the coordinates describe, and documents
+  `locate(nil, nil)` as a lookup that found nothing.
+
 - **Entity generator** (ECS-11): `rails generate ecs_rails:entity Person name
   email mobile:phone work:phone home:address` writes a plain entity class from
   existing components, including labelled slots and namespaces. Validates names,
