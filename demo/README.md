@@ -86,8 +86,9 @@ want to retain.
 6. Open **/geocoder** (linked from How it works). One address is waiting and one
    is a place the simulated gazetteer does not know. Run the geocoder, then edit
    a person's address and run it again: only that address is redone, for users
-   and sellers alike, and `db/migrate` still holds one file. Coordinates are
-   simulated.
+   and sellers alike, and `db/migrate` still holds one file. The map above the
+   table filters by entity type (`Geolocation.where(entity: User.all)`).
+   Coordinates are simulated.
 
 The app uses an **acting-as picker**, not authenticated sessions. It is example
 software, not a production storefront. Follow

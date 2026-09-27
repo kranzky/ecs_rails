@@ -618,3 +618,13 @@ retries once under a savepoint and updates the winner's row. Lookups come from
 [Demo::Gazetteer](../../demo/lib/demo/gazetteer.rb), a simulated list of city
 centres. `/geocoder` shows every address's state, runs the system and lists
 `db/migrate` — still one file.
+
+## Geocoder map amendment — 2026-09-27 (ECS-44)
+
+`/geocoder` also draws the located Geolocations on an inline SVG world map
+(`Demo::WorldMap`; coastline from Natural Earth 1:110m via
+`demo/script/build_world_map.rb`). Filter links by entity model narrow the map
+and the address table from the entity side, `Geolocation.where(entity:
+User.all)`. Inline SVG was chosen over Leaflet and OpenStreetMap tiles to keep
+the demo free of JavaScript and external requests, matching the simulated
+geocoder; the cost is a world-scale map without zoom.

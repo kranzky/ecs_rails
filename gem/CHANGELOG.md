@@ -8,6 +8,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Geocoder map in the demo** (ECS-44): `/geocoder` draws located
+  Geolocations on a server-rendered SVG world map (Natural Earth 1:110m, public
+  domain; no JavaScript or tiles), with non-overlapping labels, merged markers
+  for nearby points, a text list of places, and filter links by entity type that
+  narrow map and table with `Geolocation.where(entity: User.all)`. No gem change.
+
 - **Geocoder system in the demo** (ECS-8): `Demo::Geocoder` pairs every
   `Address` with a `Geolocation` in the same slot across users (shipping and
   billing) and companies without naming either, skips owners that declare no
