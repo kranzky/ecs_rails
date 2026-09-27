@@ -51,4 +51,7 @@ Rails.application.routes.draw do
   resource :geocoder, only: %i[show create]
 
   get "about" => "pages#about"
+
+  # Who the visitor acts as: a simulated identity, not a sign-in.
+  resource :acting_as, only: :update, controller: "acting_as"
 end

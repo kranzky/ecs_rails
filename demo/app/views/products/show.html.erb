@@ -5,9 +5,9 @@
 <article class="card <%= "is-draft" if @product.draft? %>">
   <div class="btn-row" style="justify-content:space-between">
     <%= listing_badge @product %>
-    <span class="btn-row">
+    <% if @may_manage %>
       <%= link_to "Edit", edit_product_path(@product), class: "btn btn--sm btn--ghost" %>
-    </span>
+    <% end %>
   </div>
 
   <h1 style="margin:.5rem 0 .35rem;font-size:1.9rem"><%= @product.title %></h1>
@@ -31,19 +31,22 @@
     <hr class="divider">
     <%= form_with url: basket_items_path, method: :post, class: "btn-row" do |f| %>
       <%= f.hidden_field "basket_item[product_id]", value: @product.id %>
-      <%= f.select "basket_item[user_id]", options_for_select(@authors.map { |u| [display_name(u), u.id] }), {}, class: "select", style: "width:auto" %>
+      <%= f.label "basket_item[quantity]", "Quantity", class: "visually-hidden" %>
       <%= f.number_field "basket_item[quantity]", value: 1, min: 1, max: [@product.stock, 99].min, class: "input", style: "width:4.5rem" %>
-      <%= f.submit "Add to basket", class: "btn btn--primary" %>
+      <%= f.submit "Add to #{display_name(acting_user)}'s basket", class: "btn btn--primary" %>
     <% end %>
   <% end %>
 
   <% if @company %>
     <hr class="divider">
     <h3 class="section-title">Manage this listing</h3>
-    <p class="hint" style="margin:0 0 .6rem">Listing and delisting go through <code>Demo::CompanyPolicy</code>, which reads the actor's <code>Employment</code> role at <%= @company.name %>. Owners and managers may; staff may not.</p>
-    <%= form_with url: (@product.listed? ? delist_product_path(@product) : list_product_path(@product)), method: :patch, class: "btn-row" do |f| %>
-      <%= f.select :actor_id, options_for_select(@staff.map { |e| ["#{display_name(e.user)} (#{e.role_name})", e.user&.id] }), {}, class: "select", style: "width:auto" %>
-      <%= f.submit(@product.listed? ? "Delist" : "List now", class: "btn btn--sm #{@product.listed? ? 'btn--danger' : 'btn--primary'}") %>
+    <p class="hint" style="margin:0 0 .6rem">Owners and managers at <%= @company.name %> may list, delist and edit it; staff may not.</p>
+    <% if @may_manage %>
+      <%= button_to(@product.listed? ? "Delist" : "List now", (@product.listed? ? delist_product_path(@product) : list_product_path(@product)),
+                    method: :patch, class: "btn btn--sm #{@product.listed? ? 'btn--danger' : 'btn--primary'}") %>
+    <% else %>
+      <p class="acting-note">You are acting as <strong><%= display_name(acting_user) %></strong>, who cannot manage this listing.
+        <% if @managers.any? %>Act as <%= @managers.map { |user| display_name(user) }.to_sentence(last_word_connector: ", or ", two_words_connector: " or ") %> to do this.<% end %></p>
     <% end %>
   <% end %>
 </article>
@@ -76,15 +79,10 @@
     <% if @product.listed? %>
       <hr class="divider">
       <%= form_with url: product_reviews_path(@product), method: :post do |f| %>
-        <div class="grid grid--2">
-          <div class="field">
-            <%= f.label "review[author_id]", "Reviewing as" %>
-            <%= f.select "review[author_id]", options_for_select(@authors.map { |u| [display_name(u), u.id] }), {}, class: "select" %>
-          </div>
-          <div class="field">
-            <%= f.label "review[stars]", "Stars" %>
-            <%= f.select "review[stars]", options_for_select([5, 4, 3, 2, 1].map { |s| ["#{'★' * s}", s] }, 5), {}, class: "select" %>
-          </div>
+        <%= acting_note("Reviewing") %>
+        <div class="field">
+          <%= f.label "review[stars]", "Stars" %>
+          <%= f.select "review[stars]", options_for_select([5, 4, 3, 2, 1].map { |s| ["#{s} #{'star'.pluralize(s)} #{'★' * s}", s] }, 5), {}, class: "select", style: "width:auto" %>
         </div>
         <div class="field">
           <%= f.label "review[body]", "Review" %>

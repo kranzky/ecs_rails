@@ -64,7 +64,8 @@ RSpec.describe "checkout submissions", type: :request do
 
   it "invalidates the form through each basket mutation endpoint" do
     revision = basket.revision
-    post basket_items_path, params: { basket_item: { user_id: user.id, product_id: product.id, quantity: 1 } }
+    patch acting_as_path, params: { user_id: user.id } # adding goes to the acting user's basket
+    post basket_items_path, params: { basket_item: { product_id: product.id, quantity: 1 } }
     expect(basket.reload.revision).to eq revision + 1
     expect(basket.items.sole.quantity).to eq 2
     patch user_basket_item_path(user, basket.items.sole), params: { basket_item: { quantity: 3 } }

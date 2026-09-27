@@ -31,15 +31,16 @@ class ProductsController < ApplicationController
                        .includes_components(Text, Rating, Counter)
                        .preload(author_relationship: { target: [:name, :avatar_image] })
     @review = Review.new
-    @authors = User.all
-    @staff = @company&.staff || []
+    @may_manage = @company && Demo::CompanyPolicy.new(acting_user, @company).can?(:manage_products)
+    @managers = @company ? Demo::CompanyPolicy.people_who_can(:manage_products, @company) : []
   end
 
   def new
     @company = Company.find(params[:company_id])
+    return unless authorised!(@company, :manage_products, fallback: @company)
+
     @product = Product.new
     @product.listing_state.status = "listed"
-    @staff = @company.staff
   end
 
   def create
@@ -53,7 +54,6 @@ class ProductsController < ApplicationController
       redirect_to product, notice: product.listed? ? "Product listed." : "Draft saved."
     else
       @product = product
-      @staff = @company.staff
       render :new, status: :unprocessable_entity
     end
   end
@@ -61,7 +61,7 @@ class ProductsController < ApplicationController
   def edit
     @product = Product.find(params[:id])
     @company = @product.seller
-    @staff = @company.staff
+    authorised!(@company, :manage_products, fallback: @product)
   end
 
   def update
@@ -75,7 +75,6 @@ class ProductsController < ApplicationController
       redirect_to product, notice: "Product updated."
     else
       @product = product
-      @staff = @company.staff
       render :edit, status: :unprocessable_entity
     end
   end
@@ -98,17 +97,20 @@ class ProductsController < ApplicationController
 
   private
 
-  # The demo has no sessions: management forms carry an "acting as" picker, and
-  # the policy — a PORO over the Employment join entity — decides. Returns
-  # false (having redirected) when the actor may not.
+  # The seller policy — a PORO over the Employment join entity — decides for
+  # the acting user. Returns false (having redirected) when they may not, and
+  # says who to act as instead.
   def authorised!(company, action, fallback:)
-    actor = User.find_by(id: params[:actor_id].presence || params.dig(:product, :actor_id))
-    policy = Demo::CompanyPolicy.new(actor, company)
+    policy = Demo::CompanyPolicy.new(acting_user, company)
     return true if policy.can?(action)
 
-    who = actor ? helpers.display_name(actor) : "Nobody"
+    who = helpers.display_name(acting_user)
     reason = policy.employee? ? "is #{policy.role} at #{company.name} and may not manage products" : "does not work at #{company.name}"
-    redirect_to fallback, alert: "#{who} #{reason}."
+    refusal = "#{who} #{reason}"
+    refusal += "." unless refusal.end_with?(".") # "Nanosecond Supply Co." already ends one
+    able = Demo::CompanyPolicy.people_who_can(action, company).map { |user| helpers.display_name(user) }
+    refusal += " Act as #{able.to_sentence(last_word_connector: ', or ', two_words_connector: ' or ')} to do this." if able.any?
+    redirect_to fallback, alert: refusal
     false
   end
 
@@ -135,6 +137,6 @@ class ProductsController < ApplicationController
   end
 
   def product_params
-    params.require(:product).permit(:title, :body, :sku, :price, :stock, :listed, :actor_id, categories: [])
+    params.require(:product).permit(:title, :body, :sku, :price, :stock, :listed, categories: [])
   end
 end

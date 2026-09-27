@@ -14,6 +14,14 @@ module ApplicationHelper
     user.name.to_s.presence || "Anonymous"
   end
 
+  # "Posting as Ada Lovelace", beside a form that the acting user signs.
+  def acting_note(verb)
+    content_tag(:p, class: "acting-note") do
+      safe_join(["#{verb} as ", content_tag(:strong, display_name(acting_user)),
+                 ". Change who you are acting as at the top of the page."])
+    end
+  end
+
   # Initials for the avatar chip.
   def initials_for(user)
     return "?" if user.nil?
