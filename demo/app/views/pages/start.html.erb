@@ -1,0 +1,93 @@
+<% content_for :title, "Start here" %>
+
+<div class="page-head">
+  <h1>Composing Rails models, in four steps</h1>
+  <p>This demo is a bulletin board and a small marketplace built with
+     <strong>ECS Rails</strong>. Every model is an identity row composed from
+     standard components, and every table came from one install migration.
+     Follow the steps; each opens a live page. You are acting as
+     <strong><%= display_name(acting_user) %></strong>, and can switch at the top.</p>
+</div>
+
+<ol class="tour">
+  <li class="card tour__step">
+    <p class="tour__label">1 · Compose</p>
+    <h2>A person is a list of parts</h2>
+    <p class="prose">No table was written for <code>User</code>. Each line is a
+       component from the catalogue, stored in a table it shares with every
+       other entity. A prefix adds a second copy under a named slot.</p>
+<pre tabindex="0" class="code-block"><code>class User &lt; ApplicationEntity
+  component Name
+  component Email
+  component Address,     prefix: :shipping
+  component Address,     prefix: :billing
+  component Geolocation, prefix: :shipping
+  marker :moderator
+  has_many :orders, via: :customer
+end</code></pre>
+    <% if acting_user %>
+      <p class="tour__action"><%= link_to "Open #{display_name(acting_user)}'s profile", acting_user %>
+        and fill in an address. Step 4 picks it up.</p>
+    <% end %>
+  </li>
+
+  <li class="card tour__step">
+    <p class="tour__label">2 · Use</p>
+    <h2>Shop with the same parts</h2>
+    <p class="prose">A product reuses <code>Text</code>, <code>Counter</code> and
+       the rest under its own slots. The market's filters and sorting query by
+       those components.</p>
+<pre tabindex="0" class="code-block"><code>class Product &lt; ApplicationEntity
+  component Text,       prefix: :title
+  component Money,      prefix: :price
+  component Counter,    prefix: :stock
+  component Rating
+  relates_to :seller, Company
+end</code></pre>
+    <p class="tour__action"><%= link_to "Open the market", products_path %>, add something to
+       your basket and check out. The card is simulated: use
+       <code>4242 4242 4242 4242</code>.</p>
+  </li>
+
+  <li class="card tour__step">
+    <p class="tour__label">3 · Inspect</p>
+    <h2>An invoice keeps copies, not links</h2>
+    <p class="prose">Checkout copies the billing address and totals onto the
+       invoice. Its <code>Address</code> is the same component a person has,
+       so a later change to the person leaves the invoice as it was.</p>
+<pre tabindex="0" class="code-block"><code>class Invoice &lt; ApplicationEntity
+  component Identifier, prefix: :invoice_number
+  component Money,      prefix: :total
+  component Address,    prefix: :billing
+  relates_to :order, Order, unique: true
+end</code></pre>
+    <% if @invoice %>
+      <p class="tour__action"><%= link_to "Open invoice #{@invoice.invoice_number}", @invoice %>.</p>
+    <% end %>
+  </li>
+
+  <li class="card tour__step">
+    <p class="tour__label">4 · Extend</p>
+    <h2>One system for every kind of entity</h2>
+    <p class="prose">The geocoder reads the <code>addresses</code> table, so it
+       handles a seller's address and a customer's shipping address in one pass
+       without naming either class. Declaring the pair is all an entity does to
+       take part. No migration was needed.</p>
+<pre tabindex="0" class="code-block"><code># in Demo::Geocoder: every address, whatever owns it
+Address.where.not(current.arel.exists)
+
+# in Company, beside its address
+component Geolocation</code></pre>
+    <p class="tour__action"><%= link_to "Run the geocoder", geocoder_path %>, then filter
+       its map by entity type.</p>
+  </li>
+</ol>
+
+<div class="card" style="margin-top:1.5rem">
+  <h2 class="section-title">And the rest</h2>
+  <p class="prose" style="margin-bottom:0">The <%= link_to "bulletin board", posts_path %> has
+     posts, comments and likes; <%= link_to "groups", groups_path %> use a join entity for
+     membership; <%= link_to "people", users_path %> carry moderator and admin markers.
+     <%= link_to "How it works", about_path %> explains each idea, and the
+     <a href="https://github.com/kranzky/ecs_rails">source is on GitHub</a>.</p>
+</div>

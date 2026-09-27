@@ -73,12 +73,7 @@
 
       <hr class="divider">
       <%= form_with url: post_comments_path(@post), method: :post do |f| %>
-        <div class="field">
-          <%= f.label "comment[author_id]", "Commenting as" %>
-          <%= f.select "comment[author_id]",
-                options_for_select(@authors.map { |u| [display_name(u), u.id] }),
-                {}, class: "select" %>
-        </div>
+        <%= acting_note("Commenting") %>
         <div class="field">
           <%= f.label "comment[body]", "Comment" %>
           <%= f.text_area "comment[body]", class: "textarea", rows: 3, maxlength: 2000, placeholder: "Add your thoughts…" %>

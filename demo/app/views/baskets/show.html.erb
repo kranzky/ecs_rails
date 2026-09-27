@@ -16,26 +16,33 @@
   </div>
 <% else %>
   <div class="card">
+    <div class="table-scroll">
     <table class="table">
-      <thead><tr><th>Product</th><th>Unit price</th><th>Qty</th><th class="num">Line total</th><th></th></tr></thead>
+      <thead><tr><th>Product</th><th class="narrow-hide">Unit price</th><th>Qty</th><th class="num">Line total</th></tr></thead>
       <tbody>
         <% @items.each do |item| %>
           <tr>
             <td><%= link_to item.product.title, item.product %></td>
-            <td class="num"><%= price_tag item.product.price_money %></td>
+            <td class="num narrow-hide"><%= price_tag item.product.price_money %></td>
             <td>
-              <%= form_with url: user_basket_item_path(@user, item), method: :patch, class: "inline btn-row" do |f| %>
-                <%= f.number_field "basket_item[quantity]", value: item.quantity, min: 1, max: 99, class: "input", style: "width:4.5rem;padding:.35rem .5rem" %>
-                <%= f.submit "Update", class: "btn btn--sm btn--ghost" %>
-              <% end %>
+              <%# Update and Remove share the cell so the row fits a phone. %>
+              <div class="btn-row">
+                <%= form_with url: user_basket_item_path(@user, item), method: :patch, class: "inline btn-row" do |f| %>
+                  <%= f.label "basket_item[quantity]", "Quantity of #{item.product.title}", for: "quantity_#{item.id}", class: "visually-hidden" %>
+                  <%= f.number_field "basket_item[quantity]", id: "quantity_#{item.id}", value: item.quantity, min: 1, max: 99, class: "input", style: "width:4.5rem;padding:.35rem .5rem" %>
+                  <%= f.submit "Update", class: "btn btn--sm btn--ghost", "aria-label": "Update quantity of #{item.product.title}" %>
+                <% end %>
+                <%= button_to "Remove", user_basket_item_path(@user, item), method: :delete, class: "btn btn--sm btn--ghost btn--danger",
+                              form_class: "inline", "aria-label": "Remove #{item.product.title}" %>
+              </div>
             </td>
             <td class="num price"><%= price_tag item.line_total %></td>
-            <td class="num"><%= button_to "Remove", user_basket_item_path(@user, item), method: :delete, class: "btn btn--sm btn--ghost btn--danger", form_class: "inline" %></td>
           </tr>
         <% end %>
       </tbody>
-      <tfoot><tr><td colspan="3" style="text-align:right;color:var(--muted)">Total</td><td class="num price" style="font-size:1.2rem"><%= price_tag @total %></td><td></td></tr></tfoot>
+      <tfoot><tr><td></td><td class="narrow-hide"></td><td style="text-align:right;color:var(--muted)">Total</td><td class="num price" style="font-size:1.2rem"><%= price_tag @total %></td></tr></tfoot>
     </table>
+    </div>
     <hr class="divider">
     <div class="btn-row" style="justify-content:flex-end">
       <%= link_to "Checkout", new_user_checkout_path(@user), class: "btn btn--primary" %>

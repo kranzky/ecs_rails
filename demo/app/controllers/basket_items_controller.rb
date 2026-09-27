@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-# Adding to, changing, and removing from a basket. The basket is found — or
-# created — through the customer's has_one inverse; adding the same product
+# Adding to, changing, and removing from a basket. Adding goes to the acting
+# user's basket, found — or created — through the customer's has_one inverse; adding the same product
 # twice bumps the quantity instead of adding a second line.
 class BasketItemsController < ApplicationController
   def create
-    user = User.find(params[:basket_item][:user_id])
+    user = acting_user
     product = Product.find(params[:basket_item][:product_id])
     return redirect_to(product, alert: "#{product.title} is not listed.") unless product.listed?
 

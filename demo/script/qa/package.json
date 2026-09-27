@@ -1,0 +1,9 @@
+{
+  "name": "ecs-rails-demo-qa",
+  "private": true,
+  "description": "ECS-35 rendered and accessibility review of the demo (see docs/design/demo-qa.md)",
+  "devDependencies": {
+    "axe-core": "4.13.0",
+    "puppeteer-core": "23.11.1"
+  }
+}

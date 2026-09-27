@@ -3,23 +3,25 @@
    composes from them. Light and dark via prefers-color-scheme. */
 
 :root {
-  /* palette — a calm indigo/slate with a warm accent */
+  /* palette — a calm indigo/slate with a warm accent. Every text colour
+     clears WCAG AA (4.5:1) on every surface it sits on, in both themes;
+     checked by the ECS-35 accessibility pass. */
   --bg:        #f7f8fa;
   --surface:   #ffffff;
   --surface-2: #f1f3f7;
   --border:    #e3e7ee;
   --text:      #1c2230;
   --muted:     #5c6675;
-  --faint:     #8b94a3;
+  --faint:     #646d7b;
   --brand:     #4f46e5;
   --brand-ink: #ffffff;
   --brand-soft:#eef0fe;
-  --accent:    #e11d73;
-  --ok:        #0f9d63;
+  --accent:    #c2185b;
+  --ok:        #047a4c;
   --ok-soft:   #e2f5ec;
-  --warn:      #b7791f;
+  --warn:      #8a5a12;
   --warn-soft: #fbf1dc;
-  --danger:    #d9432f;
+  --danger:    #b3321f;
 
   --radius:   14px;
   --radius-s: 9px;
@@ -41,8 +43,8 @@
     --border:    #29313f;
     --text:      #e7ebf2;
     --muted:     #9aa4b4;
-    --faint:     #6b7686;
-    --brand:     #7c78ff;
+    --faint:     #8d97a8;
+    --brand:     #8f8bff;
     --brand-ink: #0e1118;
     --brand-soft:#20223c;
     --accent:    #f472b6;
@@ -208,7 +210,7 @@ form.inline { display: inline; }
 
 /* --- flash -------------------------------------------------------------- */
 
-.flash { max-width: var(--maxw); margin: 1rem auto -0.5rem; padding: 0 1.25rem; }
+.flash { margin: 0 0 1.25rem; } /* inside <main>, which supplies the width and gutter */
 .flash__msg {
   padding: .7rem 1rem; border-radius: var(--radius-s); font-weight: 550;
   border: 1px solid transparent; display: flex; align-items: center; gap: .5rem;
@@ -339,7 +341,8 @@ kbd, code { font-family: var(--mono); font-size: .88em; background: var(--surfac
 /* --- geocoder (ECS-8) ------------------------------------------------------ */
 .table-scroll { overflow-x: auto; }
 .table .coords { font-variant-numeric: tabular-nums; white-space: nowrap; }
-.code-block { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-s); padding: 1rem; overflow: auto; }
+.code-block { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-s);
+              padding: 1rem; overflow: auto; font-size: .85rem; line-height: 1.55; }
 
 /* --- geocoder map (ECS-44): inline SVG, one unit per degree ------------------ */
 .world-map { display: block; width: 100%; height: auto; background: var(--surface-2);
@@ -357,3 +360,63 @@ kbd, code { font-family: var(--mono); font-size: .88em; background: var(--surfac
 }
 .map-places { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .35rem 1.25rem; font-size: .92rem; }
 .map-places .count { color: var(--muted); }
+
+/* --- acting as (ECS-35): a simulated identity, shown on every page ---------- */
+.acting-bar { background: var(--surface-2); border-bottom: 1px solid var(--border); font-size: .88rem; }
+.acting-bar__inner { max-width: var(--maxw); margin: 0 auto; padding: .45rem 1.25rem;
+                     display: flex; flex-wrap: wrap; align-items: center; gap: .4rem 1rem; }
+.acting-bar__form { display: flex; align-items: center; gap: .5rem; }
+.acting-bar__form label { font-weight: 600; color: var(--text); }
+.acting-bar__hint { color: var(--muted); }
+.acting-bar__links { display: flex; gap: .9rem; margin-left: auto; }
+.select--sm { width: auto; padding: .3rem .5rem; font-size: .88rem; }
+.acting-note { margin: 0 0 1rem; padding: .55rem .8rem; border-radius: var(--radius-s);
+               background: var(--brand-soft); color: var(--text); font-size: .9rem; }
+
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+                   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* --- the tour (ECS-35) ------------------------------------------------------ */
+.tour { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem;
+        grid-template-columns: minmax(0, 1fr); } /* code scrolls; the card never widens */
+.tour__step h2 { margin: .1rem 0 .5rem; font-size: 1.2rem; }
+.tour__label { margin: 0; font-size: .78rem; font-weight: 700; letter-spacing: .06em;
+               text-transform: uppercase; color: var(--brand); }
+.tour__action { margin: .75rem 0 0; }
+.tour__action a { font-weight: 600; }
+
+/* Code blocks: the inline `code` chip style must not box every line. */
+pre code { background: none; border: 0; padding: 0; border-radius: 0; font-size: inherit; }
+
+/* Links inside running text are underlined, so they are not told apart by
+   colour alone (WCAG 1.4.1). Navigation, buttons and card links stay plain. */
+:where(p, li, dd, td) a:not(.btn) { text-decoration: underline; text-underline-offset: .15em; }
+
+/* A code block that scrolls sideways takes keyboard focus (tabindex="0"). */
+pre:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+/* --- phones (ECS-35 rendered review) -----------------------------------------
+   The nav unpins and tightens so the header stops eating a third of the
+   screen; filters pair up; tables drop the unit price (the line total stays)
+   and give the remaining columns room. */
+@media (max-width: 619px) {
+  .site-nav { position: static; }
+  .site-nav__inner { flex-wrap: wrap; gap: .4rem; padding: .6rem 1rem; }
+  .site-nav__links { margin-left: 0; width: 100%; gap: 0; }
+  .site-nav__links a { padding: .3rem .5rem; font-size: .88rem; }
+  .acting-bar { font-size: .82rem; }
+  .acting-bar__inner { padding: .4rem 1rem; gap: .3rem .8rem; }
+  .acting-bar__links { margin-left: 0; gap: .7rem; }
+  main { padding: 1.25rem 1rem 3rem; }
+  .filters { grid-template-columns: 1fr 1fr; }
+  .filters .field:first-child, .filters .btn-row { grid-column: 1 / -1; }
+  .table { font-size: .88rem; }
+  .table th, .table td { padding-left: .3rem; padding-right: .3rem; }
+  .narrow-hide { display: none; }
+}
+
+/* Skip link: hidden until a keyboard user tabs onto it. */
+.skip-link { position: absolute; left: 1rem; top: -3rem; z-index: 20; padding: .5rem .8rem;
+             background: var(--brand); color: var(--brand-ink); border-radius: var(--radius-s); font-weight: 600; }
+.skip-link:focus { top: .75rem; }
+main:focus { outline: none; } /* focused only as the skip link's target */

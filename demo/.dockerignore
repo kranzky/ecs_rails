@@ -19,3 +19,6 @@ Dockerfile*
 # Local dev noise
 .env
 /spec/
+
+# QA tooling dependencies (demo/script/qa, ECS-35)
+node_modules/

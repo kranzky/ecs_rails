@@ -8,6 +8,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Demo journey, identity and accessibility** (ECS-35): the demo opens on a
+  four-step tour quoting each step's declaration; a session-backed "acting
+  as" bar replaces per-form user pickers; a scripted rendered and axe-core
+  review (`demo/script/qa`) brought 21 pages and 7 states to zero WCAG 2.1 AA
+  violations in light and dark schemes and fixed phone layouts. See
+  [the review](../docs/design/demo-qa.md). No gem change.
+
 - **Geocoder map in the demo** (ECS-44): `/geocoder` draws located
   Geolocations on a server-rendered SVG world map (Natural Earth 1:110m, public
   domain; no JavaScript or tiles), with non-overlapping labels, merged markers

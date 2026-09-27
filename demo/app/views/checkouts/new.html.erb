@@ -12,7 +12,7 @@
     <% %w[shipping billing].each do |slot| %>
       <% address = @user.public_send("#{slot}_address") %>
       <div class="card">
-        <h3 class="section-title"><%= slot.capitalize %> address</h3>
+        <h2 class="section-title"><%= slot.capitalize %> address</h2>
         <% [["line1", "Line 1"], ["line2", "Line 2"], ["locality", "City"], ["region", "Region"], ["postcode", "Postcode"], ["country", "Country (2 letters)"]].each do |field, label| %>
           <div class="field">
             <%= f.label "checkout[#{slot}][#{field}]", label %>
@@ -27,7 +27,7 @@
   </div>
 
   <div class="card" style="margin-top:1rem">
-    <h3 class="section-title">Payment</h3>
+    <h2 class="section-title">Payment</h2>
     <div class="field">
       <%= f.label "checkout[card_number]", "Card number" %>
       <%= f.text_field "checkout[card_number]", value: "4242 4242 4242 4242", class: "input", maxlength: 24, inputmode: "numeric" %>

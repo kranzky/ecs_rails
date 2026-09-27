@@ -8,11 +8,11 @@
 
 <div class="stack">
   <div class="card">
-    <h3 class="section-title">Entities are composed from components</h3>
+    <h2 class="section-title">Entities are composed from components</h2>
     <p class="prose">A <code>Post</code> isn't a wide table. It's an identity row
        composed from <strong>catalogue</strong> components — standard parts that
        ship with the gem, each under a <em>slot</em> that names its role:</p>
-    <pre style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:1rem;overflow:auto"><code>class Post &lt; ApplicationEntity
+    <pre tabindex="0" style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:1rem;overflow:auto"><code>class Post &lt; ApplicationEntity
   component Text,    prefix: :title                               # post.title
   component Text,    prefix: :body                                # post.body
   component State,   prefix: :publish, states: %w[draft published] # post.publish_state
@@ -32,7 +32,7 @@ end</code></pre>
 
   <div class="grid grid--2">
     <div class="card">
-      <h3 class="section-title">Markers → badges</h3>
+      <h2 class="section-title">Markers → badges</h2>
       <p class="prose" style="margin-bottom:0">The <span class="badge badge--mod">Moderator</span>
          and <span class="badge badge--admin">★ Admin</span> badges on
          <%= link_to "People", users_path %> are marker components. A user
@@ -42,14 +42,14 @@ end</code></pre>
          every marker. No STI.</p>
     </div>
     <div class="card">
-      <h3 class="section-title">Lazy by default</h3>
+      <h2 class="section-title">Lazy by default</h2>
       <p class="prose" style="margin-bottom:0">A component costs nothing until a
          value differs from its default — no row, no query. A new person with no
          bio has no row in <code>texts</code>, yet <code>user.bio</code> still
          works.</p>
     </div>
     <div class="card">
-      <h3 class="section-title">Query by composition</h3>
+      <h2 class="section-title">Query by composition</h2>
       <p class="prose" style="margin-bottom:0">The posts list is
          <code>Post.with_component(State, prefix: :publish, status: "published")</code>
          — it filters by what an entity is made of, and scopes to the entity type
@@ -60,14 +60,14 @@ end</code></pre>
          can't sort.</p>
     </div>
     <div class="card">
-      <h3 class="section-title">One component, two slots</h3>
+      <h2 class="section-title">One component, two slots</h2>
       <p class="prose" style="margin-bottom:0">A <%= link_to "group", groups_path %> has a
          name, a description <em>and</em> house rules — the same <code>Text</code>
          component declared three times under three slots. Same table, one row
          per slot, read as <code>group.rules</code>.</p>
     </div>
     <div class="card">
-      <h3 class="section-title">Relationships & join entities</h3>
+      <h2 class="section-title">Relationships & join entities</h2>
       <p class="prose" style="margin-bottom:0"><code>relates_to :author, User</code>
          links a post to its author, and <code>has_many :posts, via: :author</code>
          on the user reads them back as a real collection — both rows in one
@@ -77,14 +77,14 @@ end</code></pre>
   </div>
 
   <div class="card">
-    <h3 class="section-title">The market: filters, sort, and a system that never names an entity</h3>
+    <h2 class="section-title">The market: filters, sort, and a system that never names an entity</h2>
     <p class="prose">A <%= link_to "product", products_path %> is nine catalogue components
        and a relationship — price is <code>Money</code> under the slot <code>price</code>,
        the SKU an <code>Identifier</code>, stock a <code>Counter</code>, categories a
        <code>Tags</code>, the listing lifecycle a <code>State</code> — and, like the
        board, it needed no migration. Every filter on the market page is one
        clause on the same query:</p>
-    <pre style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:1rem;overflow:auto"><code>Product.listed
+    <pre tabindex="0" style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:1rem;overflow:auto"><code>Product.listed
        .with_component(Money, prefix: :price) { where("amount_cents <= ?", 5000) }
        .with_component(Rating, "stars >= ?", 4)
        .with_component(Tags) { tagged("books") }
@@ -100,7 +100,7 @@ end</code></pre>
   </div>
 
   <div class="card">
-    <h3 class="section-title">Checkout: a system over components, and copies not links</h3>
+    <h2 class="section-title">Checkout: a system over components, and copies not links</h2>
     <p class="prose" style="margin-bottom:0"><code>Demo::Checkout</code> is a plain Ruby object
        that turns a <code>Basket</code> into a paid <code>Order</code> with an
        <code>Invoice</code> in one transaction: it copies the customer's
@@ -114,7 +114,7 @@ end</code></pre>
   </div>
 
   <div class="card">
-    <h3 class="section-title">Geocoding: one system, every address</h3>
+    <h2 class="section-title">Geocoding: one system, every address</h2>
     <p class="prose" style="margin-bottom:0"><code>Demo::Geocoder</code> gives each
        <code>Address</code> a <code>Geolocation</code> in the same slot — a seller's
        address and a customer's shipping and billing addresses in one pass over the
@@ -125,7 +125,7 @@ end</code></pre>
   </div>
 
   <div class="card">
-    <h3 class="section-title">Validation merges onto the entity</h3>
+    <h2 class="section-title">Validation merges onto the entity</h2>
     <p class="prose" style="margin-bottom:0">The <code>Email</code> component
        validates its address; the error surfaces as
        <code>user.errors[:"email.address"]</code> and reads naturally in the form.

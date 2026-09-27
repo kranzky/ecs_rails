@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <title><%= content_for(:title) ? "#{content_for(:title)} · Bulletin" : "Bulletin — built on ECS Rails" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -11,35 +11,42 @@
   </head>
 
   <body>
-    <nav class="site-nav">
+    <%# Keyboard users skip the navigation and acting-as bar (13 stops). %>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <nav class="site-nav" aria-label="Main">
       <div class="site-nav__inner">
         <%= link_to root_path, class: "brand" do %>
           <span class="brand__mark">E</span> Bulletin
         <% end %>
         <div class="site-nav__links">
+          <%= nav_link "Start here", root_path, active: current_page?(root_path) %>
           <%= nav_link "Posts", posts_path, active: controller_name == "posts" %>
           <%= nav_link "People", users_path, active: controller_name == "users" %>
           <%= nav_link "Groups", groups_path, active: %w[groups memberships].include?(controller_name) %>
           <%= nav_link "Market", products_path, active: %w[products reviews].include?(controller_name) %>
           <%= nav_link "Sellers", companies_path, active: controller_name == "companies" %>
-          <%= nav_link "How it works", about_path, active: controller_name == "pages" %>
+          <%= nav_link "How it works", about_path, active: current_page?(about_path) %>
         </div>
       </div>
     </nav>
 
+    <%= render "layouts/acting_as" %>
     <%= render "layouts/reset_banner" %>
 
-    <% if flash.any? %>
-      <div class="flash">
-        <% flash.each do |type, message| %>
-          <div class="flash__msg flash__msg--<%= type == "alert" ? "alert" : "notice" %>">
-            <%= message %>
-          </div>
-        <% end %>
-      </div>
-    <% end %>
-
-    <main><%= yield %></main>
+    <main id="main" tabindex="-1">
+      <%# Alerts interrupt a screen reader; notices wait their turn. %>
+      <% if flash.any? %>
+        <div class="flash">
+          <% flash.each do |type, message| %>
+            <% alert = type == "alert" %>
+            <div class="flash__msg flash__msg--<%= alert ? "alert" : "notice" %>" role="<%= alert ? "alert" : "status" %>">
+              <%= message %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+      <%= yield %>
+    </main>
 
     <footer class="site-footer">
       <div class="site-footer__inner">

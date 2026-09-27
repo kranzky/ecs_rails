@@ -5,7 +5,22 @@ class ApplicationController < ActionController::Base
   # Changes to the importmap will invalidate the etag for HTML responses
   stale_when_importmap_changes
 
+  helper_method :acting_user
+
   private
+
+  # The demo has no accounts. A visitor picks who to act as from the bar under
+  # the navigation (ActingAsController), and that person writes the posts,
+  # comments and reviews, fills the basket and asks the seller policy for
+  # permission. The choice lives in the session; without one, or once an
+  # hourly reset has deleted that person, it falls back to the first person
+  # in the seed (Ada). This is a convenience, not authentication: anyone can
+  # act as anyone.
+  def acting_user
+    return @acting_user if defined?(@acting_user)
+
+    @acting_user = User.find_by(id: session[:acting_as_id]) || User.order(created_at: :asc, id: :asc).first
+  end
 
   # ECS-31: normalize before querying an offset. Kaminari owns the page/count
   # behavior; an out-of-range bookmark lands on the last available page.

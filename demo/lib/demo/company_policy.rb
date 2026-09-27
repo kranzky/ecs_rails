@@ -13,6 +13,14 @@ module Demo
       "staff"   => [].freeze
     }.freeze
 
+    # The people at a company whose role allows an action, so a refusal can
+    # say who to act as instead.
+    #
+    # @return [Array<User>]
+    def self.people_who_can(action, company)
+      company.staff.select { |employment| ROLES.fetch(employment.role_name, []).include?(action) }.map(&:user)
+    end
+
     attr_reader :role
 
     def initialize(user, company)

@@ -11,7 +11,7 @@
   </div>
 
   <hr class="divider">
-  <h3 class="section-title">Contact — Email, Phone and Address components</h3>
+  <h2 class="section-title">Contact — Email, Phone and Address components</h2>
   <dl class="contact">
     <dt>Email</dt><dd><%= @company.email_address %></dd>
     <dt>Phone</dt><dd><%= @company.phone.to_s.presence || "—" %></dd>
@@ -42,7 +42,9 @@
 <section style="margin-top:2rem">
   <div class="page-head page-head--row" style="margin-bottom:.75rem">
     <h2 class="section-title" style="margin:0">Products · <%= @products.total_count %></h2>
-    <%= link_to "New product", new_product_path(company_id: @company.id), class: "btn btn--sm btn--primary" %>
+    <% if @may_manage %>
+      <%= link_to "New product", new_product_path(company_id: @company.id), class: "btn btn--sm btn--primary" %>
+    <% end %>
   </div>
   <% if @products.empty? %>
     <div class="empty">Nothing listed yet.</div>

@@ -24,17 +24,15 @@ class PostsController < ApplicationController
                      .includes_components(Text, Counter)
                      .preload(author_relationship: { target: [:name, :avatar_image] })
     @comment = Comment.new
-    @authors = User.all
   end
 
   def new
     @post = Post.new
     @post.publish_state.status = "published" # default the checkbox to checked
-    @authors = User.all
   end
 
   def create
-    post = Post.new
+    post = Post.new(author: acting_user)
     assign(post, post_params)
 
     if post.save
@@ -42,14 +40,12 @@ class PostsController < ApplicationController
       redirect_to post, notice: post.published? ? "Post published." : "Draft saved."
     else
       @post = post
-      @authors = User.all
       render :new, status: :unprocessable_entity
     end
   end
 
   def edit
     @post = Post.find(params[:id])
-    @authors = User.all
   end
 
   def update
@@ -61,7 +57,6 @@ class PostsController < ApplicationController
       redirect_to post, notice: post.published? ? "Post published." : "Draft updated."
     else
       @post = post
-      @authors = User.all
       render :edit, status: :unprocessable_entity
     end
   end
@@ -75,16 +70,16 @@ class PostsController < ApplicationController
 
   private
 
-  # Shared by create and update. The publish checkbox always submits (check_box
+  # Shared by create and update; the author is set once, on create, from the
+  # acting user. The publish checkbox always submits (check_box
   # renders a hidden "0"), so its key is always present on a form post.
   def assign(post, attrs)
     post.title = cap(attrs[:title], 120) if attrs.key?(:title)
     post.body = cap(attrs[:body], 5000) if attrs.key?(:body)
-    post.author = User.find(attrs[:author_id]) if attrs[:author_id].present?
     post.publish_state.status = attrs[:publish] == "1" ? "published" : "draft" if attrs.key?(:publish)
   end
 
   def post_params
-    params.require(:post).permit(:title, :body, :author_id, :publish)
+    params.require(:post).permit(:title, :body, :publish)
   end
 end

@@ -304,6 +304,13 @@
       "humanMinutes": 0,
       "aiMinutes": 45,
       "costs": []
+    },
+    {
+      "date": "2026-09-27",
+      "summary": "ECS-44 marked Done. ECS-35: session-backed acting-as bar replacing four per-form user pickers (posts, comments, reviews, basket, seller policy with 'act as X' refusals); root is a four-step tour quoting each declaration, with a drift spec; scripted rendered + axe-core review (demo/script/qa: 21 pages x desktop/phone x light/dark, 7 interaction states, keyboard pass) took 8 violated rules on every page to zero; five colour tokens adjusted for AA, lang, landmarks, heading order, announced errors via a shared partial, underlined inline links, labelled basket controls, skip link, phone layouts for header, filters and tables. Findings in docs/design/demo-qa.md. 120 demo examples pass; no gem change.",
+      "humanMinutes": 5,
+      "aiMinutes": 120,
+      "costs": []
     }
   ]
 }

@@ -1,0 +1,24 @@
+<%# Who the visitor is acting as, on every page. A simulated identity: the
+    demo has no accounts, and switching needs no password. %>
+<% people = User.order(created_at: :asc, id: :asc).limit(50).includes_components(Name).to_a %>
+<% people.unshift(acting_user) if acting_user && people.exclude?(acting_user) %>
+<aside class="acting-bar" aria-label="Who you are acting as">
+  <div class="acting-bar__inner">
+    <% if acting_user %>
+      <%= form_with url: acting_as_path, method: :patch, class: "acting-bar__form" do |f| %>
+        <%= f.label :user_id, "Acting as", for: "acting_as_user_id" %>
+        <%= f.select :user_id, options_for_select(people.map { |person| [display_name(person), person.id] }, acting_user.id),
+                     {}, id: "acting_as_user_id", class: "select select--sm", "aria-describedby": "acting-as-hint" %>
+        <%= f.submit "Switch", class: "btn btn--sm btn--ghost" %>
+      <% end %>
+      <span id="acting-as-hint" class="acting-bar__hint">Simulated: no sign-in, switch freely.</span>
+      <span class="acting-bar__links">
+        <%= link_to "Basket", user_basket_path(acting_user) %>
+        <%= link_to "Orders", user_orders_path(acting_user) %>
+        <%= link_to "Profile", user_path(acting_user) %>
+      </span>
+    <% else %>
+      <span class="acting-bar__hint">Nobody to act as yet. <%= link_to "Add a person", new_user_path %>.</span>
+    <% end %>
+  </div>
+</aside>

@@ -70,28 +70,32 @@ want to retain.
 
 ## A short guided journey
 
-1. Open **People**, then Ada. Inspect the name, email, addresses and avatar;
-   toggle a marker to see presence as behavior.
-2. Open the bulletin board, create a post and publish it. The title/body are
-   Text slots; authorship is a relationship and publication is a State slot.
-3. Open **Market**, combine category, price and rating filters, then open a
-   product and its seller. An absent Money row displays as zero; filters and
-   ordering use that same displayed value.
-4. Add a priced, stocked product to a person's basket and check out. Use the
-   simulated card `4242424242424242` for success, or `4000000000000002` for a
-   decline. A decline rolls back the order and stock changes. The gateway makes
-   no network call and charges no real card; a zero total is also declined.
-5. Open the resulting order and invoice. Their copied addresses, titles and
-   prices preserve the sale even when the source product changes.
-6. Open **/geocoder** (linked from How it works). One address is waiting and one
-   is a place the simulated gazetteer does not know. Run the geocoder, then edit
-   a person's address and run it again: only that address is redone, for users
-   and sellers alike, and `db/migrate` still holds one file. The map above the
-   table filters by entity type (`Geolocation.where(entity: User.all)`).
-   Coordinates are simulated.
+The root page is a four-step tour — compose, use, inspect, extend — that quotes
+the declaration behind each step and links to the live page. In order:
 
-The app uses an **acting-as picker**, not authenticated sessions. It is example
-software, not a production storefront. Follow
+1. **Compose.** Open the acting person's profile (Ada by default). The name,
+   email, addresses, phones and avatar are catalogue components; the two
+   addresses are one component under two slots. Fill in an address.
+2. **Use.** Open **Market**, combine category, price and rating filters, add a
+   stocked product to the basket and check out. Use the simulated card
+   `4242424242424242` for success, or `4000000000000002` for a decline, which
+   rolls back the order and stock. The gateway makes no network call.
+3. **Inspect.** Open the order and its invoice. Their copied addresses, titles
+   and prices preserve the sale even when the source product changes.
+4. **Extend.** Open **/geocoder**. One address is waiting and one is a place
+   the simulated gazetteer does not know. Run it: the address from step 1 is
+   located, for users and sellers alike, and `db/migrate` still holds one file.
+   The map filters by entity type (`Geolocation.where(entity: User.all)`).
+
+The bulletin board (`/posts`), groups and moderator/admin markers cover the
+rest of the gem.
+
+**Acting as.** There are no accounts. The bar under the navigation picks who
+you act as, kept in the session and defaulting to Ada; that person writes
+posts, comments and reviews, fills the basket, and is judged by the seller
+policy (an owner or manager may list and edit products; the page names who can
+when you cannot). It is labelled as simulated and needs no password. It is
+example software, not a production storefront. Follow
 [the source walkthrough](../docs/source-walkthrough.md) for the declarations,
 query/render path, checkout locks and generic indexer.
 
@@ -124,6 +128,15 @@ the console; the existing People page lists User records and does not acquire a
 new interface automatically. Remove the example records with `Person.destroy_all`
 in the console before `bin/rails destroy ecs_rails:entity Person` removes the
 class file. The generator does not delete data.
+
+## Rendered and accessibility review
+
+`script/qa/` screenshots every page at desktop and phone widths in light and
+dark schemes, runs axe-core (WCAG 2.1 AA) on each, checks phone overflow and
+walks the keyboard focus order; `states.js` covers validation errors, a
+declined checkout and empty states. See
+[the review and how to rerun it](../docs/design/demo-qa.md). It needs Node and
+a local Chrome; it is not part of CI.
 
 ## Tests and checks
 

@@ -1,21 +1,8 @@
 <div class="card">
-  <% if @product.errors.any? %>
-    <div class="errors">
-      <strong><%= pluralize(@product.errors.count, "problem") %> stopped this saving:</strong>
-      <ul>
-        <% @product.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
-      </ul>
-    </div>
-  <% end %>
+  <%= render "shared/errors", record: @product %>
 
   <%= form_with url: url, method: method do |f| %>
-    <div class="field">
-      <%= f.label "product[actor_id]", "Acting as" %>
-      <%= f.select "product[actor_id]",
-            options_for_select(@staff.map { |e| ["#{display_name(e.user)} (#{e.role_name} at #{@company.name})", e.user&.id] }),
-            {}, class: "select" %>
-      <p class="hint">Owners and managers may manage products; staff may not — the policy reads the Employment's Role.</p>
-    </div>
+    <%= acting_note("Managing #{@company.name}'s products") %>
     <div class="field">
       <%= f.label "product[title]", "Title" %>
       <%= f.text_field "product[title]", class: "input", maxlength: 120, value: @product.title %>

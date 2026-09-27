@@ -4,7 +4,8 @@ Rails.application.routes.draw do
   # Health check for uptime monitors / Fly (config.silence_healthcheck_path).
   get "up" => "rails/health#show", as: :rails_health_check
 
-  root "posts#index"
+  # The tour: where a visitor starts (ECS-35). The bulletin board is /posts.
+  root "pages#start"
 
   resources :posts, only: %i[index show new create edit update] do
     member { patch :publish }
@@ -51,4 +52,7 @@ Rails.application.routes.draw do
   resource :geocoder, only: %i[show create]
 
   get "about" => "pages#about"
+
+  # Who the visitor acts as: a simulated identity, not a sign-in.
+  resource :acting_as, only: :update, controller: "acting_as"
 end
