@@ -125,6 +125,11 @@ module ApplicationHelper
     content_tag(:p, safe_join([text, " · ", link_to("Geocoder", geocoder_path)]), class: "hint", style: "margin:.2rem 0 0")
   end
 
+  # Entity-type counts for a map marker or filter: "2 users, 1 company".
+  def owner_types_text(counts)
+    counts.map { |model, count| pluralize(count, model.singularize) }.to_sentence
+  end
+
   # A short name for any entity that owns an address.
   def owner_label(entity)
     case entity

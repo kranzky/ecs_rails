@@ -3,7 +3,8 @@
 require "rails_helper"
 
 # ECS-8: the geocoder's page shows its work before and after a run, beside the
-# unchanged migration directory. The seed leaves one address waiting and one
+# unchanged migration directory. ECS-44 adds a map of the located addresses,
+# filtered by the owning entity's type from the entity side. The seed leaves one address waiting and one
 # the simulated gazetteer cannot place, so a visitor's first run does something
 # and every state is visible. Losing either would leave the page with nothing
 # to show.
@@ -49,5 +50,50 @@ RSpec.describe "geocoder page", type: :request do
     expect(response.body).to include("The simulated gazetteer does not know this place")
     get company_path(Company.first)
     expect(response.body).to include("(simulated)")
+  end
+
+  describe "the map (ECS-44)" do
+    def places
+      response.body.scan(%r{<li><strong>([^<]+)</strong> <span class="count">([^<]+)</span>}).to_h
+    end
+
+    # The seed leaves Alan's Wilmslow address waiting, so six are located.
+    it "plots every located address, merging towns that share a dot" do
+      get geocoder_path
+
+      expect(response.body).to include('<svg class="world-map"', "Map · 6 located addresses")
+      expect(places).to eq(
+        "Cambridge and London" => "2 companies", "New York" => "1 company",
+        "Arlington" => "1 user", "Perth" => "2 users"
+      )
+      expect(response.body).to include("Cambridge &amp; London · 2")
+    end
+
+    it "filters the map and the address table by the owning entity's type" do
+      get geocoder_path(model: "companies")
+
+      expect(response.body).to include("Geolocation.where(entity: Company.all)", "Map · 3 located addresses")
+      expect(places.keys).to eq ["Cambridge and London", "New York"]
+      expect(response.body).to include("Addresses · 3")
+      expect(response.body).not_to include('<span class="badge">User</span>')
+      expect(response.body).to match(%r{<a class="btn btn--sm btn--primary" aria-current="page" href="/geocoder\?model=companies">})
+    end
+
+    it "shows everything for a type that owns no located address, or a bad value" do
+      %w[orders nope].each do |model|
+        get geocoder_path(model: model)
+
+        expect(response.body).to include("Map · 6 located addresses", "Addresses · 11")
+        expect(response.body).not_to include("Geolocation.where(entity:")
+      end
+    end
+
+    it "keeps the filter when paging through the address table" do
+      allow(Kaminari.config).to receive(:default_per_page).and_return(2)
+
+      get geocoder_path(model: "users")
+
+      expect(response.body).to include("/geocoder?model=users&amp;page=2")
+    end
   end
 end

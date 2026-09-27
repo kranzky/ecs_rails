@@ -17,6 +17,55 @@
   </div>
 
   <div class="card">
+    <h2 class="section-title">Map · <%= pluralize(@located_total, "located address") %></h2>
+    <nav class="btn-row" aria-label="Show addresses owned by" style="margin-bottom:.75rem">
+      <%= link_to "All · #{@model_counts.values.sum}", geocoder_path,
+                  class: "btn btn--sm #{@model ? 'btn--ghost' : 'btn--primary'}", "aria-current": (@model ? nil : "page") %>
+      <% @model_counts.each do |model, count| %>
+        <%= link_to "#{model.humanize} · #{count}", geocoder_path(model: model),
+                    class: "btn btn--sm #{model == @model ? 'btn--primary' : 'btn--ghost'}", "aria-current": (model == @model ? "page" : nil) %>
+      <% end %>
+    </nav>
+    <p class="hint" style="margin:0 0 .75rem">
+      <% if @owner_class %>
+        <code>Geolocation.where(entity: <%= @owner_class.name %>.all)</code>: the component
+        table has no idea what owns a row, so the type comes from the owner's scope.
+      <% else %>
+        Every located <code>Geolocation</code>, whatever owns it. Filter by the owning
+        entity's type above; the address table below follows the same filter.
+      <% end %>
+    </p>
+    <svg class="world-map" viewBox="<%= Demo::WorldMap::VIEW_BOX %>" role="img" aria-labelledby="world-map-title world-map-desc">
+      <title id="world-map-title">Simulated geolocations on a world map</title>
+      <desc id="world-map-desc"><%= pluralize(@markers.sum { |marker| marker.pins.size }, "point") %> in <%= pluralize(@markers.size, "place") %>, listed after the map.</desc>
+      <path class="world-map__land" d="<%= Demo::WorldMap::LAND %>"/>
+      <% labels = Demo::WorldMap.label_positions(@markers) %>
+      <% @markers.each do |marker| %>
+        <g class="world-map__marker">
+          <title><%= marker.places.to_sentence %>: <%= owner_types_text(marker.owner_types) %></title>
+          <circle cx="<%= marker.x.round(2) %>" cy="<%= marker.y.round(2) %>" r="<%= marker.radius %>"/>
+          <% if (x, y, anchor = labels[marker]) %>
+            <text class="world-map__label" x="<%= x.round(2) %>" y="<%= y.round(2) %>" text-anchor="<%= anchor %>"><%= marker.label %></text>
+          <% end %>
+        </g>
+      <% end %>
+    </svg>
+    <% if @markers.empty? %>
+      <p class="empty" style="margin-top:.75rem">Nothing located yet. Run the geocoder below.</p>
+    <% else %>
+      <h3 class="section-title" style="margin:1rem 0 .5rem">Places on the map</h3>
+      <ul class="map-places">
+        <% @markers.each do |marker| %>
+          <li><strong><%= marker.places.to_sentence %></strong> <span class="count"><%= owner_types_text(marker.owner_types) %></span></li>
+        <% end %>
+      </ul>
+    <% end %>
+    <% if @located_total > GeocodersController::MAP_LIMIT %>
+      <p class="hint">Showing the first <%= GeocodersController::MAP_LIMIT %> of <%= @located_total %> points.</p>
+    <% end %>
+  </div>
+
+  <div class="card">
     <div class="btn-row" style="justify-content:space-between;align-items:center;margin-bottom:.75rem">
       <h2 class="section-title" style="margin:0">Addresses · <%= @addresses.total_count %></h2>
       <%= button_to "Run the geocoder", geocoder_path, class: "btn btn--sm btn--primary" %>
