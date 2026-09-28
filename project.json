@@ -325,6 +325,13 @@
       "humanMinutes": 10,
       "aiMinutes": 20,
       "costs": []
+    },
+    {
+      "date": "2026-09-28",
+      "summary": "ECS-19 closed: demo repin merged (PR #58); the user dropped the live 0.2.2 tables and ran fly deploy (release v5). Verified the live site on ecs_on_rails 0.3.0: one schema_migrations version (the install), 28 tables, seeded data, every main route 200 in 0.2-0.9s (was 13.7s), tour, acting-as bar, geocoder map and checkout render, and the 09:00 UTC hourly reset logged. Created the v0.3.0 GitHub release from the changelog. Linear: ECS-19 and the ECS-3 epic Done; ECS-21 moved out of the epic to the backlog. Next: ECS-20 blog, ECS-10 video, then the 0.4.0 performance epic (ECS-37).",
+      "humanMinutes": 10,
+      "aiMinutes": 25,
+      "costs": []
     }
   ]
 }
