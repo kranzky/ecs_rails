@@ -4,15 +4,18 @@ An Entity–Component–System reimagining of ActiveRecord that stays idiomatic 
 Ruby on Rails.
 
 > **Published as [`ecs_on_rails`](https://rubygems.org/gems/ecs_on_rails)
-> (0.2.2).** The v0.1 API is implemented and tested on real PostgreSQL, and the
-> companion bulletin board runs live at
-> [ecs-rails.kranzky.com](https://ecs-rails.kranzky.com). See the
-> [v0.1 retrospective](docs/retrospective-v0.1.md) and the launch post,
-> ["Composing Rails"](docs/blog/composing-rails.md). **v2 is under way** on
-> `main`: *zero migrations for composition from the installed catalogue* —
-> [ADR-0017](docs/adr/0017-shared-relationships-table.md),
-> [ADR-0018](docs/adr/0018-catalogue-in-the-gem.md) — tracked in Linear team
-> ECS and released once, as 0.3.0.
+> (0.3.0), the zero-migrations release.** After `rails g ecs_rails:install`
+> and one `db:migrate`, entities, labelled slots, relationships, markers and
+> systems are plain Ruby: the catalogue ships the components
+> ([ADR-0018](docs/adr/0018-catalogue-in-the-gem.md)) and one shared table
+> holds every relationship
+> ([ADR-0017](docs/adr/0017-shared-relationships-table.md)). Tested on real
+> PostgreSQL across Rails 7.1–8.1. The companion bulletin board and
+> marketplace run at [ecs-rails.kranzky.com](https://ecs-rails.kranzky.com).
+> Upgrading from 0.2? See the
+> [changelog](gem/CHANGELOG.md). Earlier: the
+> [v0.1 retrospective](docs/retrospective-v0.1.md) and
+> ["Composing Rails"](docs/blog/composing-rails.md).
 
 ## The idea
 

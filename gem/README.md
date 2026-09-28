@@ -3,9 +3,9 @@
 Compose ordinary Rails models from reusable components. Install their tables
 once; add entity types, labelled slots, relationships and markers in Ruby.
 
-> This guide uses the **unreleased 0.3.0 API on main**. Published **0.2.2** has
-> the earlier API and does not provide this catalogue. Use the source checkout
-> below for this tutorial. The gem version stays unchanged until release.
+> This guide is for **0.3.0**, the zero-migrations release. Upgrading from
+> 0.2.x? See [Upgrading an existing installation](#upgrading-an-existing-installation)
+> and the [changelog](https://github.com/kranzky/ecs_rails/blob/main/gem/CHANGELOG.md).
 
 ## Quickstart: a contacts directory
 
@@ -16,11 +16,13 @@ and database for this tutorial; the script creates example records each run.
 From a directory where you keep projects:
 
 ```sh
-git clone https://github.com/kranzky/ecs_rails.git
 rails new contacts --minimal --database=postgresql
 cd contacts
-bundle add ecs_on_rails --path ../ecs_rails/gem
+bundle add ecs_on_rails --version "~> 0.3.0"
 ```
+
+To follow unreleased work on `main` instead, clone the repository and use
+`bundle add ecs_on_rails --path ../ecs_rails/gem`.
 
 Install the catalogue, then create and migrate the app's database:
 
@@ -325,8 +327,8 @@ This app now has a second migration and a dedicated `temperatures` table.
 
 ## Upgrading an existing installation
 
-Back up the database and try the upgrade on a copy first. For published 0.2.2,
-change the Gemfile entry to the source path above, then run `bundle update
+Back up the database and try the upgrade on a copy first. From 0.2.x, change
+the Gemfile entry to `gem "ecs_on_rails", "~> 0.3.0"`, then run `bundle update
 ecs_on_rails`. Use development (without eager loading) for generation: an old
 app needs the new generated classes before it can fully boot. Set
 `RAILS_ENV=development` in your shell, then run:

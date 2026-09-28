@@ -6,6 +6,37 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-09-27
+
+**The zero-migrations release.** After `rails g ecs_rails:install` and one
+`db:migrate`, entities, labelled slots, relationships, markers and systems are
+plain Ruby: the catalogue ships the components, one shared table holds every
+relationship, another every marker. Breaking, pre-1.0.
+
+### Upgrading from 0.2
+
+Back up the database and try this on a copy first. The gem README's
+"Upgrading an existing installation" has the full steps.
+
+1. Update the Gemfile to `gem "ecs_on_rails", "~> 0.3.0"` and run
+   `bundle update ecs_on_rails`.
+2. In development, run `bin/rails generate ecs_rails:upgrade` (add
+   `--sets core commerce` for `Money`), review the migrations, then
+   `bin/rails db:migrate`. It adds `slot` to every component table and moves
+   the unique index to `(entity_id, slot)`, creates `relationships`, `markers`
+   and the catalogue tables, and moves rows from per-relationship and marker
+   tables into the shared ones, keeping their IDs. Running it again generates
+   nothing.
+3. **Delegated names are prefixed with the reader**: `user.address` becomes
+   `user.email_address`. Add `prefix: false` to a declaration to keep bare names.
+4. **Markers are declared by name**: `component Moderator` becomes
+   `marker :moderator`, and `add(Moderator)` becomes `add(:moderator)`. Delete
+   the old marker class after migrating.
+5. **`rails g ecs_rails:relationship` is gone**: `relates_to` needs no
+   migration. Nested preloads name `target`:
+   `preload(author_relationship: { target: :name })`.
+6. Run `bin/rails zeitwerk:check` and your tests.
+
 ### Added
 
 - **Demo journey, identity and accessibility** (ECS-35): the demo opens on a
@@ -154,6 +185,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   that lacks them, found by inspecting the database. Safe on shipped data.
   This is the only migration a 0.2.x app needs to run.
 
+- `component Foo, prefix: false` — bare delegation for one declaration, where
+  the prefix would be redundant (`post.state`, not `post.publish_state_state`).
+  `prefix: true` is the explicit default. A Symbol (RFC-0014's slot label)
+  raises `ArgumentError` until labelled slots are implemented.
+- **Flat mass assignment.** Because the prefixed writers exist,
+  `User.create!(name_first: "Ada", email_address: "a@b.com")` routes each key
+  to its component, dirties it and persists it through the save cascade;
+  `update!` too. Rails multiparameter form fields (`date_select` →
+  `group_founded_on(1i)`…) route the same way. Unknown keys still raise
+  `ActiveModel::UnknownAttributeError`.
+
 ### Fixed
 
 - **Bounded demo indexing** (ECS-32): the component indexer batches 100 owners,
@@ -267,19 +309,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   declarations; both messages name dropping `prefix: false` as a way out.
 - `relates_to` declares its backing component bare, so `post.author` /
   `post.author=` keep their shape.
-
-### Added
-
-- `component Foo, prefix: false` — bare delegation for one declaration, where
-  the prefix would be redundant (`post.state`, not `post.publish_state_state`).
-  `prefix: true` is the explicit default. A Symbol (RFC-0014's slot label)
-  raises `ArgumentError` until labelled slots are implemented.
-- **Flat mass assignment.** Because the prefixed writers exist,
-  `User.create!(name_first: "Ada", email_address: "a@b.com")` routes each key
-  to its component, dirties it and persists it through the save cascade;
-  `update!` too. Rails multiparameter form fields (`date_select` →
-  `group_founded_on(1i)`…) route the same way. Unknown keys still raise
-  `ActiveModel::UnknownAttributeError`.
 
 ## [0.2.2] — 2026-07-23
 

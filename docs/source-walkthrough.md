@@ -1,6 +1,6 @@
 # Reading an ECS Rails application
 
-This walkthrough follows the unreleased 0.3.0 source. Start with the
+This walkthrough follows the 0.3.0 source. Start with the
 [gem README](../gem/README.md#quickstart-a-contacts-directory) for installation,
 then follow these three paths through the companion demo. You can understand the application
 without starting with the gem's metaprogramming.

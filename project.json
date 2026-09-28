@@ -311,6 +311,13 @@
       "humanMinutes": 5,
       "aiMinutes": 120,
       "costs": []
+    },
+    {
+      "date": "2026-09-27",
+      "summary": "ECS-35 marked Done. ECS-19 release prep for ecs_on_rails 0.3.0: version bump; CHANGELOG [0.3.0] with an 'Upgrading from 0.2' section (prefixed delegation, ecs_rails:upgrade, markers by name, relationship generator removed, target preloads) and the two Added sections merged; gem README tutorial installs the published gem (~> 0.3.0) and upgrade text points at it; root README banner describes 0.3.0. Verified every gemspec URI resolves, gem builds with correct metadata, 952 gem examples, YARD 100% with ASCII .yardopts, packaged fresh-install and published-0.2.2 upgrade checks, 120 demo examples and eager loading. gem push, tag, demo repin and Fly deploy follow merge.",
+      "humanMinutes": 0,
+      "aiMinutes": 30,
+      "costs": []
     }
   ]
 }
