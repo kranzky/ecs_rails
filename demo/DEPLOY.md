@@ -58,15 +58,35 @@ fly secrets set RAILS_MASTER_KEY="$(cat config/master.key)" --app ecs-rails-demo
 fly deploy
 ```
 
-> **Paused during the v2 build.** `demo/Gemfile` takes the gem from
-> `path: "../gem"` (ECS-18), which the Docker build context cannot see, so
-> `fly deploy` fails until the 0.3.0 release (ECS-19) repins
-> `gem "ecs_on_rails", "~> 0.3.0"`. The live site keeps serving 0.2.2 meanwhile.
-> For a one-off deploy before then, point the Gemfile at the git source noted in
-> its comment, `bundle lock`, and deploy.
+> The Gemfile pins the published gem (`~> 0.3.0`), so the build context is
+> self-contained. Between releases, if the Gemfile points at `path: "../gem"`,
+> the Docker build cannot see it and `fly deploy` fails until the next release
+> repins the published gem. For a one-off deploy then, use a git source
+> (`gem "ecs_on_rails", github: "kranzky/ecs_rails", glob: "gem/*.gemspec"`),
+> `bundle lock`, and deploy.
 
 The `release_command` in `fly.toml` runs `bin/rails db:prepare demo:reset`, so
 the database is created, migrated (one migration — the install) and seeded on every deploy.
+
+### Once: moving the live demo from 0.2.2 to 0.3.0
+
+The 0.3.0 demo has a single install migration that creates every table. The
+live database still holds the 0.2.2 demo's tables, so the release command's
+`db:prepare` would stop at the first `create_table` (Fly then abandons the
+release and keeps 0.2.2 running). The data is disposable — it resets hourly —
+so drop the tables, as the app's own database user that owns them, and deploy:
+
+```sh
+fly ssh console --app ecs-rails-demo -C \
+  "bin/rails runner 'c = ActiveRecord::Base.connection; c.tables.each { |t| c.drop_table(t, force: :cascade) }'"
+fly deploy
+```
+
+`db:prepare` then runs the one install migration on an empty database and
+`demo:reset` seeds it. The site shows errors between the two commands (the old
+release has no tables), for the few minutes the deploy takes. Later releases
+that keep the install migration need no such step; one that changes the
+catalogue ships an `ecs_rails:upgrade` migration instead.
 
 ## 5. Custom domain (ecs-rails.kranzky.com)
 

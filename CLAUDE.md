@@ -9,15 +9,15 @@ differ). A **Labs** project in the portfolio: open source (MIT), no revenue
 metric. Read the parent `../CLAUDE.md` for portfolio conventions; this file is
 the project-specific rule set.
 
-- **v0.1 shipped** (gem 0.2.2, demo live at https://ecs-rails.kranzky.com,
-  blog post `docs/blog/composing-rails.md`).
-- **v2 is in progress**: *zero migrations after install*. After
+- **v0.1 shipped** (gem 0.2.2, blog post `docs/blog/composing-rails.md`).
+- **v2 shipped as gem 0.3.0** (2026-09-28): *zero migrations after install*. After
   `rails g ecs_rails:install` and one `db:migrate`, entities, relationships,
   markers and systems are pure Ruby. Design of record:
   [ADR-0017](docs/adr/0017-shared-relationships-table.md) (one shared
   `relationships` table) and [ADR-0018](docs/adr/0018-catalogue-in-the-gem.md)
   (the catalogue ships in the gem). Ends in gem 0.3.0, the marketplace demo
-  (`docs/design/marketplace-demo.md`) and a blog post, "The Last Migration".
+  (`docs/design/marketplace-demo.md`) and a blog post, "The Last Migration"
+  (ECS-20, still to write), then the video (ECS-10).
 
 ## Read in this order
 
@@ -36,8 +36,8 @@ demo/   a Rails 8 bulletin board + marketplace built on the gem. Deployed to Fly
 docs/   architecture, ADRs, RFCs, backlog, friction log, design, blog.
 ```
 
-The demo uses the gem via `path: "../gem"` during a build so gem changes are
-felt in the demo the same day. Since ECS-17 the demo is composed from the
+The demo pins the published gem (`~> 0.3.0`) between builds. During a build it
+switches to `path: "../gem"` so gem changes are felt in the demo the same day. Since ECS-17 the demo is composed from the
 catalogue only: `db/migrate` holds exactly one file (the install migration,
 generated with `--sets core commerce` — Money is in the commerce set),
 every class under `app/entities/components/` is a catalogue one-liner, and
