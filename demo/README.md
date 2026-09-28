@@ -4,8 +4,8 @@ A bulletin board and marketplace composed from the gem's catalogue. Explore
 people, posts, groups, companies, products, baskets, orders and invoices without
 adding a migration for each entity type.
 
-This checkout uses the sibling `../gem` source and the unreleased 0.3.0 API.
-The published 0.2.2 gem and deployed demo belong to the earlier release. Start
+This demo runs on the published `ecs_on_rails` 0.3.0 gem, the same version
+deployed at [ecs-rails.kranzky.com](https://ecs-rails.kranzky.com). Start
 with the [gem quickstart](../gem/README.md#quickstart-a-contacts-directory) if you
 want to build a small app of your own.
 
@@ -171,7 +171,7 @@ For the demo benchmark and its limits, see
 
 ## Deployment
 
-The current local-path gem dependency reaches outside the demo's Docker build
-context. Deployment resumes at the 0.3.0 release after the Gemfile is repinned to
-the published gem. The Fly configuration belongs to that release workflow;
-local setup does not require Fly credentials or a deployment.
+The demo deploys to Fly.io from the published gem; see [DEPLOY.md](DEPLOY.md).
+Local setup does not require Fly credentials or a deployment. To try unreleased
+gem changes in the demo, point the Gemfile at `path: "../gem"`; deploys then
+wait for the next release.

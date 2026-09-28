@@ -318,6 +318,13 @@
       "humanMinutes": 0,
       "aiMinutes": 30,
       "costs": []
+    },
+    {
+      "date": "2026-09-28",
+      "summary": "ECS-19: ecs_on_rails 0.3.0 published by the user (RubyGems, 2026-09-28, tag v0.3.0). Repinned demo/Gemfile to ~> 0.3.0 (lock resolves from RubyGems), so the Docker build context is self-contained; 120 demo examples and eager loading pass on the installed gem. Updated Dockerfile, DEPLOY.md (plus a one-time 0.2.2 -> 0.3.0 database transition: the single install migration collides with the live 0.2.2 tables, so drop them and deploy), demo README and CLAUDE.md status. Fly deploy pending the user's login and go-ahead.",
+      "humanMinutes": 10,
+      "aiMinutes": 20,
+      "costs": []
     }
   ]
 }
