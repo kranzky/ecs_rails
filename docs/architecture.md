@@ -57,6 +57,11 @@ is ordinary ActiveRecord.
 - Operates over one or more component types.
 - Never requires knowledge of entity subclasses.
 - Reaches the owning entity, when it must, via `component.entity`.
+- May write a component table in bulk, bypassing the model, only as an
+  explicit and tested contract that says what it keeps and what it skips
+  (validations, callbacks, timestamps). Ordinary saves and the component's
+  own methods stay on the model path. First case: `Demo::Indexer`'s one
+  upsert per batch (ECS-39, [batched indexer](design/batched-indexer.md)).
 
 ---
 

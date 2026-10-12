@@ -1,0 +1,632 @@
+{
+  "issue": "ECS-39",
+  "measured_at": "2026-10-12",
+  "base_commit": "0245e0ad659516768e5cafb251f59a4d3bf2484a",
+  "note": "Candidate write paths in demo/script/benchmark_indexer.rb on the ECS-32 fixture (three Text slots per owner, each a phrase repeated 80 times; 20% groups without SearchVector). Three runs per mode and size, each a fresh Ruby process; batch size 100. batch_transaction ran on a re-prepared fixture of the same shape (new UUIDs), so its document_sha256 differs from the other modes; an upsert run on that fixture matched it.",
+  "runs": [
+    {
+      "size": 250,
+      "run": 1,
+      "mode": "batched",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 250,
+      "texts": 750,
+      "indexed": 200,
+      "batch_size": 100,
+      "seconds": 1.238,
+      "allocated_objects": 194175,
+      "queries": {
+        "total": 409,
+        "owner_reads": 3,
+        "text_reads": 3,
+        "vector_reads": 203,
+        "writes": 200
+      },
+      "document_sha256": "1a63f028d38381f6d95f473433933c5ece5ae96be52b9346e77dda3b85531f30"
+    },
+    {
+      "size": 250,
+      "run": 1,
+      "mode": "no_reload",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 250,
+      "texts": 750,
+      "indexed": 200,
+      "batch_size": 100,
+      "seconds": 0.503,
+      "allocated_objects": 180005,
+      "queries": {
+        "total": 406,
+        "owner_reads": 3,
+        "text_reads": 3,
+        "vector_reads": 200,
+        "writes": 200
+      },
+      "document_sha256": "1a63f028d38381f6d95f473433933c5ece5ae96be52b9346e77dda3b85531f30"
+    },
+    {
+      "size": 250,
+      "run": 1,
+      "mode": "update_from",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 250,
+      "texts": 750,
+      "indexed": 200,
+      "batch_size": 100,
+      "seconds": 0.305,
+      "allocated_objects": 125370,
+      "queries": {
+        "total": 12,
+        "owner_reads": 3,
+        "text_reads": 3,
+        "vector_reads": 3,
+        "writes": 3
+      },
+      "document_sha256": "1a63f028d38381f6d95f473433933c5ece5ae96be52b9346e77dda3b85531f30"
+    },
+    {
+      "size": 250,
+      "run": 1,
+      "mode": "upsert",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 250,
+      "texts": 750,
+      "indexed": 200,
+      "batch_size": 100,
+      "seconds": 0.316,
+      "allocated_objects": 123081,
+      "queries": {
+        "total": 9,
+        "owner_reads": 3,
+        "text_reads": 3,
+        "writes": 3
+      },
+      "document_sha256": "1a63f028d38381f6d95f473433933c5ece5ae96be52b9346e77dda3b85531f30"
+    },
+    {
+      "size": 250,
+      "run": 2,
+      "mode": "batched",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 250,
+      "texts": 750,
+      "indexed": 200,
+      "batch_size": 100,
+      "seconds": 1.323,
+      "allocated_objects": 194375,
+      "queries": {
+        "total": 409,
+        "owner_reads": 3,
+        "text_reads": 3,
+        "vector_reads": 203,
+        "writes": 200
+      },
+      "document_sha256": "1a63f028d38381f6d95f473433933c5ece5ae96be52b9346e77dda3b85531f30"
+    },
+    {
+      "size": 250,
+      "run": 2,
+      "mode": "no_reload",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 250,
+      "texts": 750,
+      "indexed": 200,
+      "batch_size": 100,
+      "seconds": 0.5,
+      "allocated_objects": 180008,
+      "queries": {
+        "total": 406,
+        "owner_reads": 3,
+        "text_reads": 3,
+        "vector_reads": 200,
+        "writes": 200
+      },
+      "document_sha256": "1a63f028d38381f6d95f473433933c5ece5ae96be52b9346e77dda3b85531f30"
+    },
+    {
+      "size": 250,
+      "run": 2,
+      "mode": "update_from",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 250,
+      "texts": 750,
+      "indexed": 200,
+      "batch_size": 100,
+      "seconds": 0.315,
+      "allocated_objects": 125356,
+      "queries": {
+        "total": 12,
+        "owner_reads": 3,
+        "text_reads": 3,
+        "vector_reads": 3,
+        "writes": 3
+      },
+      "document_sha256": "1a63f028d38381f6d95f473433933c5ece5ae96be52b9346e77dda3b85531f30"
+    },
+    {
+      "size": 250,
+      "run": 2,
+      "mode": "upsert",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 250,
+      "texts": 750,
+      "indexed": 200,
+      "batch_size": 100,
+      "seconds": 0.33,
+      "allocated_objects": 123081,
+      "queries": {
+        "total": 9,
+        "owner_reads": 3,
+        "text_reads": 3,
+        "writes": 3
+      },
+      "document_sha256": "1a63f028d38381f6d95f473433933c5ece5ae96be52b9346e77dda3b85531f30"
+    },
+    {
+      "size": 250,
+      "run": 3,
+      "mode": "batched",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 250,
+      "texts": 750,
+      "indexed": 200,
+      "batch_size": 100,
+      "seconds": 1.234,
+      "allocated_objects": 194391,
+      "queries": {
+        "total": 409,
+        "owner_reads": 3,
+        "text_reads": 3,
+        "vector_reads": 203,
+        "writes": 200
+      },
+      "document_sha256": "1a63f028d38381f6d95f473433933c5ece5ae96be52b9346e77dda3b85531f30"
+    },
+    {
+      "size": 250,
+      "run": 3,
+      "mode": "no_reload",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 250,
+      "texts": 750,
+      "indexed": 200,
+      "batch_size": 100,
+      "seconds": 0.783,
+      "allocated_objects": 180019,
+      "queries": {
+        "total": 406,
+        "owner_reads": 3,
+        "text_reads": 3,
+        "vector_reads": 200,
+        "writes": 200
+      },
+      "document_sha256": "1a63f028d38381f6d95f473433933c5ece5ae96be52b9346e77dda3b85531f30"
+    },
+    {
+      "size": 250,
+      "run": 3,
+      "mode": "update_from",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 250,
+      "texts": 750,
+      "indexed": 200,
+      "batch_size": 100,
+      "seconds": 0.315,
+      "allocated_objects": 125361,
+      "queries": {
+        "total": 12,
+        "owner_reads": 3,
+        "text_reads": 3,
+        "vector_reads": 3,
+        "writes": 3
+      },
+      "document_sha256": "1a63f028d38381f6d95f473433933c5ece5ae96be52b9346e77dda3b85531f30"
+    },
+    {
+      "size": 250,
+      "run": 3,
+      "mode": "upsert",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 250,
+      "texts": 750,
+      "indexed": 200,
+      "batch_size": 100,
+      "seconds": 0.323,
+      "allocated_objects": 123083,
+      "queries": {
+        "total": 9,
+        "owner_reads": 3,
+        "text_reads": 3,
+        "writes": 3
+      },
+      "document_sha256": "1a63f028d38381f6d95f473433933c5ece5ae96be52b9346e77dda3b85531f30"
+    },
+    {
+      "size": 2500,
+      "run": 1,
+      "mode": "batched",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 2500,
+      "texts": 7500,
+      "indexed": 2000,
+      "batch_size": 100,
+      "seconds": 10.837,
+      "allocated_objects": 945868,
+      "queries": {
+        "total": 4076,
+        "owner_reads": 26,
+        "text_reads": 25,
+        "vector_reads": 2025,
+        "writes": 2000
+      },
+      "document_sha256": "a86d97ffbd307612f9f8c13a6736f635200510ce5f52a1039538156b3d83a256"
+    },
+    {
+      "size": 2500,
+      "run": 1,
+      "mode": "no_reload",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 2500,
+      "texts": 7500,
+      "indexed": 2000,
+      "batch_size": 100,
+      "seconds": 10.916,
+      "allocated_objects": 828857,
+      "queries": {
+        "total": 4051,
+        "owner_reads": 26,
+        "text_reads": 25,
+        "vector_reads": 2000,
+        "writes": 2000
+      },
+      "document_sha256": "a86d97ffbd307612f9f8c13a6736f635200510ce5f52a1039538156b3d83a256"
+    },
+    {
+      "size": 2500,
+      "run": 1,
+      "mode": "update_from",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 2500,
+      "texts": 7500,
+      "indexed": 2000,
+      "batch_size": 100,
+      "seconds": 1.376,
+      "allocated_objects": 282314,
+      "queries": {
+        "total": 101,
+        "owner_reads": 26,
+        "text_reads": 25,
+        "vector_reads": 25,
+        "writes": 25
+      },
+      "document_sha256": "a86d97ffbd307612f9f8c13a6736f635200510ce5f52a1039538156b3d83a256"
+    },
+    {
+      "size": 2500,
+      "run": 1,
+      "mode": "upsert",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 2500,
+      "texts": 7500,
+      "indexed": 2000,
+      "batch_size": 100,
+      "seconds": 1.466,
+      "allocated_objects": 260716,
+      "queries": {
+        "total": 76,
+        "owner_reads": 26,
+        "text_reads": 25,
+        "writes": 25
+      },
+      "document_sha256": "a86d97ffbd307612f9f8c13a6736f635200510ce5f52a1039538156b3d83a256"
+    },
+    {
+      "size": 2500,
+      "run": 2,
+      "mode": "batched",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 2500,
+      "texts": 7500,
+      "indexed": 2000,
+      "batch_size": 100,
+      "seconds": 10.63,
+      "allocated_objects": 947870,
+      "queries": {
+        "total": 4076,
+        "owner_reads": 26,
+        "text_reads": 25,
+        "vector_reads": 2025,
+        "writes": 2000
+      },
+      "document_sha256": "a86d97ffbd307612f9f8c13a6736f635200510ce5f52a1039538156b3d83a256"
+    },
+    {
+      "size": 2500,
+      "run": 2,
+      "mode": "no_reload",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 2500,
+      "texts": 7500,
+      "indexed": 2000,
+      "batch_size": 100,
+      "seconds": 10.787,
+      "allocated_objects": 828856,
+      "queries": {
+        "total": 4051,
+        "owner_reads": 26,
+        "text_reads": 25,
+        "vector_reads": 2000,
+        "writes": 2000
+      },
+      "document_sha256": "a86d97ffbd307612f9f8c13a6736f635200510ce5f52a1039538156b3d83a256"
+    },
+    {
+      "size": 2500,
+      "run": 2,
+      "mode": "update_from",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 2500,
+      "texts": 7500,
+      "indexed": 2000,
+      "batch_size": 100,
+      "seconds": 1.423,
+      "allocated_objects": 282316,
+      "queries": {
+        "total": 101,
+        "owner_reads": 26,
+        "text_reads": 25,
+        "vector_reads": 25,
+        "writes": 25
+      },
+      "document_sha256": "a86d97ffbd307612f9f8c13a6736f635200510ce5f52a1039538156b3d83a256"
+    },
+    {
+      "size": 2500,
+      "run": 2,
+      "mode": "upsert",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 2500,
+      "texts": 7500,
+      "indexed": 2000,
+      "batch_size": 100,
+      "seconds": 1.467,
+      "allocated_objects": 260852,
+      "queries": {
+        "total": 76,
+        "owner_reads": 26,
+        "text_reads": 25,
+        "writes": 25
+      },
+      "document_sha256": "a86d97ffbd307612f9f8c13a6736f635200510ce5f52a1039538156b3d83a256"
+    },
+    {
+      "size": 2500,
+      "run": 3,
+      "mode": "batched",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 2500,
+      "texts": 7500,
+      "indexed": 2000,
+      "batch_size": 100,
+      "seconds": 11.432,
+      "allocated_objects": 947868,
+      "queries": {
+        "total": 4076,
+        "owner_reads": 26,
+        "text_reads": 25,
+        "vector_reads": 2025,
+        "writes": 2000
+      },
+      "document_sha256": "a86d97ffbd307612f9f8c13a6736f635200510ce5f52a1039538156b3d83a256"
+    },
+    {
+      "size": 2500,
+      "run": 3,
+      "mode": "no_reload",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 2500,
+      "texts": 7500,
+      "indexed": 2000,
+      "batch_size": 100,
+      "seconds": 7.701,
+      "allocated_objects": 828874,
+      "queries": {
+        "total": 4051,
+        "owner_reads": 26,
+        "text_reads": 25,
+        "vector_reads": 2000,
+        "writes": 2000
+      },
+      "document_sha256": "a86d97ffbd307612f9f8c13a6736f635200510ce5f52a1039538156b3d83a256"
+    },
+    {
+      "size": 2500,
+      "run": 3,
+      "mode": "update_from",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 2500,
+      "texts": 7500,
+      "indexed": 2000,
+      "batch_size": 100,
+      "seconds": 1.468,
+      "allocated_objects": 282331,
+      "queries": {
+        "total": 101,
+        "owner_reads": 26,
+        "text_reads": 25,
+        "vector_reads": 25,
+        "writes": 25
+      },
+      "document_sha256": "a86d97ffbd307612f9f8c13a6736f635200510ce5f52a1039538156b3d83a256"
+    },
+    {
+      "size": 2500,
+      "run": 3,
+      "mode": "upsert",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 2500,
+      "texts": 7500,
+      "indexed": 2000,
+      "batch_size": 100,
+      "seconds": 1.412,
+      "allocated_objects": 260733,
+      "queries": {
+        "total": 76,
+        "owner_reads": 26,
+        "text_reads": 25,
+        "writes": 25
+      },
+      "document_sha256": "a86d97ffbd307612f9f8c13a6736f635200510ce5f52a1039538156b3d83a256"
+    },
+    {
+      "size": 250,
+      "run": 1,
+      "mode": "batch_transaction",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 250,
+      "texts": 750,
+      "indexed": 200,
+      "batch_size": 100,
+      "seconds": 1.08,
+      "allocated_objects": 197273,
+      "queries": {
+        "total": 415,
+        "owner_reads": 3,
+        "text_reads": 3,
+        "vector_reads": 203,
+        "writes": 200
+      },
+      "document_sha256": "84206656ee7bba7ac349d7297dbfb70149a27f7cf57eeecf5b63a9c706001564"
+    },
+    {
+      "size": 250,
+      "run": 2,
+      "mode": "batch_transaction",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 250,
+      "texts": 750,
+      "indexed": 200,
+      "batch_size": 100,
+      "seconds": 0.803,
+      "allocated_objects": 197474,
+      "queries": {
+        "total": 415,
+        "owner_reads": 3,
+        "text_reads": 3,
+        "vector_reads": 203,
+        "writes": 200
+      },
+      "document_sha256": "84206656ee7bba7ac349d7297dbfb70149a27f7cf57eeecf5b63a9c706001564"
+    },
+    {
+      "size": 250,
+      "run": 3,
+      "mode": "batch_transaction",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 250,
+      "texts": 750,
+      "indexed": 200,
+      "batch_size": 100,
+      "seconds": 1.068,
+      "allocated_objects": 197473,
+      "queries": {
+        "total": 415,
+        "owner_reads": 3,
+        "text_reads": 3,
+        "vector_reads": 203,
+        "writes": 200
+      },
+      "document_sha256": "84206656ee7bba7ac349d7297dbfb70149a27f7cf57eeecf5b63a9c706001564"
+    },
+    {
+      "size": 2500,
+      "run": 1,
+      "mode": "batch_transaction",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 2500,
+      "texts": 7500,
+      "indexed": 2000,
+      "batch_size": 100,
+      "seconds": 9.216,
+      "allocated_objects": 978006,
+      "queries": {
+        "total": 4126,
+        "owner_reads": 26,
+        "text_reads": 25,
+        "vector_reads": 2025,
+        "writes": 2000
+      },
+      "document_sha256": "5cfcab1dd45a7e7a34befb8392a47b62dc7ef2d5fd9c8681680f73fb41677f95"
+    },
+    {
+      "size": 2500,
+      "run": 2,
+      "mode": "batch_transaction",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 2500,
+      "texts": 7500,
+      "indexed": 2000,
+      "batch_size": 100,
+      "seconds": 9.604,
+      "allocated_objects": 978296,
+      "queries": {
+        "total": 4126,
+        "owner_reads": 26,
+        "text_reads": 25,
+        "vector_reads": 2025,
+        "writes": 2000
+      },
+      "document_sha256": "5cfcab1dd45a7e7a34befb8392a47b62dc7ef2d5fd9c8681680f73fb41677f95"
+    },
+    {
+      "size": 2500,
+      "run": 3,
+      "mode": "batch_transaction",
+      "ruby": "3.4.5",
+      "rails": "8.1.3",
+      "owners": 2500,
+      "texts": 7500,
+      "indexed": 2000,
+      "batch_size": 100,
+      "seconds": 9.009,
+      "allocated_objects": 978298,
+      "queries": {
+        "total": 4126,
+        "owner_reads": 26,
+        "text_reads": 25,
+        "vector_reads": 2025,
+        "writes": 2000
+      },
+      "document_sha256": "5cfcab1dd45a7e7a34befb8392a47b62dc7ef2d5fd9c8681680f73fb41677f95"
+    }
+  ]
+}

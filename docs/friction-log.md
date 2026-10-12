@@ -1350,3 +1350,37 @@ number of slots of a type, not with the page. Three things learned:
 
 All 137 demo examples (17 new) and the package smoke pass; eager loading is
 clean. No gem code changed. One install migration remains.
+
+## ECS-39 — one upsert per indexer batch
+
+**Problem.** `Demo::Indexer` batched discovery and reads (ECS-32) but still
+called `reindex!` per owner: an UPDATE, a reload nothing read, and a read and
+an insert for a missing vector. At 5,000 products a sweep made 5,609 reads and
+5,000 writes.
+
+**Change.** Five write paths were measured on the ECS-32 fixture before
+choosing: the existing one, the same in one transaction per batch, an UPDATE
+per owner without the reload, one `UPDATE ... FROM unnest` per batch, and one
+`INSERT ... ON CONFLICT (entity_id, slot)` per batch. All built identical
+documents. The upsert won: no vector reads, missing vectors created in the
+same statement, ids kept by the conflict target. The indexer says in code and
+spec what the bulk path keeps (ids, default slot, an existing vector's
+`updated_at`) and skips (SearchVector models, so their validations and
+callbacks). `architecture.md` gains the rule that a system may bulk-write a
+component table only as such an explicit, tested contract.
+
+**Verdict.** The ECS-33 sweep now makes 406 reads and 203 writes at 5,000
+products, with 65% fewer allocations, but its median fell only 16% — not the
+sevenfold of the ECS-32 fixture — because what remains is mostly the
+`to_tsvector` and GIN work the conventional sweep does too. Two things worth
+keeping:
+
+- **Commits were not the cost; statements were.** One transaction per batch
+  saved about 15%. The gain came from one statement per batch, which is also
+  why dropping the reload alone did nothing at 2,500 owners.
+- **A bulk path changes the benchmark's fairness.** The conventional sweep
+  still writes per row by contract, so the sweep ratio (now about 1.4×) is no
+  longer like-for-like; the design doc says so rather than quoting it as a win.
+
+`reindex!` and the gem are unchanged. All 140 demo examples pass (3 new);
+eager loading is clean. One install migration remains.
