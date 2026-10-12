@@ -339,6 +339,13 @@
       "humanMinutes": 5,
       "aiMinutes": 75,
       "costs": []
+    },
+    {
+      "date": "2026-10-12",
+      "summary": "ECS-20 merged (PR #60) and marked Done. ECS-10 prep: shooting script docs/video/compose-a-contacts-app.md (cold open + six scenes: install, compose, use, inspect, extend, close; narration ~840 words for ~8 min, visible result per scene, recording setup, upload description, end-card links) using the post's exact code, plus a caption transcript extracted from the narration. The script carries verify: markers, so docs/blog/verify.rb rehearses the whole video against the published gem (14 checks pass); the verifier gained verify:sql (bin/rails dbconsole, no psqlrc) and verify:output columns, both negative-tested, and word-by-word output comparison. Recording remains for the user.",
+      "humanMinutes": 2,
+      "aiMinutes": 35,
+      "costs": []
     }
   ]
 }
