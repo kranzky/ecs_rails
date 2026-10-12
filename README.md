@@ -13,7 +13,8 @@ Ruby on Rails.
 > PostgreSQL across Rails 7.1–8.1. The companion bulletin board and
 > marketplace run at [ecs-rails.kranzky.com](https://ecs-rails.kranzky.com).
 > Upgrading from 0.2? See the
-> [changelog](gem/CHANGELOG.md). Earlier: the
+> [changelog](gem/CHANGELOG.md). The launch post is
+> ["The Last Migration"](docs/blog/the-last-migration.md). Earlier: the
 > [v0.1 retrospective](docs/retrospective-v0.1.md) and
 > ["Composing Rails"](docs/blog/composing-rails.md).
 
