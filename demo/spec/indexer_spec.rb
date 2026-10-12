@@ -5,7 +5,13 @@ require "rails_helper"
 # ECS-32: whole-entity boundaries preserve ordered text documents while memory
 # and owner discovery stay bounded. The system must continue deciding from
 # component declarations rather than a list of concrete entity classes.
+# ECS-39: each batch is written by one INSERT ... ON CONFLICT, so these also
+# pin what that bulk path keeps (documents, vector ids, default slot, the
+# untouched updated_at) and what it skips (SearchVector models, and so their
+# callbacks). If they change, docs/design/batched-indexer.md must too.
 RSpec.describe Demo::Indexer do
+  include ActiveSupport::Testing::TimeHelpers
+
   before { ApplicationEntity.delete_all }
 
   def expected_document(values)
@@ -101,6 +107,50 @@ RSpec.describe Demo::Indexer do
     expect(owner_reads).to all(include("LIMIT"))
     expect(text_reads.size).to eq 3
     expect(text_reads).to all(include('WHERE "texts"."entity_id"'))
-    expect(queries.grep(/SELECT .*FROM "search_vectors"/).count { |sql| sql.include?('"search_vectors"."entity_id"') }).to eq 3
+    expect(queries.grep(/FROM "search_vectors"/)).to be_empty
+    expect(queries.grep(/\AINSERT INTO "search_vectors"/).size).to eq 3
+    expect(queries.grep(/\A\s*(UPDATE|DELETE)/)).to be_empty
+  end
+
+  it "writes once per batch however many owners it holds" do
+    writes_for = lambda do
+      count = 0
+      callback = ->(*args) { count += 1 if args.last[:sql].start_with?("INSERT INTO \"search_vectors\"") }
+      ActiveSupport::Notifications.subscribed(callback, "sql.active_record") { described_class.call(batch_size: 4) }
+      count
+    end
+    4.times { |index| Post.create!(title: "First #{index}") }
+    expect(writes_for.call).to eq 1
+    4.times { |index| Post.create!(title: "Second #{index}") }
+    expect(writes_for.call).to eq 2
+  end
+
+  it "creates a missing vector in the default slot and keeps an existing one's id and updated_at" do
+    missing = Post.create!(title: "No vector yet")
+    present = Post.create!(title: "Has a vector")
+    present.search_vector.reindex!("stale")
+    vector = present.search_vector.reload
+    travel 1.minute do
+      expect(described_class.call).to eq 2
+    end
+
+    created = SearchVector.find_by!(entity_id: missing.id)
+    expect(created.slot).to eq ""
+    expect(created.created_at).to be_present
+    expect(created.updated_at).to eq created.created_at
+    expect(documents.fetch(missing.id)).to eq expected_document(["No vector yet"])
+    kept = SearchVector.find_by!(entity_id: present.id)
+    expect(kept.id).to eq vector.id
+    expect(kept.updated_at).to eq vector.updated_at
+    expect(documents.fetch(present.id)).to eq expected_document(["Has a vector"])
+  end
+
+  it "builds no SearchVector models, so their validations and callbacks do not run" do
+    3.times { |index| Product.create!(title: "Product #{index}") }
+    built = Hash.new(0)
+    callback = ->(*args) { built[args.last[:class_name]] += args.last[:record_count] }
+    ActiveSupport::Notifications.subscribed(callback, "instantiation.active_record") { described_class.call }
+    expect(built).not_to have_key("SearchVector")
+    expect(SearchVector.count).to eq 3
   end
 end

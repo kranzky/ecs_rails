@@ -346,6 +346,13 @@
       "humanMinutes": 2,
       "aiMinutes": 110,
       "costs": []
+    },
+    {
+      "date": "2026-10-12",
+      "summary": "ECS-38 merged (PR #62) and marked Done; merged main into the ECS-10 branch to resolve the friction-log/project.json append conflict (no force-push). ECS-39: measured five indexer write paths on the ECS-32 fixture (reindex! per owner, per-batch transaction, no reload, UPDATE...FROM unnest, INSERT...ON CONFLICT); all produced identical documents and the batch statements were ~7x faster. Demo::Indexer now writes each batch with one upsert (no vector reads; ids, default slot and existing updated_at kept; SearchVector validations/callbacks skipped and documented). ECS-33 sweep at 5,000 products: reads 5,609->406, writes 5,000->203, allocations -65%, p50 -16% (-28% at 1,000, -35% at 100); other workloads and conventional unchanged. Sweep ratio vs per-row conventional no longer like-for-like (stated). Indexer spec +3 (3 fail on the old indexer), architecture.md system bulk-write rule, batched-indexer.md amendment, raw JSON.",
+      "humanMinutes": 2,
+      "aiMinutes": 70,
+      "costs": []
     }
   ]
 }

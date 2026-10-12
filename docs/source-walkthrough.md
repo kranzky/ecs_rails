@@ -83,17 +83,21 @@ same/separate billing addresses, normalization, replay and stale forms.
 
 [Demo::Indexer](../demo/lib/demo/indexer.rb) is the contrasting reusable system.
 It finds owners of Text rows in bounded batches, checks each owner's class for
-a SearchVector declaration, collects all eligible owners' text slots, and calls
-the catalogue's
-[SearchVector#reindex!](../gem/lib/ecs_rails/catalogue/search_vector.rb).
-It names no Product or Post class. Another entity type participates by declaring
+a SearchVector declaration, collects all eligible owners' text slots, and
+writes the batch's documents with one `INSERT ... ON CONFLICT`. Each document
+is the one the catalogue's
+[SearchVector#reindex!](../gem/lib/ecs_rails/catalogue/search_vector.rb) would
+build; the bulk path skips SearchVector's validations and callbacks and says
+so (ECS-39). It names no Product or Post class. Another entity type participates by declaring
 the relevant components.
 
 The batch unit is an owner, because splitting one owner's text across batches
 would replace its search document with the last fragment. Values are fetched
-with `pluck`; existing vectors are loaded together. The
+with `pluck`, and no vector is read or built: the unique `(entity_id, slot)`
+index decides between insert and update. The
 [indexer specs](../demo/spec/indexer_spec.rb) cover unfamiliar entity types,
-complete documents, repeated runs and batch boundaries. Use
+complete documents, repeated runs, batch boundaries and what the bulk write
+keeps and skips. Use
 [the performance comparison](design/performance-comparison.md) to understand
 the remaining costs before changing this path.
 

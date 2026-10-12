@@ -119,6 +119,11 @@ do not turn its ratios or p95 values into universal claims.
   to 11 reads at every size; the review workload is unchanged. See
   [focused preloads](focused-preloads.md). The tables above are the original
   baseline and are not updated.
+- **12 October 2026, ECS-39:** `Demo::Indexer` writes each batch with one
+  upsert. At 5,000 products the ECS sweep drops from 5,609 reads and 5,000
+  writes to 406 and 203, allocations by 65% and its median by 16%. The
+  conventional sweep still writes per row, so the sweep ratio is no longer
+  like-for-like. See the [indexer amendment](batched-indexer.md#amendment--one-upsert-per-batch-ecs-39-12-october-2026).
 
 ## Rerun on the published 0.3.0 — 12 October 2026
 
