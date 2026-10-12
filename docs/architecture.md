@@ -354,7 +354,11 @@ components actually pleasant?** Everything not needed to answer that is out.
 Tracked, not yet decided. Each will become an ADR when it's forced.
 
 1. **Does `User.all` preload declared components?** Currently no — N+1 by
-   default. The demo will tell us how bad this is.
+   default. The demo will tell us how bad this is. *(ECS-38: the demo's
+   answer so far is explicit — each list page preloads, by association name,
+   the slots its view shows, pinned by `focused_preloads_spec.rb`. Automatic
+   preloading would load slots a page never shows, which is the cost ECS-38
+   removed; still open, not decided.)*
 2. **Can one component be shared by two entities?** Currently no
    (`entity_id` is unique and singular). "Shared Components" in the proposal
    means *shared component types*, not shared rows.

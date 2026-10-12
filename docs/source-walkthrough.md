@@ -43,8 +43,9 @@ Product's scopes and then the
 normalizes parameters, composes a relation, paginates and preloads before ERB
 renders it. Component-presence filters use correlated `EXISTS`; the demo's price
 filter deliberately uses a slot-scoped left join so a missing price displays
-and sorts as zero. `includes_components(Text)` loads every declared Text slot;
-ordinary Rails `preload(:title_text)` can load just the title. An undeclared
+and sorts as zero. The preload names the slots a card shows, by association
+(`preload(:title_text, :price_money, ...)`): `includes_components(Text)` would
+load every declared Text slot, each product's body included (ECS-38). An undeclared
 component query can match stored rows: querying is distinct from the declaration
 checks used by the presence API.
 
