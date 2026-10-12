@@ -118,7 +118,9 @@ class PerformanceComparisonRunner
   def source
     paths = Dir.glob(File.join(@root, "script/performance/**/*")).select { |path| File.file?(path) }
     paths << __FILE__
+    # Uncommitted files are listed, so a run on a modified tree says so.
     { commit: Open3.capture2("git", "rev-parse", "HEAD", chdir: @root).first.strip,
+      uncommitted: Open3.capture2("git", "status", "--porcelain", "--", ".", chdir: @root).first.lines.map(&:strip),
       benchmark_sha256: paths.sort.to_h { |path| [path.delete_prefix(@root + "/"), Digest::SHA256.file(path).hexdigest] },
       demo_lock_sha256: Digest::SHA256.file(File.join(@root, "Gemfile.lock")).hexdigest }
   end

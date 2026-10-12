@@ -16,14 +16,20 @@ if %w[prepare pages].include?(mode)
   ActiveRecord::MigrationContext.new(Rails.root.join("db/migrate")).migrate
 end
 Rails.application.eager_load!
-require_relative "models"
-require_relative "checkout"
-require_relative "schema"
-require_relative "fixtures"
-require_relative "workloads"
-require_relative "verify"
 require_relative "measurement"
-require_relative "pages"
+if mode == "pages"
+  require_relative "pages"
+else
+  # The stress fixture. models.rb declares benchmark-only Text and Counter
+  # slots on the demo's Product, so it must never load for the demo's own
+  # pages: they would be measured on a Product the demo does not have.
+  require_relative "models"
+  require_relative "checkout"
+  require_relative "schema"
+  require_relative "fixtures"
+  require_relative "workloads"
+  require_relative "verify"
+end
 
 result = case mode
 when "prepare"
