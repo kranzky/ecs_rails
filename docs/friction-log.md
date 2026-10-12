@@ -1337,3 +1337,41 @@ and a terminal's `ls` columns read down, so a word-for-word check of the
 component listing needed its own mode. Rows, slots, the relationship and the
 marker all fit one `dbconsole` screen — the inspect step needed three
 one-line queries, no tooling.
+
+## ECS-38 — preload what the page shows, by name
+
+**Problem.** Six list pages preloaded component *types*, so
+`includes_components(Text)` loaded every product's body, every post's body
+and every group's rules for pages that never showed them; reviews loaded
+likes and orders their checkout key. The geocoder's address table read each
+owner's label once per row.
+
+**Change.** Each page now names the slots its view reads
+(`preload(:title_text, :price_money, ...)`); the geocoder groups its owners by
+class and preloads each type's label with Rails' `Preloader`.
+`focused_preloads_spec.rb` pins no N+1, unshown slots unloaded, and virtual
+defaults rendering. The gem README gained a runnable "Preloading what a page
+shows" example the package smoke checks. The benchmark harness gained
+`--pages`: the demo's own pages on its seed, as requests, with HTML hashed.
+Details and numbers: [focused preloads](design/focused-preloads.md).
+
+**Verdict.** No new API was needed, and the issue was right not to want one:
+the association names are the reader names, so a view's own calls are the
+preload list. On the ordinary seed the gain is small (one or two reads a page,
+3–10% of allocations); on the stress fixture's slot-heavy Product the
+catalogue drops from 20 to 11 reads. Type-wide preloading costs grow with the
+number of slots of a type, not with the page. Three things learned:
+
+- **`loaded?` after a render proves nothing about preloading** — a lazily
+  read slot is loaded too. Only "not loaded" and query-count checks
+  discriminate, so the spec uses those.
+- **Mixed-type owners have no nested preload.** The geocoder's owners are
+  four entity types with four different label slots; `Preloader` per class is
+  plain Rails, but it is the one place a page needs more than `preload`.
+- **The harness measured the wrong Product at first:** page mode loaded the
+  stress models, which add slots to `Product`, and overstated three pages'
+  savings. A request trace of the real page caught it; the worker now keeps
+  them apart, and results record uncommitted files.
+
+All 137 demo examples (17 new) and the package smoke pass; eager loading is
+clean. No gem code changed. One install migration remains.

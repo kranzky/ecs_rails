@@ -2,9 +2,10 @@
 
 class GroupsController < ApplicationController
   def index
-    # includes_components(Text) preloads all three Text slots (name,
-    # description, rules), one query each.
-    @groups = paginate_list(Group.order(created_at: :asc, id: :asc)).includes_components(Text)
+    # The list shows each group's name and description. includes_components(Text)
+    # would preload all three Text slots, rules included, one query each; naming
+    # the two it shows skips the third (ECS-38).
+    @groups = paginate_list(Group.order(created_at: :asc, id: :asc)).preload(:name_text, :description_text)
   end
 
   def show

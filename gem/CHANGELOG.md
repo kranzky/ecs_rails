@@ -6,6 +6,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Documentation
+
+- README: "Preloading what a page shows" — preload the readers a view calls
+  by association name (`preload(:name, :mobile_phone)`) rather than every slot
+  of a type with `includes_components(Phone)`. Its example runs in the package
+  smoke check, which compares the output with the README (ECS-38).
+
 ## [0.3.0] — 2026-09-27
 
 **The zero-migrations release.** After `rails g ecs_rails:install` and one

@@ -19,6 +19,7 @@ class GeocodersController < ApplicationController
     @located_total = @model ? @model_counts.fetch(@model) : @model_counts.values.sum
     @markers = Demo::WorldMap.markers(pins)
     @addresses = paginate_list(owned(Address).order(created_at: :asc, id: :asc)).preload(:entity)
+    preload_owner_labels(@addresses)
     # One query for the page's pairs, looked up by (entity, slot) in the view.
     @geolocations = Geolocation.where(entity_id: @addresses.map(&:entity_id))
                                .index_by { |geolocation| [geolocation.entity_id, geolocation.slot] }
@@ -36,6 +37,23 @@ class GeocodersController < ApplicationController
   end
 
   private
+
+  # What ApplicationHelper#owner_label reads for each kind of owner, by class
+  # name (no entity constants are loaded with this controller). The owners
+  # are of mixed types, so a nested preload cannot name one slot for them
+  # all: without this, every row costs a query for its owner's label.
+  OWNER_LABELS = { "User" => :name, "Company" => :name_text,
+                   "Order" => :order_number_identifier, "Invoice" => :invoice_number_identifier }.freeze
+
+  # One query per owner type on the page, rather than one per row (ECS-38).
+  # Preloader is the Rails API behind `preload`, applied to records already
+  # loaded, a group at a time.
+  def preload_owner_labels(addresses)
+    addresses.map(&:entity).group_by { |owner| owner.class.name }.each do |class_name, owners|
+      label = OWNER_LABELS[class_name]
+      ActiveRecord::Associations::Preloader.new(records: owners, associations: label).call if label
+    end
+  end
 
   def located
     Geolocation.where.not(lat: nil).where.not(lng: nil)

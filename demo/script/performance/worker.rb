@@ -4,24 +4,32 @@
 abort "Use the benchmark orchestrator" unless ENV["RAILS_ENV"] == "test" &&
   ENV.fetch("ECS_PERFORMANCE_DATABASE", "").match?(/\Aecs_performance_[0-9a-f]+\z/)
 require_relative "../../config/environment"
+require "digest"
 require "json"
 require "pg"
 abort "Database does not belong to this run" unless ActiveRecord::Base.connection_db_config.database == ENV.fetch("ECS_PERFORMANCE_DATABASE")
 ActiveRecord::Base.logger = nil
 mode, output, *arguments = ARGV
-if mode == "prepare"
+if %w[prepare pages].include?(mode)
   # Entity declarations inspect component columns, so install before loading them.
   ActiveRecord::Migration.verbose = false
   ActiveRecord::MigrationContext.new(Rails.root.join("db/migrate")).migrate
 end
 Rails.application.eager_load!
-require_relative "models"
-require_relative "checkout"
-require_relative "schema"
-require_relative "fixtures"
-require_relative "workloads"
-require_relative "verify"
 require_relative "measurement"
+if mode == "pages"
+  require_relative "pages"
+else
+  # The stress fixture. models.rb declares benchmark-only Text and Counter
+  # slots on the demo's Product, so it must never load for the demo's own
+  # pages: they would be measured on a Product the demo does not have.
+  require_relative "models"
+  require_relative "checkout"
+  require_relative "schema"
+  require_relative "fixtures"
+  require_relative "workloads"
+  require_relative "verify"
+end
 
 result = case mode
 when "prepare"
@@ -48,6 +56,12 @@ when "measure"
   raise "Unknown workload" unless PerformanceComparison::Workloads::NAMES.include?(name)
   raise "Unknown representation" unless %w[ecs plain].include?(representation)
   PerformanceComparison::Measurement.run(representation, name, warmups: Integer(warmups), samples: Integer(samples))
+when "pages"
+  # The demo's own seed, not the stress fixture, in this run's own database.
+  PerformanceComparison::Pages.seed
+  { versions: { ruby: RUBY_DESCRIPTION, rails: Rails.version, ecs_on_rails: EcsRails::VERSION,
+                postgresql: ActiveRecord::Base.connection.select_value("SELECT version()") },
+    pages: PerformanceComparison::Pages.run(warmups: Integer(arguments.fetch(0)), samples: Integer(arguments.fetch(1))) }
 when "plans"
   %w[ecs plain].to_h { |representation| [representation, PerformanceComparison::Workloads.new(representation).plans] }
 else
