@@ -112,6 +112,35 @@ network latency, concurrent throughput, peak RSS, a cold database, or data large
 than RAM. It is one independently seeded run per size with repeated operations;
 do not turn its ratios or p95 values into universal claims.
 
+## Rerun on the published 0.3.0 — 12 October 2026
+
+The observations above measured unreleased source. For the launch post (ECS-20)
+the same command ran again at commit `b602b6d`, where the demo resolves the
+published `ecs_on_rails` 0.3.0 from RubyGems (Rails 8.1.3; the lockfile SHA-256
+is in the JSON). Raw results:
+[performance-comparison-results-0.3.0.json](performance-comparison-results-0.3.0.json).
+
+Median allocations and SQL read/write counts are **identical** to the first run
+for every workload, representation and size: the measured code paths did not
+change between the candidate and the release. Every ECS/conventional p50 ratio
+is within 13% of the first run's, most of them slightly lower. At 5,000 products:
+
+| Workload | 0.3.0 p50 ms ECS / plain | 0.3.0 ratio | 14 Sep ratio |
+|---|---:|---:|---:|
+| Catalogue render | 45.15 / 22.36 | 2.02× | 2.21× |
+| Detail render | 18.98 / 4.72 | 4.02× | 4.04× |
+| All-slot projection | 18.22 / 2.07 | 8.81× | 9.89× |
+| Selected-slot projection | 5.28 / 1.12 | 4.72× | 4.95× |
+| Full indexing sweep | 3922.20 / 1946.14 | 2.02× | 1.93× |
+| Committed checkout | 74.74 / 19.10 | 3.91× | 3.88× |
+
+Two things differed, so compare ratios and counts rather than absolute times.
+Homebrew PostgreSQL had moved from 14.15 to 17.11. And the machine was shared
+with an unrelated CPU-bound process for the whole run, which raised absolute
+latencies and widened some tails: the 5,000-product conventional sweep has a
+p95 of 8,675 ms against a p50 of 1,946 ms. The 14 September tables above remain
+the cleaner absolute measurement.
+
 ## Reproduce
 
 From the repository root, with the demo bundle installed and PostgreSQL running:

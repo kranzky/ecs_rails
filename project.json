@@ -332,6 +332,13 @@
       "humanMinutes": 10,
       "aiMinutes": 25,
       "costs": []
+    },
+    {
+      "date": "2026-10-12",
+      "summary": "ECS-20: drafted the 0.3.0 launch post \"The Last Migration\" (docs/blog/the-last-migration.md): a Person/Company contacts app on the published gem \u2014 one install migration, entity generator output, labelled slots, a relates_to + has_many via:, a marker, lazy components with the real SELECT/INSERT traffic, a 20-line slot-paired geocoder system across both entity types (rerun-safe, redoes a changed address), and the unchanged db/migrate. Cost section uses the ECS-33 benchmark (5,000-product medians, allocations, plans, storage) and lists the trade-offs plainly; the title's promise is qualified (upgrades and bespoke components still migrate). Added docs/blog/verify.rb, which builds a fresh app from RubyGems and replays every marked command, file and console check (14) in the post; negative-tested. Reran the ECS-33 benchmark against published 0.3.0: identical allocations and SQL counts, ratios within 13% \u2014 raw JSON checked in and an amendment added to performance-comparison.md. Friction-log entry; root README links the post.",
+      "humanMinutes": 5,
+      "aiMinutes": 75,
+      "costs": []
     }
   ]
 }

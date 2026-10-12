@@ -1274,3 +1274,41 @@ Automated checks passed everything they can see; a screen reader and a real
 phone were not used, and the review says so.
 
 All 120 demo examples pass (10 new); the gem is untouched.
+
+## ECS-20 — the launch post, run against the release
+
+**Problem.** "The Last Migration" had to show the thesis on a fresh app, not
+the demo: install, generate Person and Company, add a relationship and a
+marker, run a cross-entity system, and end with the same one-file
+`db/migrate`. Every snippet had to run against the published 0.3.0, and the
+cost section had to rest on measurements, not query counts.
+
+**Change.** [The post](blog/the-last-migration.md) marks its runnable blocks
+with HTML comments; [`docs/blog/verify.rb`](blog/verify.rb) builds a new app
+from RubyGems, runs the commands in order, writes the files, replays the
+console session and checks every `# =>` value (14), checks the generated
+declarations against the post, and compares both `ls db/migrate` listings. Its
+geocoder is the demo's system cut to twenty lines: pair by slot, stamp with
+the address's `updated_at`, record "not found". The ECS-33 benchmark was rerun
+against the published gem; allocations and SQL counts are identical, ratios
+within 13% ([rerun](design/performance-comparison.md#rerun-on-the-published-030--12-october-2026)).
+
+**Verdict.** The story needed no gem change, and the whole system fit on a
+screen using only `declaration_for`, `find_or_initialize_by` and `locate`.
+Three small frictions showed up writing for a reader rather than a spec:
+
+- **Coordinates are BigDecimal**, so the post writes
+  `coordinates.map(&:to_f)` to show `[-31.9523, 115.8613]` rather than
+  `[0.319523e2, …]`. Correct for a decimal column; noisy in a console. Not
+  worth an API.
+- **`has_many :employees, "Person", via: :employer` needs the string twice
+  over**: the name does not infer the class, and a constant would be circular.
+  The post explains it in a sentence; the rule from RFC-0015 holds.
+- **A new `app/systems` directory needs a console restart**, because Rails
+  computes autoload roots at boot. The post re-finds Ada with
+  `Person.with_marker(:favourite).sole`, which turned the restart into a use of
+  the marker.
+
+The tutorial (gem README) composes `Contact`/`Company`/`Note`; the post and the
+planned video (ECS-10) use `Person`/`Company`, as the README's "Generating more
+entities" section does. One install migration remains.
