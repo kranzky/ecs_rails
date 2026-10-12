@@ -22,6 +22,7 @@ class PerformanceComparisonRunner
       parser.on("--samples N", Integer) { |value| @options[:samples] = value }
       parser.on("--output PATH") { |value| @options[:output] = File.expand_path(value) }
       parser.on("--smoke", "100 products, one warmup and two samples") { @options.merge!(sizes: [100], warmups: 1, samples: 2) }
+      parser.on("--pages", "The demo's pages on its own seed data (ECS-38), not the stress fixture") { @options[:pages] = true }
       parser.on("-h", "--help") { puts parser; exit }
     end.parse!
     abort "Sizes must be >= 100; samples positive; warmups nonnegative" unless
@@ -34,6 +35,8 @@ class PerformanceComparisonRunner
   end
 
   def run
+    return run_pages if @options[:pages]
+
     results = { format_version: 1, measured_at: Time.now.utc.iso8601,
                 command: @options, source: source, host: host, sizes: [] }
     Dir.mktmpdir("ecs-performance-") do |directory|
@@ -63,6 +66,23 @@ class PerformanceComparisonRunner
       end
     end
     puts "Verified results: #{@options[:output]}"
+  ensure
+    drop_database
+  end
+
+  # One database, the ordinary demo seed, every page measured in one worker.
+  def run_pages
+    Dir.mktmpdir("ecs-performance-") do |directory|
+      @directory = directory
+      create_database
+      puts "Measuring the demo's pages in #{@database}"
+      measured = worker("pages", @options[:warmups], @options[:samples])
+      results = { format_version: 1, measured_at: Time.now.utc.iso8601,
+                  command: @options, source: source, host: host, **measured.transform_keys(&:to_sym) }
+      FileUtils.mkdir_p(File.dirname(@options[:output]))
+      File.write(@options[:output], JSON.pretty_generate(results) + "\n")
+    end
+    puts "Page results: #{@options[:output]}"
   ensure
     drop_database
   end
