@@ -112,6 +112,14 @@ network latency, concurrent throughput, peak RSS, a cold database, or data large
 than RAM. It is one independently seeded run per size with repeated operations;
 do not turn its ratios or p95 values into universal claims.
 
+## Since this report
+
+- **12 October 2026, ECS-38:** the catalogue and review workloads now preload
+  by association name, as the demo controllers do. The catalogue drops from 20
+  to 11 reads at every size; the review workload is unchanged. See
+  [focused preloads](focused-preloads.md). The tables above are the original
+  baseline and are not updated.
+
 ## Rerun on the published 0.3.0 — 12 October 2026
 
 The observations above measured unreleased source. For the launch post (ECS-20)
@@ -149,6 +157,10 @@ From the repository root, with the demo bundle installed and PostgreSQL running:
 cd demo
 bundle exec ruby script/compare_performance.rb --output ../tmp/ecs33-results.json
 ```
+
+`--pages` measures the demo's own pages on its seed data instead, as whole
+requests, with each page's HTML hashed for before/after comparison; see
+[focused preloads](focused-preloads.md) (ECS-38).
 
 The default run uses 100, 1,000 and 5,000 products, three warmups and twenty
 measured warm repetitions per workload/representation. Override them with

@@ -10,8 +10,9 @@ class UsersController < ApplicationController
   def show
     @user = User.find(params[:id])
     # The inverse association (RFC-0015): user.posts is a collection.
+    # The profile lists titles, draft badges and likes, never a body (ECS-38).
     @posts = paginate_list(@user.posts.order(created_at: :desc, id: :asc))
-                  .includes_components(Text, Counter, State)
+                  .preload(:title_text, :publish_state, :likes_counter)
   end
 
   def new

@@ -12,7 +12,9 @@ class CompaniesController < ApplicationController
     # Every product, drafts and delisted included: this doubles as the
     # seller's own view. Only managing them is gated, by the acting user's role.
     @may_manage = Demo::CompanyPolicy.new(acting_user, @company).can?(:manage_products)
+    # A product row shows title, price, listing badge, stars and stock; not
+    # the body or the review count (ECS-38).
     @products = paginate_list(@company.products.order(created_at: :desc, id: :asc))
-                        .includes_components(Text, Money, Counter, State, Rating)
+                        .preload(:title_text, :price_money, :listing_state, :rating, :stock_counter)
   end
 end

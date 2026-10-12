@@ -339,6 +339,13 @@
       "humanMinutes": 5,
       "aiMinutes": 75,
       "costs": []
+    },
+    {
+      "date": "2026-10-12",
+      "summary": "ECS-38 (0.4.0 epic): inventoried every demo read path; six list pages (market, product reviews, profile posts, seller products, groups, orders) now preload by association name only the slots their views show instead of type-wide includes_components, and the geocoder address table preloads each owner type's label (N+1 removed). New focused_preloads_spec (17 examples; 7 fail on the old controllers; dropping a shown slot fails the N+1 check). Gem README gained a runnable 'Preloading what a page shows' example checked by the package smoke; CHANGELOG Unreleased. Benchmark harness gained --pages (demo seed, whole requests, normalised HTML hashes) and records uncommitted files. Results: ordinary pages 1-2 fewer reads and 3-10% fewer allocations (geocoder 20->15 reads, p50 17.8->13.5 ms), identical HTML on all nine pages; stress catalogue 20->11 reads, allocations -42-45%, p50 -19-37%. Caught and fixed a harness bug where page mode loaded the stress models' extra Product slots. docs/design/focused-preloads.md with raw JSON.",
+      "humanMinutes": 2,
+      "aiMinutes": 110,
+      "costs": []
     }
   ]
 }
