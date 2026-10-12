@@ -19,17 +19,21 @@ class ProductsController < ApplicationController
                        .rated_at_least(@min_stars)
                        .in_category(@category)
                        .sorted(@sort)
+    # Preload by association name what a card shows (ECS-38): title, price,
+    # rating, stock, review count, tags and the seller's name. A type-wide
+    # includes_components(Text) would also load every body, which no card
+    # shows. After pagination, so only this page's rows are read.
     @products = paginate_list(products)
-                  .includes_components(Text, Money, Rating, Counter, Tags)
-                  .preload(seller_relationship: { target: :name_text })
+                  .preload(:title_text, :price_money, :rating, :stock_counter, :review_count_counter, :tags,
+                           seller_relationship: { target: :name_text })
   end
 
   def show
     @product = Product.find(params[:id])
     @company = @product.seller
+    # A review shows its body, stars and author, not its likes (ECS-38).
     @reviews = paginate_list(@product.reviews.order(created_at: :desc, id: :asc))
-                       .includes_components(Text, Rating, Counter)
-                       .preload(author_relationship: { target: [:name, :avatar_image] })
+                       .preload(:body_text, :rating, author_relationship: { target: [:name, :avatar_image] })
     @review = Review.new
     @may_manage = @company && Demo::CompanyPolicy.new(acting_user, @company).can?(:manage_products)
     @managers = @company ? Demo::CompanyPolicy.people_who_can(:manage_products, @company) : []

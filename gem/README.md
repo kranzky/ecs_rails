@@ -227,12 +227,50 @@ a stored Counter with `count: 0`. Component queries need not be declared on the
 entity and can match independently stored rows. Markers make presence explicit:
 `add(:featured)`, `remove(:featured)` and `featured?`.
 
-Use ordinary Rails association preloads for the slots a page reads, as the
-controller above does. `includes_components(Address)` loads all declared Address
-slots. Relationship targets can be nested with
-`Note.preload(author_relationship: { target: :name })`. See the
+### Preloading what a page shows
+
+Every component reader is an ordinary Rails association with the reader's
+name: `name`, `email`, `mobile_phone`, `home_address`. A list page should
+preload the readers its view calls, as the controller above does, so that
+twenty rows cost one query per reader rather than one per row. Using the
+`Person` generated above, create **script/preloads.rb**:
+
+<!-- preload:file script/preloads.rb -->
+```ruby
+Person.create!(name_given: "Ada", mobile_phone_e164: "+61491570156",
+               work_phone_e164: "+61891570156")
+
+# By name: exactly the slots a page shows, one query each.
+people = Person.order(:id).preload(:name, :mobile_phone).to_a
+puts people.first.mobile_phone.to_s                 # already loaded
+puts people.first.association(:work_phone).loaded?  # not named, so not loaded
+
+# Type-wide: every declared slot of the type, work phone included.
+people = Person.order(:id).includes_components(Phone).to_a
+puts people.first.association(:work_phone).loaded?
+```
+
+<!-- preload:commands run -->
+```sh
+bin/rails runner script/preloads.rb
+```
+
+<!-- preload:output run -->
+```text
++61491570156
+false
+true
+```
+
+Name the slots when a page shows some of a type's slots: a product list that
+calls `includes_components(Text)` loads every product's body along with its
+title. `includes_components` suits a page that shows them all. Either way, a
+preload that finds no row leaves the reader to build its virtual default, so
+absent components still render. Relationship targets nest:
+`Note.preload(author_relationship: { target: :name })`. An unpreloaded reader
+still works; it just queries once per entity. The
 [performance comparison](https://github.com/kranzky/ecs_rails/blob/main/docs/design/performance-comparison.md)
-for measured costs.
+has measured costs.
 
 ## Updating, replacing and deleting
 
@@ -374,8 +412,9 @@ covers Ruby/Rails 3.2/7.1, 3.2/7.2, 3.3/8.0, 3.2/8.1, 3.4/8.1 and 4.0/8.1,
 resolving current patches within each Rails minor. It runs PostgreSQL gem specs
 and packaged fresh-install/0.2.2-upgrade checks for each entry. The package
 check extracts the marked code and Rails command blocks from this README,
-then verifies the tutorial's stored results, rendered page and bespoke component. The demo suite,
-eager loading and a 100% public-API documentation gate run separately.
+then verifies the tutorial's stored results, rendered page, the preload
+example's output and the bespoke component. The demo suite, eager loading and
+a 100% public-API documentation gate run separately.
 
 JSON is constrained to version 2 because supported Rails decoders still use
 positional option hashes incompatible with JSON 3. This is a runtime dependency,

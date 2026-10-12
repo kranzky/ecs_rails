@@ -31,9 +31,11 @@ module PerformanceComparison
     def catalogue
       page = catalogue_scope.page(1).per(PAGE_SIZE)
       total = page.total_count
+      # The demo controller's policy since ECS-38: the slots a card shows, by
+      # name. Type-wide Text/Counter would load all six of each here.
       page = if @ecs
-        page.includes_components(::Text, ::Money, ::Rating, ::Counter, ::Tags)
-            .preload(seller_relationship: { target: :name_text })
+        page.preload(:title_text, :price_money, :rating, :stock_counter, :review_count_counter, :tags,
+                     seller_relationship: { target: :name_text })
       else
         page.preload(:seller)
       end
@@ -48,9 +50,11 @@ module PerformanceComparison
       product = products.find(Fixtures.id("products", 2))
       reviews = detail_reviews(product)
       total = reviews.total_count
+      # Named like the demo controller's since ECS-38, but this view also shows
+      # likes. A review has one Text and one Counter, so the queries match the
+      # type-wide form; the workload is a control.
       reviews = if @ecs
-        reviews.includes_components(::Text, ::Rating, ::Counter)
-               .preload(author_relationship: { target: [:name, :avatar_image] })
+        reviews.preload(:body_text, :rating, :likes_counter, author_relationship: { target: [:name, :avatar_image] })
       else
         reviews.preload(:author)
       end

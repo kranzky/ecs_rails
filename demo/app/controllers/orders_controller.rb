@@ -3,7 +3,10 @@
 class OrdersController < ApplicationController
   def index
     @user = User.find(params[:user_id])
-    @orders = paginate_list(@user.orders.order(created_at: :desc, id: :asc)).includes_components(Identifier, Money, State)
+    # The list shows the order number, total and status. Identifier is also
+    # the checkout's idempotency key, which the list never shows (ECS-38).
+    @orders = paginate_list(@user.orders.order(created_at: :desc, id: :asc))
+                .preload(:order_number_identifier, :total_money, :fulfilment_state)
   end
 
   def show

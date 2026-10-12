@@ -136,12 +136,23 @@ class PackageSmoke
     blocks = File.read(File.join(@gem_root, "README.md")).scan(/<!-- #{Regexp.escape(marker)} -->\n```sh\n(.*?)```/m)
     raise "Expected one README block: #{marker}" unless blocks.size == 1
 
-    blocks.first.first.lines.reject { |line| line.strip.empty? }.each do |line|
+    blocks.first.first.lines.reject { |line| line.strip.empty? }.map do |line|
       executable, *arguments = Shellwords.split(line)
       raise "Expected bin/rails in #{marker}" unless executable == "bin/rails"
 
       rails(path, url, *arguments)
-    end
+    end.last
+  end
+
+  # What the README says a command prints: its last lines must match exactly.
+  def readme_output(output, section, name)
+    marker = "#{section}:output #{name}"
+    blocks = File.read(File.join(@gem_root, "README.md")).scan(/<!-- #{Regexp.escape(marker)} -->\n```text\n(.*?)```/m)
+    raise "Expected one README block: #{marker}" unless blocks.size == 1
+
+    expected = blocks.first.first.lines.map(&:strip)
+    actual = output.lines.map(&:strip).last(expected.size)
+    raise "#{marker} printed #{actual.inspect}, README says #{expected.inspect}" unless actual == expected
   end
 
   def readme_files(path, section)
@@ -172,6 +183,8 @@ class PackageSmoke
     readme_commands(path, url, "quickstart", "run")
     fixture(path, "fresh")
     rails(path, url, "runner", "script/fresh.rb")
+    readme_files(path, "preload")
+    readme_output(readme_commands(path, url, "preload", "run"), "preload", "run")
     before = Dir.glob(File.join(path, "db/migrate/*"))
     readme_commands(path, url, "upgrade", "generate")
     raise "Current package generated another migration" unless Dir.glob(File.join(path, "db/migrate/*")) == before
