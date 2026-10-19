@@ -353,6 +353,13 @@
       "humanMinutes": 2,
       "aiMinutes": 70,
       "costs": []
+    },
+    {
+      "date": "2026-10-19",
+      "summary": "ECS-40 started: traced and attributed a three-line checkout's SQL (58 reads); 23 were the gem re-reading each new entity once per dirty component. With the user's choice, split that into a new issue ECS-46 (blocks ECS-40/ECS-43). ECS-46: Lazy::Entity#save_dirty_components now restamps with component.entity = self instead of entity_id = id, so the required belongs_to validates against the in-memory owner; 2 new lazy specs (red first), RFC-0006 amendment, CHANGELOG Unreleased. Demo switched to path: ../gem for the 0.4.0 build (Fly deploys pause; README/DEPLOY updated). ECS-33 checkout: reads 60->35, allocations 21,725->17,101, writes unchanged, other workloads' counts identical, latency within noise. Gem 954 examples, YARD 100%, package smoke, demo 140 examples pass.",
+      "humanMinutes": 2,
+      "aiMinutes": 60,
+      "costs": []
     }
   ]
 }

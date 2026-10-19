@@ -1384,3 +1384,30 @@ keeping:
 
 `reindex!` and the gem are unchanged. All 140 demo examples pass (3 new);
 eager loading is clean. One install migration remains.
+
+## ECS-46 — the owner a component already had
+
+**Problem.** Attributing a three-line checkout's SQL for ECS-40 turned up 23
+`ApplicationEntity Load … WHERE id = $1` reads out of 58, one before every
+component INSERT of the new order, its lines and its invoice. The save
+cascade restamped a new entity's id with `component.entity_id = id`; Rails
+then treated the in-memory owner as stale, and each component's required
+`belongs_to :entity` read it back.
+
+**Change.** One line in `Lazy::Entity#save_dirty_components`: restamp with
+`component.entity = self`. Two lazy specs pin it (no `entities` SELECT when
+a new entity saves its components; the saved component's owner is the same
+object). RFC-0006 has an amendment. The demo switched to `path: "../gem"` for
+the 0.4.0 build, so Fly deploys pause until the release.
+
+**Verdict.** The biggest cost in the checkout was not the demo's code but the
+gem's, and every app paid it on every create. The ECS-33 checkout drops from
+60 reads to 35 and 21,725 to 17,101 allocations at every size, writes
+unchanged; latency moved within the run's noise. Worth keeping: **an
+attribution trace before optimising** found this in one run, where the issue's
+hypothesis (batch the product reads) would have saved a third as much. The
+remaining per-line reads (product, listing, title, price, the stock counter's
+owner) are ECS-40's.
+
+All 954 gem examples (2 new), YARD 100%, the package smoke and 140 demo
+examples pass on the gem's source. One install migration remains.
