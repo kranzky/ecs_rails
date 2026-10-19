@@ -6,6 +6,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Performance
+
+- Saving a new entity no longer reads it back once per dirty component. The
+  save cascade restamped each component's foreign key after the entity's
+  INSERT, which made Rails treat the loaded owner as stale and the required
+  `belongs_to :entity` reload it; it now restamps through the association
+  writer, so `component.entity` stays the entity in memory and the presence
+  validation still runs against it. A demo checkout of three lines drops from
+  58 reads to 35 (ECS-46).
+
 ### Documentation
 
 - README: "Preloading what a page shows" — preload the readers a view calls

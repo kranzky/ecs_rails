@@ -3,6 +3,18 @@
 **Status:** Implemented
 **Depends on:** RFC-0004
 
+## Amendment: a new entity's components keep their owner (ECS-46, 2026-10-19)
+
+The save cascade stamps a new entity's id onto each dirty component after the
+entity's INSERT, because the id does not exist when a virtual component is
+built. It now does so with the association writer (`component.entity = self`)
+rather than the bare foreign key. Assigning only `entity_id` made Rails treat
+the in-memory owner as stale, so each component's required `belongs_to
+:entity` reloaded it: one `entities` SELECT per dirty component on every
+create. Observable change: after `entity.save!`, `entity.email.entity` is the
+entity object itself, not a reloaded copy. Validation is unchanged; the
+presence check runs against the owner in memory.
+
 ## Amendment: component association operations (ECS-26, 2026-09-12)
 
 The recommended update remains `user.email.assign_attributes(address: "new@example.com")`

@@ -445,6 +445,32 @@ RSpec.describe "lazy components" do
 
       expect { user.save }.to change(Email, :count).by(1)
     end
+
+    # ECS-46. On create, a component is built before the entity has an id.
+    # Restamping only the foreign key once the id exists made Rails treat the
+    # loaded owner as stale, so each component's required belongs_to read the
+    # entity back: one SELECT per dirty component, on every create, in every
+    # app. The owner is in memory; validating against it needs no query.
+    it "does not read a new entity back to save its components" do
+      user = User.new
+      user.name.first = "Ada"
+      user.email.address = "a@b.com"
+
+      statements = capture_sql { user.save! }
+
+      expect(statements.grep(/\ASELECT .*FROM "entities"/)).to be_empty
+      expect([Email.count, Name.count]).to eq [1, 1]
+    end
+
+    it "leaves each saved component pointing at the entity itself" do
+      user = User.new
+      user.email.address = "a@b.com"
+
+      user.save!
+
+      expect(user.email.entity).to equal(user)
+      expect(user.email.entity_id).to eq user.id
+    end
   end
 
   # --- atomicity -------------------------------------------------------------
