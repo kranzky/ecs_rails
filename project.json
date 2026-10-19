@@ -353,6 +353,27 @@
       "humanMinutes": 2,
       "aiMinutes": 110,
       "costs": []
+    },
+    {
+      "date": "2026-10-12",
+      "summary": "ECS-38 merged (PR #62) and marked Done; merged main into the ECS-10 branch to resolve the friction-log/project.json append conflict (no force-push). ECS-39: measured five indexer write paths on the ECS-32 fixture (reindex! per owner, per-batch transaction, no reload, UPDATE...FROM unnest, INSERT...ON CONFLICT); all produced identical documents and the batch statements were ~7x faster. Demo::Indexer now writes each batch with one upsert (no vector reads; ids, default slot and existing updated_at kept; SearchVector validations/callbacks skipped and documented). ECS-33 sweep at 5,000 products: reads 5,609->406, writes 5,000->203, allocations -65%, p50 -16% (-28% at 1,000, -35% at 100); other workloads and conventional unchanged. Sweep ratio vs per-row conventional no longer like-for-like (stated). Indexer spec +3 (3 fail on the old indexer), architecture.md system bulk-write rule, batched-indexer.md amendment, raw JSON.",
+      "humanMinutes": 2,
+      "aiMinutes": 70,
+      "costs": []
+    },
+    {
+      "date": "2026-10-19",
+      "summary": "ECS-40 started: traced and attributed a three-line checkout's SQL (58 reads); 23 were the gem re-reading each new entity once per dirty component. With the user's choice, split that into a new issue ECS-46 (blocks ECS-40/ECS-43). ECS-46: Lazy::Entity#save_dirty_components now restamps with component.entity = self instead of entity_id = id, so the required belongs_to validates against the in-memory owner; 2 new lazy specs (red first), RFC-0006 amendment, CHANGELOG Unreleased. Demo switched to path: ../gem for the 0.4.0 build (Fly deploys pause; README/DEPLOY updated). ECS-33 checkout: reads 60->35, allocations 21,725->17,101, writes unchanged, other workloads' counts identical, latency within noise. Gem 954 examples, YARD 100%, package smoke, demo 140 examples pass.",
+      "humanMinutes": 2,
+      "aiMinutes": 60,
+      "costs": []
+    },
+    {
+      "date": "2026-10-19",
+      "summary": "ECS-40 (stacked on ECS-46): Demo::Checkout preloads each line's quantity and product link with the items, loads the lines' products with listing/title/price in one group after the stock lock (lock order unchanged), hands each locked stock row its loaded product, and creates the order pending. Reads now 21 at 1/3/6/10 lines (main: 36/58/91/135; after ECS-46: 23/35/53/77); writes unchanged. ECS-33 checkout: reads 35->21, allocations 17,101->14,531, writes 40; latency within noise. All ECS-28 checkout/concurrency specs pass; checkout_reads_spec adds 4 (flat reads; listing and price read under the lock; destroyed product still RecordNotFound). Filed ECS-47 (gem belongs_to validator ignores the app's belongs_to_required_validates_foreign_key) for a decision. Remaining reads attributed in checkout-concurrency.md amendment.",
+      "humanMinutes": 1,
+      "aiMinutes": 55,
+      "costs": []
     }
   ]
 }

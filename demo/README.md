@@ -4,8 +4,9 @@ A bulletin board and marketplace composed from the gem's catalogue. Explore
 people, posts, groups, companies, products, baskets, orders and invoices without
 adding a migration for each entity type.
 
-This demo runs on the published `ecs_on_rails` 0.3.0 gem, the same version
-deployed at [ecs-rails.kranzky.com](https://ecs-rails.kranzky.com). Start
+On `main` the demo runs the gem's own source (`path: "../gem"`) for the 0.4.0
+build; [ecs-rails.kranzky.com](https://ecs-rails.kranzky.com) still runs the
+published `ecs_on_rails` 0.3.0 until 0.4.0 is released and repinned. Start
 with the [gem quickstart](../gem/README.md#quickstart-a-contacts-directory) if you
 want to build a small app of your own.
 

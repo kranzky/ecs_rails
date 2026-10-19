@@ -1375,3 +1375,95 @@ number of slots of a type, not with the page. Three things learned:
 
 All 137 demo examples (17 new) and the package smoke pass; eager loading is
 clean. No gem code changed. One install migration remains.
+
+## ECS-39 — one upsert per indexer batch
+
+**Problem.** `Demo::Indexer` batched discovery and reads (ECS-32) but still
+called `reindex!` per owner: an UPDATE, a reload nothing read, and a read and
+an insert for a missing vector. At 5,000 products a sweep made 5,609 reads and
+5,000 writes.
+
+**Change.** Five write paths were measured on the ECS-32 fixture before
+choosing: the existing one, the same in one transaction per batch, an UPDATE
+per owner without the reload, one `UPDATE ... FROM unnest` per batch, and one
+`INSERT ... ON CONFLICT (entity_id, slot)` per batch. All built identical
+documents. The upsert won: no vector reads, missing vectors created in the
+same statement, ids kept by the conflict target. The indexer says in code and
+spec what the bulk path keeps (ids, default slot, an existing vector's
+`updated_at`) and skips (SearchVector models, so their validations and
+callbacks). `architecture.md` gains the rule that a system may bulk-write a
+component table only as such an explicit, tested contract.
+
+**Verdict.** The ECS-33 sweep now makes 406 reads and 203 writes at 5,000
+products, with 65% fewer allocations, but its median fell only 16% — not the
+sevenfold of the ECS-32 fixture — because what remains is mostly the
+`to_tsvector` and GIN work the conventional sweep does too. Two things worth
+keeping:
+
+- **Commits were not the cost; statements were.** One transaction per batch
+  saved about 15%. The gain came from one statement per batch, which is also
+  why dropping the reload alone did nothing at 2,500 owners.
+- **A bulk path changes the benchmark's fairness.** The conventional sweep
+  still writes per row by contract, so the sweep ratio (now about 1.4×) is no
+  longer like-for-like; the design doc says so rather than quoting it as a win.
+
+`reindex!` and the gem are unchanged. All 140 demo examples pass (3 new);
+eager loading is clean. One install migration remains.
+
+## ECS-46 — the owner a component already had
+
+**Problem.** Attributing a three-line checkout's SQL for ECS-40 turned up 23
+`ApplicationEntity Load … WHERE id = $1` reads out of 58, one before every
+component INSERT of the new order, its lines and its invoice. The save
+cascade restamped a new entity's id with `component.entity_id = id`; Rails
+then treated the in-memory owner as stale, and each component's required
+`belongs_to :entity` read it back.
+
+**Change.** One line in `Lazy::Entity#save_dirty_components`: restamp with
+`component.entity = self`. Two lazy specs pin it (no `entities` SELECT when
+a new entity saves its components; the saved component's owner is the same
+object). RFC-0006 has an amendment. The demo switched to `path: "../gem"` for
+the 0.4.0 build, so Fly deploys pause until the release.
+
+**Verdict.** The biggest cost in the checkout was not the demo's code but the
+gem's, and every app paid it on every create. The ECS-33 checkout drops from
+60 reads to 35 and 21,725 to 17,101 allocations at every size, writes
+unchanged; latency moved within the run's noise. Worth keeping: **an
+attribution trace before optimising** found this in one run, where the issue's
+hypothesis (batch the product reads) would have saved a third as much. The
+remaining per-line reads (product, listing, title, price, the stock counter's
+owner) are ECS-40's.
+
+All 954 gem examples (2 new), YARD 100%, the package smoke and 140 demo
+examples pass on the gem's source. One install migration remains.
+
+## ECS-40 — a checkout whose reads do not grow with the basket
+
+**Problem.** After ECS-46 a three-line checkout still made 35 reads, about six
+per line: each line's product link, its product, the product's listing, title
+and price, and the locked stock row's owner check.
+
+**Change.** Preload the lines' quantity and product link with the items; load
+the products with `preload(:listing_state, :title_text, :price_money)` once,
+after the stock lock; hand each locked stock row its loaded product; create
+the order pending. `checkout_reads_spec.rb` pins flat reads and that listing
+and price are read under the lock. Details:
+[checkout amendment](design/checkout-concurrency.md#amendment--fewer-reads-same-guarantees-ecs-40-19-october-2026).
+
+**Verdict.** 21 reads at 1, 3, 6 or 10 lines (36 to 135 on `main`), the same
+writes, every ECS-28 guarantee and spec unchanged. The preloads are ordinary
+Rails, named by reader. Two frictions:
+
+- **A row loaded by a lock has no owner.** `Counter.where(...).lock` returns
+  counters without their products, and the component's required
+  `belongs_to` reads the owner back on `update!` even though the key did not
+  change — the gem's validator was built before the app's Rails 8 defaults
+  applied (ECS-47, for a decision). Assigning `stock.entity = product` works,
+  but it is a line an app author would not think to write.
+- **The basket's own mutation path re-locks inside the checkout's lock.**
+  `clear!` goes through `mutate!`, which costs three reads the checkout's lock
+  already covers. Kept: one path for every basket change is worth more than
+  three cheap reads.
+
+All 144 demo examples (4 new) pass on the gem's source; eager loading is
+clean. No gem code changed in ECS-40. One install migration remains.

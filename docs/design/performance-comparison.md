@@ -119,6 +119,27 @@ do not turn its ratios or p95 values into universal claims.
   to 11 reads at every size; the review workload is unchanged. See
   [focused preloads](focused-preloads.md). The tables above are the original
   baseline and are not updated.
+- **12 October 2026, ECS-39:** `Demo::Indexer` writes each batch with one
+  upsert. At 5,000 products the ECS sweep drops from 5,609 reads and 5,000
+  writes to 406 and 203, allocations by 65% and its median by 16%. The
+  conventional sweep still writes per row, so the sweep ratio is no longer
+  like-for-like. See the [indexer amendment](batched-indexer.md#amendment--one-upsert-per-batch-ecs-39-12-october-2026).
+- **19 October 2026, ECS-46:** the gem's save cascade no longer reads a new
+  entity back once per dirty component (it restamped only the foreign key,
+  which made Rails reload the owner for the required `belongs_to`). The demo
+  now runs the gem's source for the 0.4.0 build. At every size the ECS
+  checkout drops from 60 reads to 35 and from 21,725 to 17,101 allocations,
+  with the same 40 writes; every other workload's counts are unchanged.
+  Latency moved within this run's noise (checkout p50 −4% to −14%, but an
+  untouched workload also moved by up to 90%), so the counts are the result.
+  Raw results: [before](owner-restamp-stress-before.json) (`d339f4c`, the
+  published 0.3.0 gem), [after](owner-restamp-stress-after.json) (`0803433`,
+  the gem source with only this change in `gem/lib`).
+- **19 October 2026, ECS-40:** the checkout reads its lines' products and
+  their listing, title and price once per basket. With ECS-46 it makes 21
+  reads at any basket size (60 for three lines in 0.3.0) and 14,531
+  allocations instead of 21,725, with the same 40 writes. See the
+  [checkout amendment](checkout-concurrency.md#amendment--fewer-reads-same-guarantees-ecs-40-19-october-2026).
 
 ## Rerun on the published 0.3.0 — 12 October 2026
 

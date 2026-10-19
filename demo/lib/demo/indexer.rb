@@ -18,7 +18,7 @@ module Demo
       end
 
       # Batch owners, not component rows: all of an owner's Text slots must
-      # reach reindex! together or the last fragment would replace the rest.
+      # reach one document together or the last fragment would replace the rest.
       ApplicationEntity.where(id: Text.select(:entity_id))
                        .find_in_batches(batch_size: batch_size)
                        .sum { |entities| reindex_batch(entities) }
@@ -31,19 +31,43 @@ module Demo
       end
       return 0 if eligible_entities.empty?
 
-      entity_ids = eligible_entities.map(&:id)
       # Only values are needed; avoid allocating Text models for every slot.
-      values_by_entity = Text.where(entity_id: entity_ids).order(:slot)
+      values_by_entity = Text.where(entity_id: eligible_entities.map(&:id)).order(:slot)
                              .pluck(:entity_id, :value).group_by(&:first)
-      vectors_by_entity = SearchVector.where(entity_id: entity_ids, slot: "").index_by(&:entity_id)
-
-      eligible_entities.each do |entity|
-        vector = vectors_by_entity[entity.id] || SearchVector.new(entity: entity)
-        values = values_by_entity.fetch(entity.id, []).map(&:last)
-        vector.reindex!(*values)
+      documents = eligible_entities.to_h do |entity|
+        [entity.id, values_by_entity.fetch(entity.id, []).map(&:last).compact.join(" ")]
       end
-      eligible_entities.size
+      write(documents)
+      documents.size
     end
     private_class_method :reindex_batch
+
+    # One INSERT ... ON CONFLICT per batch writes every owner's document
+    # (ECS-39). Each owner used to cost a reindex!: an UPDATE, a reload the
+    # system never read, and a SELECT and an INSERT first when the vector was
+    # missing. The text is the same SearchVector#reindex! builds (slot order,
+    # nils dropped, `simple` dictionary), so the documents are identical.
+    #
+    # This is a system's bulk path, and it says what it skips. No SearchVector
+    # model is built, so the class's validations and callbacks do not run: an
+    # application that adds them to its SearchVector, and needs them here,
+    # should call reindex! per owner instead. A new vector gets created_at and
+    # updated_at; an existing one keeps its id (the unique (entity_id, slot)
+    # index is the conflict target) and, as with reindex!, its updated_at.
+    UPSERT = <<~SQL
+      INSERT INTO %<table>s (entity_id, slot, document, created_at, updated_at)
+      SELECT batch.entity_id, '', to_tsvector('simple', batch.text), :now, :now
+      FROM unnest(ARRAY[:entity_ids]::uuid[], ARRAY[:texts]::text[]) AS batch(entity_id, text)
+      ON CONFLICT (entity_id, slot) DO UPDATE SET document = EXCLUDED.document
+    SQL
+
+    def write(documents)
+      sql = format(UPSERT, table: SearchVector.quoted_table_name)
+      SearchVector.connection.exec_update(
+        SearchVector.sanitize_sql_array([sql, { now: Time.current, entity_ids: documents.keys, texts: documents.values }]),
+        "Demo::Indexer upsert"
+      )
+    end
+    private_class_method :write
   end
 end

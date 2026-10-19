@@ -32,13 +32,17 @@ module Demo
         next completed if completed
         raise Error, "The basket changed; review it before checking out again." unless revision == @basket.revision
 
-        items = @basket.items.reset.includes_components(Counter).to_a
+        # Reset, then loaded inside the lock: never a collection cached before
+        # a competing request committed. Each line's quantity and product link
+        # come with it, not one query per line (ECS-40).
+        items = @basket.items.reset.preload(:quantity_counter, :product_relationship).to_a
         raise Error, "the basket is empty" if items.empty?
         stocks = lock_stock(items)
+        products = load_products(items)
 
         order = create_order(request)
         total = items.reduce(Money.new(amount_cents: 0, currency: "USD")) do |sum, item|
-          sum + add_line(order, item, stocks)  # Money#+ guards the currency
+          sum + add_line(order, item, stocks, products)  # Money#+ guards the currency
         end
         pay_order(order, total)
         Invoice.issue_for(order)
@@ -60,13 +64,15 @@ module Demo
                         order_number: Numbering.next("order_number", "ORD"))
       order.shipping_address.assign_attributes(@shipping.slice(*ADDRESS_FIELDS))
       order.billing_address.assign_attributes(@billing.slice(*ADDRESS_FIELDS))
+      # Pending from the start. Set before the first save, the reader builds
+      # its virtual State on a new order without a query (ECS-40).
+      order.fulfilment_state.status = "pending"
       order.save!
       order
     end
 
     def pay_order(order, total)
       order.total_money.assign_attributes(amount_cents: total.amount_cents, currency: total.currency)
-      order.fulfilment_state.status = "pending"
       order.save!
 
       # A decline raises inside the same transaction, rolling back every line,
@@ -91,9 +97,20 @@ module Demo
       Counter.where(slot: "stock", entity_id: ids).order(:entity_id).lock.index_by(&:entity_id)
     end
 
+    # The lines' products with exactly what a line checks or copies: listing,
+    # title and price, one query each for the whole basket rather than four
+    # per line (ECS-40). Read after lock_stock, inside the same transaction,
+    # so the lock order is unchanged.
+    def load_products(items)
+      Product.where(id: items.map(&:product_id).uniq)
+             .preload(:listing_state, :title_text, :price_money).index_by(&:id)
+    end
+
     # One order line: the product's price and title copied, stock taken.
-    def add_line(order, item, stocks)
-      product = Product.find(item.product_id)
+    def add_line(order, item, stocks, products)
+      product = products.fetch(item.product_id) do
+        raise ActiveRecord::RecordNotFound.new("Couldn't find Product with 'id'=#{item.product_id}", "Product")
+      end
       stock = stocks[product.id]
       available = stock&.count || 0
       raise Error, "quantity must be positive" unless item.quantity.positive?
@@ -104,6 +121,10 @@ module Demo
       line.unit_price_money.assign_attributes(product.price_money.attributes.slice("amount_cents", "currency"))
       line.save!
 
+      # The lock loaded the stock row without its owner. Handing it the product
+      # already in memory (the same id) lets its required belongs_to validate
+      # without reading the product again.
+      stock.entity = product
       stock.update!(count: available - item.quantity)
       line.line_total
     end
