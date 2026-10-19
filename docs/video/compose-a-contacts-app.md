@@ -2,9 +2,11 @@
 
 The shooting script for the ECS Rails demo video (Linear ECS-10). One
 narrative — **compose → use → inspect → extend** — told with a small contacts
-app on the published `ecs_on_rails` 0.3.0. It is the same app, code and names
-as the launch post, [The Last Migration](../blog/the-last-migration.md), so a
-viewer can follow either and reproduce the other. Depth is left to links: the
+app on the published `ecs_on_rails` **0.4.0**, so it is recorded after that
+release (Linear ECS-43). It is the same app, code and names as the launch
+post, [The Last Migration](../blog/the-last-migration.md), written for 0.3.0:
+nothing in this story changed between the two, so a viewer can follow either
+and reproduce the other. Depth is left to links: the
 [tutorial](../../gem/README.md), the
 [marketplace demo](https://ecs-rails.kranzky.com) and the post.
 
@@ -20,7 +22,14 @@ which builds a fresh app from RubyGems and replays the whole video:
 ruby docs/blog/verify.rb docs/video/compose-a-contacts-app.md
 ```
 
-Run it on recording day. If it fails, the video would show something false.
+Run it on recording day, after 0.4.0 is on RubyGems. If it fails, the video
+would show something false. Until the release, rehearse against the gem's
+source instead; the verifier then installs `gem/` in place of `~> 0.4.0` and
+says the run was a rehearsal:
+
+```sh
+ECS_GEM_SOURCE=gem ruby docs/blog/verify.rb docs/video/compose-a-contacts-app.md
+```
 
 ## Before recording
 
@@ -77,7 +86,7 @@ awk '/^>( |$)/ { sub(/^> ?/, ""); print; quoted = 1; next }
 > And this is its migrations directory. One file. Let me show you how it got
 > here.
 
-Title card: **Compose, don't migrate — ECS Rails 0.3.0**.
+Title card: **Compose, don't migrate — ECS Rails 0.4.0**.
 
 ## 1. Install — 0:20 to 1:30
 
@@ -87,7 +96,7 @@ Title card: **Compose, don't migrate — ECS Rails 0.3.0**.
 ```sh
 rails new contacts --minimal --database=postgresql
 cd contacts
-bundle add ecs_on_rails --version "~> 0.3.0"
+bundle add ecs_on_rails --version "~> 0.4.0"
 bin/rails generate ecs_rails:install
 bin/rails db:create db:migrate
 ```
@@ -400,18 +409,20 @@ ls db/migrate
 > migration, and a component of your own — something the catalogue doesn't
 > have — gets a table and a migration of its own, like any Rails model.
 >
-> It isn't free, either. Plain Rails was two to ten times faster in my
-> benchmarks, and the blog post has the numbers and the reasons. This is for
-> the stage when the shape of your data is still the question.
+> It isn't free, either. Plain Rails is still faster in every benchmark I've
+> run — 0.4.0 narrowed the gaps, it didn't close them — and the benchmark
+> report has the numbers and the reasons. This is for the stage when the shape
+> of your data is still the question.
 >
 > The tutorial, the gem, the source, a live marketplace built the same way,
-> and the blog post are all linked below. Thanks for watching.
+> the benchmarks and the blog post are all linked below. Thanks for watching.
 
 End card, held for eight seconds:
 
 - Tutorial — github.com/kranzky/ecs_rails (gem/README.md)
 - Gem — rubygems.org/gems/ecs_on_rails
 - Live demo and marketplace — ecs-rails.kranzky.com
+- Benchmarks — docs/design/performance-comparison.md
 - Blog post — "The Last Migration" (docs/blog/the-last-migration.md)
 
 **Visible result:** the single migration file, then the end card.
@@ -429,5 +440,6 @@ still with one migration. Geocoding in the video is simulated.
 - Gem: https://rubygems.org/gems/ecs_on_rails
 - Source: https://github.com/kranzky/ecs_rails
 - Live demo and marketplace: https://ecs-rails.kranzky.com
+- Benchmarks: https://github.com/kranzky/ecs_rails/blob/main/docs/design/performance-comparison.md
 - Blog post: https://github.com/kranzky/ecs_rails/blob/main/docs/blog/the-last-migration.md
 - Every command in this video, runnable: https://github.com/kranzky/ecs_rails/blob/main/docs/video/compose-a-contacts-app.md

@@ -374,6 +374,13 @@
       "humanMinutes": 1,
       "aiMinutes": 55,
       "costs": []
+    },
+    {
+      "date": "2026-10-19",
+      "summary": "ECS-46 and ECS-40 merged (PRs #64, #65) and marked Done; #65 retargeted to main by hand. At the user's request, retargeted the ECS-10 video (PR #61) to the 0.4.0 release: bundle add ~> 0.4.0, title card, version notes, and the closing benchmark line reworded (plain Rails still faster; 0.4.0 narrowed the gaps) with a benchmarks link; transcript regenerated. verify.rb gained opt-in ECS_GEM_SOURCE to rehearse against the gem's source before a release (result labelled a rehearsal); default still installs from RubyGems. Rehearsal passes (14 checks); the post still verifies against RubyGems; the video against RubyGems fails until 0.4.0 is published, as it should. ECS-10 now blocked by ECS-43.",
+      "humanMinutes": 1,
+      "aiMinutes": 20,
+      "costs": []
     }
   ]
 }

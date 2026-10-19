@@ -84,10 +84,11 @@ needs no migrations. A new version of the catalogue comes with an upgrade
 migration, and a component of your own — something the catalogue doesn't
 have — gets a table and a migration of its own, like any Rails model.
 
-It isn't free, either. Plain Rails was two to ten times faster in my
-benchmarks, and the blog post has the numbers and the reasons. This is for
-the stage when the shape of your data is still the question.
+It isn't free, either. Plain Rails is still faster in every benchmark I've
+run — 0.4.0 narrowed the gaps, it didn't close them — and the benchmark
+report has the numbers and the reasons. This is for the stage when the shape
+of your data is still the question.
 
 The tutorial, the gem, the source, a live marketplace built the same way,
-and the blog post are all linked below. Thanks for watching.
+the benchmarks and the blog post are all linked below. Thanks for watching.
 
