@@ -135,6 +135,11 @@ do not turn its ratios or p95 values into universal claims.
   Raw results: [before](owner-restamp-stress-before.json) (`d339f4c`, the
   published 0.3.0 gem), [after](owner-restamp-stress-after.json) (`0803433`,
   the gem source with only this change in `gem/lib`).
+- **19 October 2026, ECS-40:** the checkout reads its lines' products and
+  their listing, title and price once per basket. With ECS-46 it makes 21
+  reads at any basket size (60 for three lines in 0.3.0) and 14,531
+  allocations instead of 21,725, with the same 40 writes. See the
+  [checkout amendment](checkout-concurrency.md#amendment--fewer-reads-same-guarantees-ecs-40-19-october-2026).
 
 ## Rerun on the published 0.3.0 — 12 October 2026
 

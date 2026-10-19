@@ -360,6 +360,13 @@
       "humanMinutes": 2,
       "aiMinutes": 60,
       "costs": []
+    },
+    {
+      "date": "2026-10-19",
+      "summary": "ECS-40 (stacked on ECS-46): Demo::Checkout preloads each line's quantity and product link with the items, loads the lines' products with listing/title/price in one group after the stock lock (lock order unchanged), hands each locked stock row its loaded product, and creates the order pending. Reads now 21 at 1/3/6/10 lines (main: 36/58/91/135; after ECS-46: 23/35/53/77); writes unchanged. ECS-33 checkout: reads 35->21, allocations 17,101->14,531, writes 40; latency within noise. All ECS-28 checkout/concurrency specs pass; checkout_reads_spec adds 4 (flat reads; listing and price read under the lock; destroyed product still RecordNotFound). Filed ECS-47 (gem belongs_to validator ignores the app's belongs_to_required_validates_foreign_key) for a decision. Remaining reads attributed in checkout-concurrency.md amendment.",
+      "humanMinutes": 1,
+      "aiMinutes": 55,
+      "costs": []
     }
   ]
 }

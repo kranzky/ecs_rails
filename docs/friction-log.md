@@ -1411,3 +1411,34 @@ owner) are ECS-40's.
 
 All 954 gem examples (2 new), YARD 100%, the package smoke and 140 demo
 examples pass on the gem's source. One install migration remains.
+
+## ECS-40 — a checkout whose reads do not grow with the basket
+
+**Problem.** After ECS-46 a three-line checkout still made 35 reads, about six
+per line: each line's product link, its product, the product's listing, title
+and price, and the locked stock row's owner check.
+
+**Change.** Preload the lines' quantity and product link with the items; load
+the products with `preload(:listing_state, :title_text, :price_money)` once,
+after the stock lock; hand each locked stock row its loaded product; create
+the order pending. `checkout_reads_spec.rb` pins flat reads and that listing
+and price are read under the lock. Details:
+[checkout amendment](design/checkout-concurrency.md#amendment--fewer-reads-same-guarantees-ecs-40-19-october-2026).
+
+**Verdict.** 21 reads at 1, 3, 6 or 10 lines (36 to 135 on `main`), the same
+writes, every ECS-28 guarantee and spec unchanged. The preloads are ordinary
+Rails, named by reader. Two frictions:
+
+- **A row loaded by a lock has no owner.** `Counter.where(...).lock` returns
+  counters without their products, and the component's required
+  `belongs_to` reads the owner back on `update!` even though the key did not
+  change — the gem's validator was built before the app's Rails 8 defaults
+  applied (ECS-47, for a decision). Assigning `stock.entity = product` works,
+  but it is a line an app author would not think to write.
+- **The basket's own mutation path re-locks inside the checkout's lock.**
+  `clear!` goes through `mutate!`, which costs three reads the checkout's lock
+  already covers. Kept: one path for every basket change is worth more than
+  three cheap reads.
+
+All 144 demo examples (4 new) pass on the gem's source; eager loading is
+clean. No gem code changed in ECS-40. One install migration remains.
