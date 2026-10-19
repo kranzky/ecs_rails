@@ -58,9 +58,9 @@ fly secrets set RAILS_MASTER_KEY="$(cat config/master.key)" --app ecs-rails-demo
 fly deploy
 ```
 
-> The Gemfile pins the published gem (`~> 0.3.0`), so the build context is
-> self-contained. Between releases, if the Gemfile points at `path: "../gem"`,
-> the Docker build cannot see it and `fly deploy` fails until the next release
+> At each release the Gemfile pins the published gem, so the build context is
+> self-contained. Between releases (as now, for 0.4.0) it points at `path: "../gem"`,
+> which the Docker build cannot see, so `fly deploy` fails until the next release
 > repins the published gem. For a one-off deploy then, use a git source
 > (`gem "ecs_on_rails", github: "kranzky/ecs_rails", glob: "gem/*.gemspec"`),
 > `bundle lock`, and deploy.
