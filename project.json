@@ -342,6 +342,13 @@
     },
     {
       "date": "2026-10-12",
+      "summary": "ECS-20 merged (PR #60) and marked Done. ECS-10 prep: shooting script docs/video/compose-a-contacts-app.md (cold open + six scenes: install, compose, use, inspect, extend, close; narration ~840 words for ~8 min, visible result per scene, recording setup, upload description, end-card links) using the post's exact code, plus a caption transcript extracted from the narration. The script carries verify: markers, so docs/blog/verify.rb rehearses the whole video against the published gem (14 checks pass); the verifier gained verify:sql (bin/rails dbconsole, no psqlrc) and verify:output columns, both negative-tested, and word-by-word output comparison. Recording remains for the user.",
+      "humanMinutes": 2,
+      "aiMinutes": 35,
+      "costs": []
+    },
+    {
+      "date": "2026-10-12",
       "summary": "ECS-38 (0.4.0 epic): inventoried every demo read path; six list pages (market, product reviews, profile posts, seller products, groups, orders) now preload by association name only the slots their views show instead of type-wide includes_components, and the geocoder address table preloads each owner type's label (N+1 removed). New focused_preloads_spec (17 examples; 7 fail on the old controllers; dropping a shown slot fails the N+1 check). Gem README gained a runnable 'Preloading what a page shows' example checked by the package smoke; CHANGELOG Unreleased. Benchmark harness gained --pages (demo seed, whole requests, normalised HTML hashes) and records uncommitted files. Results: ordinary pages 1-2 fewer reads and 3-10% fewer allocations (geocoder 20->15 reads, p50 17.8->13.5 ms), identical HTML on all nine pages; stress catalogue 20->11 reads, allocations -42-45%, p50 -19-37%. Caught and fixed a harness bug where page mode loaded the stress models' extra Product slots. docs/design/focused-preloads.md with raw JSON.",
       "humanMinutes": 2,
       "aiMinutes": 110,
@@ -366,6 +373,13 @@
       "summary": "ECS-40 (stacked on ECS-46): Demo::Checkout preloads each line's quantity and product link with the items, loads the lines' products with listing/title/price in one group after the stock lock (lock order unchanged), hands each locked stock row its loaded product, and creates the order pending. Reads now 21 at 1/3/6/10 lines (main: 36/58/91/135; after ECS-46: 23/35/53/77); writes unchanged. ECS-33 checkout: reads 35->21, allocations 17,101->14,531, writes 40; latency within noise. All ECS-28 checkout/concurrency specs pass; checkout_reads_spec adds 4 (flat reads; listing and price read under the lock; destroyed product still RecordNotFound). Filed ECS-47 (gem belongs_to validator ignores the app's belongs_to_required_validates_foreign_key) for a decision. Remaining reads attributed in checkout-concurrency.md amendment.",
       "humanMinutes": 1,
       "aiMinutes": 55,
+      "costs": []
+    },
+    {
+      "date": "2026-10-19",
+      "summary": "ECS-46 and ECS-40 merged (PRs #64, #65) and marked Done; #65 retargeted to main by hand. At the user's request, retargeted the ECS-10 video (PR #61) to the 0.4.0 release: bundle add ~> 0.4.0, title card, version notes, and the closing benchmark line reworded (plain Rails still faster; 0.4.0 narrowed the gaps) with a benchmarks link; transcript regenerated. verify.rb gained opt-in ECS_GEM_SOURCE to rehearse against the gem's source before a release (result labelled a rehearsal); default still installs from RubyGems. Rehearsal passes (14 checks); the post still verifies against RubyGems; the video against RubyGems fails until 0.4.0 is published, as it should. ECS-10 now blocked by ECS-43.",
+      "humanMinutes": 1,
+      "aiMinutes": 20,
       "costs": []
     }
   ]

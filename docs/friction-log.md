@@ -1313,6 +1313,31 @@ The tutorial (gem README) composes `Contact`/`Company`/`Note`; the post and the
 planned video (ECS-10) use `Person`/`Company`, as the README's "Generating more
 entities" section does. One install migration remains.
 
+## ECS-10 — the video's script, rehearsed against the release
+
+**Problem.** The demo video has to show compose → use → inspect → extend on a
+fresh app, with readable source and a visible result for each step, and every
+command has to be true of the published gem on the day it is recorded.
+
+**Change.** [The shooting script](video/compose-a-contacts-app.md) tells the
+launch post's story in six scenes, with narration, the result each scene must
+show, target timings, recording setup and the upload description. It carries
+the post's `verify:` markers, so `docs/blog/verify.rb` rehearses the whole
+video from RubyGems; the verifier gained `verify:sql` (typed into `bin/rails
+dbconsole` with no psqlrc) for the inspect scene, and `verify:output columns`
+for `ls` laid out in columns. The [transcript](video/compose-a-contacts-app.transcript.txt)
+is extracted from the narration for caption auto-sync. Recording is the user's.
+
+**Verdict.** No gem change; the post's code carried over unchanged, which is
+what "names and behaviour match" needed. The friction was all presentation:
+Rails 8's development console prints every query with a
+`/*application='Contacts'*/` tag that doubles the width of the SQL the
+"SELECT versus INSERT" scene is about (the script turns it off, off camera),
+and a terminal's `ls` columns read down, so a word-for-word check of the
+component listing needed its own mode. Rows, slots, the relationship and the
+marker all fit one `dbconsole` screen — the inspect step needed three
+one-line queries, no tooling.
+
 ## ECS-38 — preload what the page shows, by name
 
 **Problem.** Six list pages preloaded component *types*, so
