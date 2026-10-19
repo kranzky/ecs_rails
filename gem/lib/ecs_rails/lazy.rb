@@ -208,7 +208,14 @@ module EcsRails
           # not exist when the component was built. Restamped rather than
           # assumed. Deliberately after the dirty check, which ignores entity_id
           # for exactly this reason.
-          component.entity_id = id
+          #
+          # Through the association writer, not `entity_id = id` (ECS-46).
+          # Changing only the foreign key makes Rails treat the loaded owner as
+          # stale, so the required belongs_to would read this entity back from
+          # the database before every component INSERT. The writer sets the
+          # key and keeps `component.entity` this very object, so the presence
+          # validation still runs, against the owner in memory.
+          component.entity = self
 
           # RFC-0007 merges component errors before this callback: ordinary
           # invalid input makes entity.save return false and save! raise. Keep
