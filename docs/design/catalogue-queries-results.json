@@ -1,0 +1,820 @@
+{
+  "measured_at": "2026-10-26 03:55:11 UTC",
+  "commit": "d2663fbb9828aefb264603a0835b0721213e7204",
+  "sizes": {
+    "100": {
+      "broad": {
+        "matches": 23,
+        "variants": {
+          "v0_exists": {
+            "page_query": {
+              "execution_ms": 0.19,
+              "planning_ms": 1.896,
+              "shared_hits": 329,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 0.158,
+              "planning_ms": 0.587,
+              "shared_hits": 329,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 24.947999976575375,
+              "p95_ms": 28.347000014036894,
+              "allocations_p50": 8064
+            }
+          },
+          "v1_in": {
+            "page_query": {
+              "execution_ms": 0.285,
+              "planning_ms": 4.228,
+              "shared_hits": 347,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 0.185,
+              "planning_ms": 0.637,
+              "shared_hits": 347,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 25.996999815106392,
+              "p95_ms": 59.61799994111061,
+              "allocations_p50": 7962
+            }
+          },
+          "v2_joins": {
+            "page_query": {
+              "execution_ms": 0.245,
+              "planning_ms": 3.086,
+              "shared_hits": 347,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 0.185,
+              "planning_ms": 0.734,
+              "shared_hits": 347,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 28.088000137358904,
+              "p95_ms": 31.662999652326107,
+              "allocations_p50": 8284
+            }
+          },
+          "v0_with_entities_index": {
+            "page_query": {
+              "execution_ms": 0.214,
+              "planning_ms": 2.044,
+              "shared_hits": 329,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 0.167,
+              "planning_ms": 0.638,
+              "shared_hits": 329,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 25.402999948710203,
+              "p95_ms": 48.91699971631169,
+              "allocations_p50": 8064
+            }
+          }
+        }
+      },
+      "selective_search": {
+        "matches": 1,
+        "variants": {
+          "v0_exists": {
+            "page_query": {
+              "execution_ms": 0.143,
+              "planning_ms": 0.512,
+              "shared_hits": 16,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 0.151,
+              "planning_ms": 0.42,
+              "shared_hits": 16,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 6.399000063538551,
+              "p95_ms": 9.30799962952733,
+              "allocations_p50": 3237
+            }
+          },
+          "v1_in": {
+            "page_query": {
+              "execution_ms": 0.202,
+              "planning_ms": 0.602,
+              "shared_hits": 16,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 0.152,
+              "planning_ms": 0.41,
+              "shared_hits": 16,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 5.406999960541725,
+              "p95_ms": 7.2029996663331985,
+              "allocations_p50": 3183
+            }
+          },
+          "v2_joins": {
+            "page_query": {
+              "execution_ms": 0.227,
+              "planning_ms": 0.762,
+              "shared_hits": 16,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 0.12,
+              "planning_ms": 0.372,
+              "shared_hits": 16,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 5.253999959677458,
+              "p95_ms": 9.103999938815832,
+              "allocations_p50": 3377
+            }
+          },
+          "v0_with_entities_index": {
+            "page_query": {
+              "execution_ms": 0.138,
+              "planning_ms": 0.54,
+              "shared_hits": 16,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 0.138,
+              "planning_ms": 0.432,
+              "shared_hits": 16,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 6.989999674260616,
+              "p95_ms": 16.511000227183104,
+              "allocations_p50": 3237
+            }
+          }
+        }
+      },
+      "unfiltered": {
+        "matches": 90,
+        "variants": {
+          "v0_exists": {
+            "page_query": {
+              "execution_ms": 0.171,
+              "planning_ms": 0.117,
+              "shared_hits": 6,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 0.292,
+              "planning_ms": 0.106,
+              "shared_hits": 6,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 16.632999759167433,
+              "p95_ms": 49.110999796539545,
+              "allocations_p50": 8003
+            }
+          },
+          "v1_in": {
+            "page_query": {
+              "execution_ms": 0.264,
+              "planning_ms": 0.175,
+              "shared_hits": 6,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 0.307,
+              "planning_ms": 0.283,
+              "shared_hits": 6,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 16.38299971818924,
+              "p95_ms": 21.3000001385808,
+              "allocations_p50": 7981
+            }
+          },
+          "v2_joins": {
+            "page_query": {
+              "execution_ms": 0.167,
+              "planning_ms": 0.109,
+              "shared_hits": 6,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 0.35,
+              "planning_ms": 0.223,
+              "shared_hits": 6,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 16.417999751865864,
+              "p95_ms": 26.858000084757805,
+              "allocations_p50": 8386
+            }
+          },
+          "v0_with_entities_index": {
+            "page_query": {
+              "execution_ms": 0.372,
+              "planning_ms": 0.452,
+              "shared_hits": 6,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 0.218,
+              "planning_ms": 0.183,
+              "shared_hits": 6,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 17.008999828249216,
+              "p95_ms": 24.334999732673168,
+              "allocations_p50": 8003
+            }
+          }
+        }
+      },
+      "price_ties": {
+        "matches": 70,
+        "variants": {
+          "v0_exists": {
+            "page_query": {
+              "execution_ms": 0.451,
+              "planning_ms": 0.26,
+              "shared_hits": 8,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 0.466,
+              "planning_ms": 0.422,
+              "shared_hits": 8,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 18.252999987453222,
+              "p95_ms": 22.51000003889203,
+              "allocations_p50": 8428
+            }
+          },
+          "v1_in": {
+            "page_query": {
+              "execution_ms": 0.564,
+              "planning_ms": 0.487,
+              "shared_hits": 8,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 0.474,
+              "planning_ms": 0.392,
+              "shared_hits": 8,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 19.902999978512526,
+              "p95_ms": 73.69800005108118,
+              "allocations_p50": 8405
+            }
+          },
+          "v2_joins": {
+            "page_query": {
+              "execution_ms": 0.593,
+              "planning_ms": 0.476,
+              "shared_hits": 8,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 0.384,
+              "planning_ms": 0.266,
+              "shared_hits": 8,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 19.315999932587147,
+              "p95_ms": 22.884999867528677,
+              "allocations_p50": 8790
+            }
+          },
+          "v0_with_entities_index": {
+            "page_query": {
+              "execution_ms": 0.64,
+              "planning_ms": 0.565,
+              "shared_hits": 8,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 0.227,
+              "planning_ms": 0.192,
+              "shared_hits": 8,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 18.37499998509884,
+              "p95_ms": 23.55000004172325,
+              "allocations_p50": 8428
+            }
+          }
+        }
+      },
+      "top_rated": {
+        "matches": 36,
+        "variants": {
+          "v0_exists": {
+            "page_query": {
+              "execution_ms": 0.594,
+              "planning_ms": 0.729,
+              "shared_hits": 223,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 0.21,
+              "planning_ms": 0.278,
+              "shared_hits": 115,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 18.062000162899494,
+              "p95_ms": 21.017999853938818,
+              "allocations_p50": 8080
+            }
+          },
+          "v1_in": {
+            "page_query": {
+              "execution_ms": 0.557,
+              "planning_ms": 0.698,
+              "shared_hits": 223,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 0.39,
+              "planning_ms": 0.428,
+              "shared_hits": 115,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 19.69200000166893,
+              "p95_ms": 28.85300014168024,
+              "allocations_p50": 8059
+            }
+          },
+          "v2_joins": {
+            "page_query": {
+              "execution_ms": 0.468,
+              "planning_ms": 0.585,
+              "shared_hits": 223,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 0.325,
+              "planning_ms": 0.451,
+              "shared_hits": 115,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 18.36899993941188,
+              "p95_ms": 24.356999900192022,
+              "allocations_p50": 8741
+            }
+          },
+          "v0_with_entities_index": {
+            "page_query": {
+              "execution_ms": 0.755,
+              "planning_ms": 0.907,
+              "shared_hits": 223,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 0.242,
+              "planning_ms": 0.276,
+              "shared_hits": 115,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 18.192000221461058,
+              "p95_ms": 22.734999656677246,
+              "allocations_p50": 8080
+            }
+          }
+        }
+      }
+    },
+    "5000": {
+      "broad": {
+        "matches": 1152,
+        "variants": {
+          "v0_exists": {
+            "page_query": {
+              "execution_ms": 8.209,
+              "planning_ms": 1.85,
+              "shared_hits": 16124,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 8.182,
+              "planning_ms": 0.722,
+              "shared_hits": 16124,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 28.691000305116177,
+              "p95_ms": 30.331000220030546,
+              "allocations_p50": 9488
+            }
+          },
+          "v1_in": {
+            "page_query": {
+              "execution_ms": 9.532,
+              "planning_ms": 1.908,
+              "shared_hits": 17860,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 8.928,
+              "planning_ms": 0.725,
+              "shared_hits": 17860,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 29.279999900609255,
+              "p95_ms": 34.456000197678804,
+              "allocations_p50": 9460
+            }
+          },
+          "v2_joins": {
+            "page_query": {
+              "execution_ms": 9.518,
+              "planning_ms": 3.116,
+              "shared_hits": 17860,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 9.422,
+              "planning_ms": 0.882,
+              "shared_hits": 17860,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 31.184999737888575,
+              "p95_ms": 54.00000000372529,
+              "allocations_p50": 10716
+            }
+          },
+          "v0_with_entities_index": {
+            "page_query": {
+              "execution_ms": 8.745,
+              "planning_ms": 1.908,
+              "shared_hits": 16124,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 8.605,
+              "planning_ms": 0.741,
+              "shared_hits": 16124,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 29.02499958872795,
+              "p95_ms": 38.84699987247586,
+              "allocations_p50": 9488
+            }
+          }
+        }
+      },
+      "selective_search": {
+        "matches": 1,
+        "variants": {
+          "v0_exists": {
+            "page_query": {
+              "execution_ms": 1.29,
+              "planning_ms": 0.19,
+              "shared_hits": 572,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 1.182,
+              "planning_ms": 0.132,
+              "shared_hits": 572,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 13.281999621540308,
+              "p95_ms": 19.49599990621209,
+              "allocations_p50": 3237
+            }
+          },
+          "v1_in": {
+            "page_query": {
+              "execution_ms": 5.001,
+              "planning_ms": 0.577,
+              "shared_hits": 572,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 1.256,
+              "planning_ms": 0.141,
+              "shared_hits": 572,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 14.028999954462051,
+              "p95_ms": 16.592000145465136,
+              "allocations_p50": 3183
+            }
+          },
+          "v2_joins": {
+            "page_query": {
+              "execution_ms": 5.048,
+              "planning_ms": 0.619,
+              "shared_hits": 572,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 1.387,
+              "planning_ms": 0.169,
+              "shared_hits": 572,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 13.154000043869019,
+              "p95_ms": 16.840999945998192,
+              "allocations_p50": 3377
+            }
+          },
+          "v0_with_entities_index": {
+            "page_query": {
+              "execution_ms": 1.335,
+              "planning_ms": 0.196,
+              "shared_hits": 572,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 1.561,
+              "planning_ms": 0.178,
+              "shared_hits": 572,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 14.533999841660261,
+              "p95_ms": 22.18900015577674,
+              "allocations_p50": 3237
+            }
+          }
+        }
+      },
+      "unfiltered": {
+        "matches": 4545,
+        "variants": {
+          "v0_exists": {
+            "page_query": {
+              "execution_ms": 2.579,
+              "planning_ms": 0.18,
+              "shared_hits": 221,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 1.932,
+              "planning_ms": 0.099,
+              "shared_hits": 221,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 34.847000148147345,
+              "p95_ms": 39.10099994391203,
+              "allocations_p50": 8938
+            }
+          },
+          "v1_in": {
+            "page_query": {
+              "execution_ms": 2.22,
+              "planning_ms": 0.155,
+              "shared_hits": 221,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 1.534,
+              "planning_ms": 0.079,
+              "shared_hits": 221,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 33.35699997842312,
+              "p95_ms": 51.014999859035015,
+              "allocations_p50": 8916
+            }
+          },
+          "v2_joins": {
+            "page_query": {
+              "execution_ms": 3.012,
+              "planning_ms": 0.122,
+              "shared_hits": 221,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 1.452,
+              "planning_ms": 0.08,
+              "shared_hits": 221,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 33.693999983370304,
+              "p95_ms": 38.530000019818544,
+              "allocations_p50": 9321
+            }
+          },
+          "v0_with_entities_index": {
+            "page_query": {
+              "execution_ms": 0.125,
+              "planning_ms": 0.212,
+              "shared_hits": 101,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 5.837,
+              "planning_ms": 0.193,
+              "shared_hits": 221,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 25.57400008663535,
+              "p95_ms": 59.148999862372875,
+              "allocations_p50": 8938
+            }
+          }
+        }
+      },
+      "price_ties": {
+        "matches": 3495,
+        "variants": {
+          "v0_exists": {
+            "page_query": {
+              "execution_ms": 3.365,
+              "planning_ms": 0.185,
+              "shared_hits": 274,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 2.698,
+              "planning_ms": 0.201,
+              "shared_hits": 274,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 32.9089998267591,
+              "p95_ms": 43.48499979823828,
+              "allocations_p50": 9129
+            }
+          },
+          "v1_in": {
+            "page_query": {
+              "execution_ms": 3.355,
+              "planning_ms": 0.158,
+              "shared_hits": 274,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 2.607,
+              "planning_ms": 0.145,
+              "shared_hits": 274,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 34.92000000551343,
+              "p95_ms": 43.55800012126565,
+              "allocations_p50": 9106
+            }
+          },
+          "v2_joins": {
+            "page_query": {
+              "execution_ms": 3.055,
+              "planning_ms": 0.167,
+              "shared_hits": 274,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 2.59,
+              "planning_ms": 0.112,
+              "shared_hits": 274,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 34.6369999460876,
+              "p95_ms": 40.56800017133355,
+              "allocations_p50": 9491
+            }
+          },
+          "v0_with_entities_index": {
+            "page_query": {
+              "execution_ms": 3.672,
+              "planning_ms": 0.236,
+              "shared_hits": 274,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 2.666,
+              "planning_ms": 0.168,
+              "shared_hits": 274,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 33.26599998399615,
+              "p95_ms": 47.40000003948808,
+              "allocations_p50": 9129
+            }
+          }
+        }
+      },
+      "top_rated": {
+        "matches": 1818,
+        "variants": {
+          "v0_exists": {
+            "page_query": {
+              "execution_ms": 6.151,
+              "planning_ms": 0.218,
+              "shared_hits": 11177,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 3.763,
+              "planning_ms": 0.182,
+              "shared_hits": 5723,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 29.40799994394183,
+              "p95_ms": 38.66599965840578,
+              "allocations_p50": 9197
+            }
+          },
+          "v1_in": {
+            "page_query": {
+              "execution_ms": 7.078,
+              "planning_ms": 0.236,
+              "shared_hits": 11177,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 3.94,
+              "planning_ms": 0.198,
+              "shared_hits": 5723,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 31.707999762147665,
+              "p95_ms": 44.08200038596988,
+              "allocations_p50": 9176
+            }
+          },
+          "v2_joins": {
+            "page_query": {
+              "execution_ms": 6.029,
+              "planning_ms": 0.237,
+              "shared_hits": 11177,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 3.477,
+              "planning_ms": 0.16,
+              "shared_hits": 5723,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 32.779000233858824,
+              "p95_ms": 50.90599972754717,
+              "allocations_p50": 9858
+            }
+          },
+          "v0_with_entities_index": {
+            "page_query": {
+              "execution_ms": 7.143,
+              "planning_ms": 0.252,
+              "shared_hits": 11177,
+              "top_node": "Limit"
+            },
+            "count_query": {
+              "execution_ms": 3.785,
+              "planning_ms": 0.189,
+              "shared_hits": 5723,
+              "top_node": "Aggregate"
+            },
+            "request": {
+              "p50_ms": 30.906999949365854,
+              "p95_ms": 38.5750001296401,
+              "allocations_p50": 9197
+            }
+          }
+        }
+      }
+    }
+  }
+}

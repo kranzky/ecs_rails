@@ -1462,3 +1462,25 @@ the two shown slots is twice as fast again; on the demo's list pages it saves
 one query and about a millisecond. The surprise worth keeping: allocations
 fell 36–41% even on those small pages, more than one query explains — Rails'
 preloader machinery is itself part of a type-wide preload's cost.
+
+## ECS-42 — the catalogue's filters, rewritten and kept
+
+**Problem.** The 5,000-product catalogue plan probes the component indexes
+once per candidate (about 16,000 buffer hits against conventional Rails'
+2,500). Could ordinary relation changes do better?
+
+**Change.** None to the demo. An experiment
+([`demo/script/catalogue_query_experiment.rb`](../demo/script/catalogue_query_experiment.rb))
+compares today's `with_component` scopes with `IN` subqueries and with inner
+joins on the slot-scoped `has_one`s, over broad, selective, unfiltered,
+price-tie and top-rated scenarios at 100 and 5,000 products, every variant
+checked for the same page and total. [Design note](design/catalogue-queries.md).
+
+**Verdict.** `EXISTS` stays: the rewrites were no faster on broad filters and
+about four times slower on a selective search, and joins cost allocations.
+The query DSL's choice of a correlated `EXISTS` (RFC-0010) holds up under
+measurement. The filter queries are at most half of a catalogue request; the
+rest is preloading and objects. One shared index on `entities (model,
+created_at DESC, id)` makes the newest-first page query twenty times faster
+at 5,000 products and nothing else faster; as a schema change for every app it
+went to the backlog.

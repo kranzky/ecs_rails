@@ -374,6 +374,13 @@
       "humanMinutes": 1,
       "aiMinutes": 35,
       "costs": []
+    },
+    {
+      "date": "2026-10-26",
+      "summary": "ECS-42 evaluated, no change: demo/script/catalogue_query_experiment.rb (owned DBs, ECS-33 fixture via the harness worker) compared the catalogue's with_component EXISTS scopes with IN subqueries and slot-scoped inner joins across broad/selective/unfiltered/price-tie/top-rated scenarios at 100 and 5,000 products, all returning identical pages and totals. EXISTS best or tied (broad page 8.2 vs 9.5 ms; selective 1.3 vs 5.0 ms); rewrites never beat request noise; joins +3-13% allocations. Filter queries are at most half a ~30 ms request. An entities(model, created_at DESC, id) index cuts the unfiltered newest page query 2.58 -> 0.12 ms only; recorded in the backlog as a schema-change candidate. docs/design/catalogue-queries.md with raw JSON.",
+      "humanMinutes": 0,
+      "aiMinutes": 45,
+      "costs": []
     }
   ]
 }
