@@ -4,27 +4,42 @@
 # would: a new Rails app in a temporary directory, the post's shell commands in
 # order, its files written where it says, and its console session replayed with
 # every `# => value` comment checked. A post is only "verified against the
-# release" while this passes.
+# release" while this passes. The video's shooting script (ECS-10) uses the
+# same markers, so it rehearses the recording the same way.
 #
 #   ruby docs/blog/verify.rb docs/blog/the-last-migration.md
+#   ruby docs/blog/verify.rb docs/video/compose-a-contacts-app.md
 #
 # Needs Ruby >= 3.2 with the `rails` gem installed, network access to
 # RubyGems, and a PostgreSQL role that may create databases. DATABASE_URL
 # (default postgresql:///postgres) names the server; the app's database gets
 # a unique name and is dropped afterwards.
 #
+# To rehearse before a release, ECS_GEM_SOURCE=gem (a path to the gem's
+# source) replaces the document's `bundle add ecs_on_rails --version ...`
+# with `--path` to that source, and the result says so. Without it the gem
+# comes from RubyGems: only that run verifies a document against the release.
+#
+#   ECS_GEM_SOURCE=gem ruby docs/blog/verify.rb docs/video/compose-a-contacts-app.md
+#
 # The post marks what runs with HTML comments, which Markdown renderers hide:
 #
 #   <!-- verify:commands -->      the next ```sh block runs in bash, in order
+#   <!-- verify:sql -->           the next ```sql block is typed into
+#                                 `bin/rails dbconsole` (psql, no psqlrc)
 #   <!-- verify:output -->        the next ```text block must equal the
-#                                 previous commands block's output
-#                                 (14-digit migration timestamps aside)
+#                                 previous commands or sql block's output,
+#                                 word for word (14-digit migration
+#                                 timestamps and spacing aside)
+#   <!-- verify:output columns --> the same, for output a terminal lays out
+#                                 in columns (`ls`): compared as a set of
+#                                 words, since columns read down, not across
 #   <!-- verify:file PATH -->     the next ```ruby block is written to PATH,
 #                                 relative to the app
 #   <!-- verify:console -->       the next ```ruby block is part of one
 #                                 console session, replayed with
 #                                 `bin/rails runner` before the next commands
-#                                 block (or at the end)
+#                                 or sql block (or at the end)
 #
 # Unmarked blocks (SQL logs, psql output, excerpts) are illustration and are
 # not run. A `# => value` check compares `value` with the expression's
@@ -36,8 +51,9 @@ require "tmpdir"
 require "uri"
 
 class BlogVerifier
-  MARKER = /^<!-- verify:(commands|output|console|file)(?: (\S+))? -->\n```(\w+)\n(.*?)^```$/m
+  MARKER = /^<!-- verify:(commands|sql|output|console|file)(?: (\S+))? -->\n```(\w+)\n(.*?)^```$/m
   CHECK = /\A(\s*)(.+?)\s+# => (.+)\z/
+  GEM_ADD = /^bundle add ecs_on_rails --version "[^"]+"$/
 
   def initialize(post)
     @post = File.expand_path(post)
@@ -47,6 +63,7 @@ class BlogVerifier
     @database_url = server.to_s
     @console = []
     @checks = 0
+    @gem_source = ENV["ECS_GEM_SOURCE"]&.then { |path| File.expand_path(path) }
   end
 
   def run
@@ -58,7 +75,8 @@ class BlogVerifier
     ensure
       drop_database
     end
-    puts "Verified #{File.basename(@post)}: #{@checks} console checks passed."
+    source = @gem_source ? "the gem source at #{@gem_source} (a rehearsal, not the release)" : "the gem from RubyGems"
+    puts "Verified #{File.basename(@post)} against #{source}: #{@checks} console checks passed."
   end
 
   private
@@ -76,10 +94,16 @@ class BlogVerifier
     when "commands"
       expect_language("sh", language, line)
       replay_console
-      @last_output = bash(body)
+      @last_output = bash(with_gem_source(body, line))
+    when "sql"
+      expect_language("sql", language, line)
+      replay_console
+      @last_output = bash("bin/rails dbconsole <<'SQL'\n#{body}SQL")
     when "output"
       expect_language("text", language, line)
-      unless normalise(@last_output) == normalise(body)
+      expected, actual = normalise(body), normalise(@last_output)
+      expected, actual = expected.sort, actual.sort if argument == "columns"
+      unless expected == actual
         abort "Line #{line}: output differs.\nExpected:\n#{body}\nActual:\n#{@last_output}"
       end
     when "file"
@@ -104,6 +128,15 @@ class BlogVerifier
     abort "Line #{line}: the post's components differ from the generated #{File.basename(target)}:\n#{generated.join}"
   end
 
+  def with_gem_source(script, line)
+    return script unless @gem_source
+
+    unless script.match?(GEM_ADD) || !script.include?("bundle add ecs_on_rails")
+      abort "Line #{line}: ECS_GEM_SOURCE cannot rewrite this bundle add; use --version \"...\""
+    end
+    script.gsub(GEM_ADD) { "bundle add ecs_on_rails --path #{@gem_source.dump}" }
+  end
+
   def expect_language(expected, actual, line)
     abort "Line #{line}: a verify block must be ```#{expected}, not ```#{actual}" unless expected == actual
   end
@@ -113,7 +146,8 @@ class BlogVerifier
   def bash(script)
     @cwd ||= @directory
     state = File.join(@directory, ".cwd")
-    environment = { "DATABASE_URL" => @database_url, "BUNDLE_GEMFILE" => nil }
+    # PSQLRC: a personal psqlrc (\timing, a pager) would change the output.
+    environment = { "DATABASE_URL" => @database_url, "BUNDLE_GEMFILE" => nil, "PSQLRC" => File::NULL }
     output, status = Open3.capture2e(environment, "bash", "-euo", "pipefail", "-c", "#{script}\npwd > #{state}",
                                      chdir: @cwd)
     abort "Failed:\n#{script}\n#{output}" unless status.success?
@@ -146,8 +180,10 @@ class BlogVerifier
     bash("bin/rails runner tmp/blog_console.rb")
   end
 
+  # Compared word by word: a terminal lays `ls` out in columns and psql pads
+  # its tables, and neither layout is what a reader needs checked.
   def normalise(output)
-    output.to_s.gsub(/\d{14}/, "<timestamp>").strip
+    output.to_s.gsub(/\d{14}/, "<timestamp>").split
   end
 
   def drop_database

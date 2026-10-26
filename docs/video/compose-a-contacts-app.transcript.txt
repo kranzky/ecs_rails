@@ -1,0 +1,94 @@
+This Rails app has people and companies, phone numbers, addresses, a
+relationship, a flag, and a system that works across all of it.
+And this is its migrations directory. One file. Let me show you how it got
+here.
+
+I'm starting from nothing: a new Rails app on PostgreSQL. I add the gem,
+ecs_on_rails, and run its install generator. That writes one migration, and
+I run it once.
+
+The install created a catalogue of components: a name, an email, a phone
+number, an address, a geolocation, text, counters, tags and more. Each is
+a tiny class in my app; the behaviour comes from the gem. And each has
+its own table, already created.
+
+That's the only migration this app will need.
+
+Now the two kinds of thing in a contacts app. A person is made of a name, an
+email, a mobile phone and a work phone, a home address, and a geolocation
+for that address. A company has a name, a phone, an address and a
+geolocation.
+
+The generator wrote plain Ruby, and nothing else. No migration. "mobile" and
+"work" are slots: two phones in the same phones table, told apart by a slot
+column, each validated on its own.
+
+A person works for a company, so I'll add a relationship called employer.
+And I want to star a few people as favourites, so I'll add a marker. Neither
+needs a table: every relationship lives in one shared relationships table,
+and every marker in one markers table. Both came with the install.
+
+A company's name isn't a person's name, so it's the generic Text component,
+in a slot called name. And from the company's side, its employees are the
+people whose employer it is: the same rows, read the other way.
+
+I create a person. That's one INSERT, into the entities table, and nothing
+else. Ask for her email and I get an Email back, not nil — but it isn't
+saved. It's virtual: every column at its default.
+
+Look at the SQL, though. To know Ada has no email, Rails had to ask: one
+SELECT that found nothing. That's the price of composition. The answer is
+cached, and a page listing many people should preload what it shows.
+
+Now a write. Each component's attributes are delegated with its name in
+front: name given, mobile phone e164, home address country. One update, one
+transaction. In the SQL: three SELECTs for components we hadn't loaded yet,
+then four INSERTs, one per component that now holds something. The work
+phone was never touched, so it's still not a row.
+
+A company, an employer, a favourite. And a question about composition:
+which people have a home address in Australia? That's a single EXISTS query
+against the addresses table, scoped to people.
+
+Here's what that looks like underneath. The addresses table holds Ada's
+home address and the company's address side by side. The table doesn't know
+about people or companies; the owner's model and the slot tell them apart.
+The employer link is one row in relationships, and the favourite is one row
+in markers. Every table here has real columns, a foreign key to its entity,
+and a unique index on entity and slot — so the database itself won't let
+Ada have two mobile phones.
+
+Now the S in ECS: a system. This geocoder runs over every address in the
+app, whoever owns it — it never mentions Person or Company.
+
+It only geocodes an address if the owner declares a geolocation in the same
+slot: home with home for a person, the default slot for a company. Any new
+entity type can join in just by declaring the pair.
+
+It stamps each result with the address's updated_at, so an address that
+hasn't changed is skipped, and an edited one is done again.
+
+And I should be honest: the lookup is simulated. Three city centres in a
+hash, where a real app would call a geocoding service.
+
+A new console, so I find Ada again — she's our one favourite. Run the
+geocoder: two addresses, a person's and a company's. Ada is in Perth. Run it
+again: nothing to do, so it does nothing. Now Ada moves to Auckland. Run it:
+one address changed, one redone, and there are her new coordinates.
+
+Two kinds of entity, ten components, a relationship, a marker, and a system.
+Still one migration.
+
+To be precise about the promise: building from the installed catalogue
+needs no migrations. A new version of the catalogue comes with an upgrade
+migration, and a component of your own — something the catalogue doesn't
+have — gets a table and a migration of its own, like any Rails model.
+
+It isn't free, either. Plain Rails is still faster in every benchmark I've
+run — 0.4.0 narrowed the gaps, it didn't close them — and the benchmark
+report has the numbers and the reasons. This is for the stage when the shape
+of your data is still the question.
+
+The tutorial, the gem, the source, a live marketplace built the same way,
+the benchmarks and the blog post are all linked below. Thanks for watching.
+
