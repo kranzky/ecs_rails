@@ -77,3 +77,14 @@ thin: under the hood it is `preload(*association_names)`.
 - The regression guarantee matters most: tests pin that native `preload` yields
   the batched-plus-virtual behaviour, so a future change to the lazy reader that
   broke preload would fail loudly.
+
+## Amendment: grouping same-type slots evaluated, kept thin (ECS-41, 2026-10-26)
+
+Loading each component type once, instead of one `preload` per slot, was
+prototyped and measured: on the demo's list pages it saves one query and
+about a millisecond; on a 12-slot product it halves the preload time, but
+naming the shown slots (ECS-38) halves it again. Rails' `available_records`
+cannot serve scoped associations, so grouping would make the gem its own
+preloader. The decision is to keep `includes_components` as native `preload`.
+Evidence, prototype and revisit triggers:
+[grouped preloads](../design/grouped-preloads.md).

@@ -342,13 +342,6 @@
     },
     {
       "date": "2026-10-12",
-      "summary": "ECS-20 merged (PR #60) and marked Done. ECS-10 prep: shooting script docs/video/compose-a-contacts-app.md (cold open + six scenes: install, compose, use, inspect, extend, close; narration ~840 words for ~8 min, visible result per scene, recording setup, upload description, end-card links) using the post's exact code, plus a caption transcript extracted from the narration. The script carries verify: markers, so docs/blog/verify.rb rehearses the whole video against the published gem (14 checks pass); the verifier gained verify:sql (bin/rails dbconsole, no psqlrc) and verify:output columns, both negative-tested, and word-by-word output comparison. Recording remains for the user.",
-      "humanMinutes": 2,
-      "aiMinutes": 35,
-      "costs": []
-    },
-    {
-      "date": "2026-10-12",
       "summary": "ECS-38 (0.4.0 epic): inventoried every demo read path; six list pages (market, product reviews, profile posts, seller products, groups, orders) now preload by association name only the slots their views show instead of type-wide includes_components, and the geocoder address table preloads each owner type's label (N+1 removed). New focused_preloads_spec (17 examples; 7 fail on the old controllers; dropping a shown slot fails the N+1 check). Gem README gained a runnable 'Preloading what a page shows' example checked by the package smoke; CHANGELOG Unreleased. Benchmark harness gained --pages (demo seed, whole requests, normalised HTML hashes) and records uncommitted files. Results: ordinary pages 1-2 fewer reads and 3-10% fewer allocations (geocoder 20->15 reads, p50 17.8->13.5 ms), identical HTML on all nine pages; stress catalogue 20->11 reads, allocations -42-45%, p50 -19-37%. Caught and fixed a harness bug where page mode loaded the stress models' extra Product slots. docs/design/focused-preloads.md with raw JSON.",
       "humanMinutes": 2,
       "aiMinutes": 110,
@@ -359,6 +352,13 @@
       "summary": "ECS-38 merged (PR #62) and marked Done; merged main into the ECS-10 branch to resolve the friction-log/project.json append conflict (no force-push). ECS-39: measured five indexer write paths on the ECS-32 fixture (reindex! per owner, per-batch transaction, no reload, UPDATE...FROM unnest, INSERT...ON CONFLICT); all produced identical documents and the batch statements were ~7x faster. Demo::Indexer now writes each batch with one upsert (no vector reads; ids, default slot and existing updated_at kept; SearchVector validations/callbacks skipped and documented). ECS-33 sweep at 5,000 products: reads 5,609->406, writes 5,000->203, allocations -65%, p50 -16% (-28% at 1,000, -35% at 100); other workloads and conventional unchanged. Sweep ratio vs per-row conventional no longer like-for-like (stated). Indexer spec +3 (3 fail on the old indexer), architecture.md system bulk-write rule, batched-indexer.md amendment, raw JSON.",
       "humanMinutes": 2,
       "aiMinutes": 70,
+      "costs": []
+    },
+    {
+      "date": "2026-10-12",
+      "summary": "ECS-20 merged (PR #60) and marked Done. ECS-10 prep: shooting script docs/video/compose-a-contacts-app.md (cold open + six scenes: install, compose, use, inspect, extend, close; narration ~840 words for ~8 min, visible result per scene, recording setup, upload description, end-card links) using the post's exact code, plus a caption transcript extracted from the narration. The script carries verify: markers, so docs/blog/verify.rb rehearses the whole video against the published gem (14 checks pass); the verifier gained verify:sql (bin/rails dbconsole, no psqlrc) and verify:output columns, both negative-tested, and word-by-word output comparison. Recording remains for the user.",
+      "humanMinutes": 2,
+      "aiMinutes": 35,
       "costs": []
     },
     {
@@ -380,6 +380,20 @@
       "summary": "ECS-46 and ECS-40 merged (PRs #64, #65) and marked Done; #65 retargeted to main by hand. At the user's request, retargeted the ECS-10 video (PR #61) to the 0.4.0 release: bundle add ~> 0.4.0, title card, version notes, and the closing benchmark line reworded (plain Rails still faster; 0.4.0 narrowed the gaps) with a benchmarks link; transcript regenerated. verify.rb gained opt-in ECS_GEM_SOURCE to rehearse against the gem's source before a release (result labelled a rehearsal); default still installs from RubyGems. Rehearsal passes (14 checks); the post still verifies against RubyGems; the video against RubyGems fails until 0.4.0 is published, as it should. ECS-10 now blocked by ECS-43.",
       "humanMinutes": 1,
       "aiMinutes": 20,
+      "costs": []
+    },
+    {
+      "date": "2026-10-26",
+      "summary": "ECS-41 evaluated and deferred (user's choice after pros/cons): Rails' Preloader available_records skips scoped associations (every component has_one is slot-scoped), so grouping same-type slots would make the gem its own preloader. Prototype (association.target= plus public row.entity=) measured: 12-slot product 13->3 reads, 19.5->10.1 ms, allocations -40% (named preloads still 5.2 ms); demo list pages 1 query and 0.8-1.1 ms saved, allocations -36-41%. Kept as demo/script/grouped_preload_experiment.rb with docs/design/grouped-preloads.md, an ADR-0012 amendment, a backlog entry with revisit triggers, and a friction-log entry. No gem change.",
+      "humanMinutes": 1,
+      "aiMinutes": 35,
+      "costs": []
+    },
+    {
+      "date": "2026-10-26",
+      "summary": "ECS-42 evaluated, no change: demo/script/catalogue_query_experiment.rb (owned DBs, ECS-33 fixture via the harness worker) compared the catalogue's with_component EXISTS scopes with IN subqueries and slot-scoped inner joins across broad/selective/unfiltered/price-tie/top-rated scenarios at 100 and 5,000 products, all returning identical pages and totals. EXISTS best or tied (broad page 8.2 vs 9.5 ms; selective 1.3 vs 5.0 ms); rewrites never beat request noise; joins +3-13% allocations. Filter queries are at most half a ~30 ms request. An entities(model, created_at DESC, id) index cuts the unfiltered newest page query 2.58 -> 0.12 ms only; recorded in the backlog as a schema-change candidate. docs/design/catalogue-queries.md with raw JSON.",
+      "humanMinutes": 0,
+      "aiMinutes": 45,
       "costs": []
     }
   ]
