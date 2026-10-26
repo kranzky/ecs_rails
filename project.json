@@ -367,6 +367,13 @@
       "humanMinutes": 1,
       "aiMinutes": 55,
       "costs": []
+    },
+    {
+      "date": "2026-10-26",
+      "summary": "ECS-41 evaluated and deferred (user's choice after pros/cons): Rails' Preloader available_records skips scoped associations (every component has_one is slot-scoped), so grouping same-type slots would make the gem its own preloader. Prototype (association.target= plus public row.entity=) measured: 12-slot product 13->3 reads, 19.5->10.1 ms, allocations -40% (named preloads still 5.2 ms); demo list pages 1 query and 0.8-1.1 ms saved, allocations -36-41%. Kept as demo/script/grouped_preload_experiment.rb with docs/design/grouped-preloads.md, an ADR-0012 amendment, a backlog entry with revisit triggers, and a friction-log entry. No gem change.",
+      "humanMinutes": 1,
+      "aiMinutes": 35,
+      "costs": []
     }
   ]
 }
