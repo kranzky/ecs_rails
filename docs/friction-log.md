@@ -1442,3 +1442,23 @@ Rails, named by reader. Two frictions:
 
 All 144 demo examples (4 new) pass on the gem's source; eager loading is
 clean. No gem code changed in ECS-40. One install migration remains.
+
+## ECS-41 — one query per component type, evaluated and deferred
+
+**Problem.** `includes_components(Text)` on a Product with six Text slots runs
+six queries, one per slot-scoped `has_one`. Could the gem load each component
+type once behind the same API?
+
+**Change.** None to the gem. A prototype
+([`demo/script/grouped_preload_experiment.rb`](../demo/script/grouped_preload_experiment.rb))
+and a [design note](design/grouped-preloads.md) with the measurements; ADR-0012
+and the backlog record the decision.
+
+**Verdict.** Deferred, at the user's choice. Rails' `available_records:` is the
+documented hook, and it skips any association with a scope — which is every
+component — so grouping would make the gem its own preloader. On a 12-slot
+product grouping halves the preload (13 → 3 reads, 19.5 → 10.1 ms), but naming
+the two shown slots is twice as fast again; on the demo's list pages it saves
+one query and about a millisecond. The surprise worth keeping: allocations
+fell 36–41% even on those small pages, more than one query explains — Rails'
+preloader machinery is itself part of a type-wide preload's cost.
