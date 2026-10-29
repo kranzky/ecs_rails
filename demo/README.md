@@ -4,9 +4,8 @@ A bulletin board and marketplace composed from the gem's catalogue. Explore
 people, posts, groups, companies, products, baskets, orders and invoices without
 adding a migration for each entity type.
 
-On `main` the demo runs the gem's own source (`path: "../gem"`) for the 0.4.0
-build; [ecs-rails.kranzky.com](https://ecs-rails.kranzky.com) still runs the
-published `ecs_on_rails` 0.3.0 until 0.4.0 is released and repinned. Start
+This demo runs on the published `ecs_on_rails` 0.4.0 gem, the same version
+deployed at [ecs-rails.kranzky.com](https://ecs-rails.kranzky.com). Start
 with the [gem quickstart](../gem/README.md#quickstart-a-contacts-directory) if you
 want to build a small app of your own.
 
@@ -14,7 +13,8 @@ want to build a small app of your own.
 
 - Ruby **3.4.5** (see `.ruby-version`) and Bundler; the demo uses Rails 8.1.
 - PostgreSQL, with a local role that can create databases. CI uses PostgreSQL 16.
-- The whole repository: the Gemfile loads `../gem` through a local path.
+- Nothing else from the repository: the Gemfile takes `ecs_on_rails` from
+  RubyGems. The gem's own checks below run from the sibling `../gem`.
 
 There is no Node build step, Redis service, external search service or payment
 account to configure. JavaScript uses import maps; search uses PostgreSQL.
@@ -166,7 +166,8 @@ DATABASE_URL=postgresql:///ecs_rails_test bundle exec ruby script/package_smoke.
 ```
 
 Package checks create and remove their own temporary databases and execute the
-gem README's tutorial, bespoke-component example and published-0.2.2 upgrade.
+gem README's tutorial, bespoke-component example and the upgrades from
+published 0.2.2 and 0.3.0.
 For the demo benchmark and its limits, see
 [the performance comparison](../docs/design/performance-comparison.md).
 

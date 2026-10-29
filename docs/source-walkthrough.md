@@ -104,7 +104,7 @@ the remaining costs before changing this path.
 ## A system that pairs components by slot
 
 [Demo::Geocoder](../demo/lib/demo/geocoder.rb) is the short example used in the
-tutorial and screencast. It selects addresses whose same-slot Geolocation is
+tutorial. It selects addresses whose same-slot Geolocation is
 missing or older than the address, keeps those whose owner declares the pair,
 and records a [simulated lookup](../demo/lib/demo/gazetteer.rb) with the
 catalogue's `Geolocation#locate`. Users (shipping and billing slots) and
