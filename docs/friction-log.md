@@ -1509,3 +1509,26 @@ rest is preloading and objects. One shared index on `entities (model,
 created_at DESC, id)` makes the newest-first page query twenty times faster
 at 5,000 products and nothing else faster; as a schema change for every app it
 went to the backlog.
+
+## ECS-47 — a component's owner, checked only when it changes
+
+**Problem.** ECS-40 found the component's required `belongs_to :entity`
+reading the owner back on every update of a row loaded on its own, such as a
+stock counter taken under a lock, although Rails 7.1+ apps opt out of that
+read. The gem declared the association when it was required, before the
+app's `load_defaults` set `belongs_to_required_validates_foreign_key`, so every
+app got the old validator. The checkout's workaround, `stock.entity = product`,
+was a line an app author would not think to write.
+
+**Change.** In the gem: `optional: true` plus the 7.1 rule written out, so the
+owner is validated when `entity_id` is nil or changed (RFC-0003 amendment).
+In the demo: the workaround is removed.
+
+**Verdict.** Option 2 of three, at the user's choice: the same rule in every
+host, rather than inheriting each app's setting through a load-order hook, or
+documenting the workaround. The skipped read guarded nothing, since
+`entity_id` is a foreign key with a cascade. Errors still say "must exist".
+Six new component specs, two of which fail on the old code. The checkout's
+flat-reads spec passes without the workaround, and without the gem change
+fails by one read per line. All 960 gem examples and 144 demo examples pass,
+eager loading is clean and YARD is at 100%. One install migration remains.

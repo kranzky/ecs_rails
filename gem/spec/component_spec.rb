@@ -94,6 +94,65 @@ RSpec.describe EcsRails::Component do
       expect(email.errors[:entity]).to be_present
     end
 
+    # The message a required belongs_to gives (`:required`, "must exist"), so
+    # forms and API errors read the same as before ECS-47.
+    it "reports it as Rails' own required belongs_to does" do
+      email = Email.new(address: "a@b.com")
+      email.valid?
+      expect(email.errors[:entity]).to eq ["must exist"]
+    end
+
+    # RFC-0003's ECS-47 amendment: the owner is checked when entity_id is new
+    # or changed, never re-read for an unchanged key (the FK guarantees it).
+    context "when the component was loaded without its owner" do
+      # Statements against `entities` while the block runs.
+      def entity_reads
+        statements = []
+        subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
+          statements << payload[:sql] unless payload[:name] == "SCHEMA" || payload[:cached]
+        end
+        yield
+        statements.grep(/FROM "entities"/)
+      ensure
+        ActiveSupport::Notifications.unsubscribe(subscriber)
+      end
+
+      let(:user) { User.create! }
+      let!(:email) { Email.create!(entity: user, address: "a@b.com") }
+
+      # This suite runs on bare ActiveRecord, where the flag keeps its pre-7.1
+      # framework default. A host's load_defaults is never applied, so the
+      # examples below show the rule holds without it — the case that broke.
+      it "runs where the host's 7.1 default is not applied" do
+        expect(ActiveRecord.belongs_to_required_validates_foreign_key).to be true
+      end
+
+      it "updates without reading the owner back" do
+        loaded = Email.find(email.id)
+        expect(entity_reads { loaded.update!(address: "c@d.com") }).to be_empty
+      end
+
+      it "updates rows taken under a lock without reading their owners" do
+        reads = entity_reads do
+          Email.transaction { Email.where(id: email.id).lock.each { |row| row.update!(verified: true) } }
+        end
+        expect(reads).to be_empty
+      end
+
+      it "still checks an owner that changes" do
+        loaded = Email.find(email.id)
+        loaded.entity_id = SecureRandom.uuid
+        expect(loaded).not_to be_valid
+        expect(loaded.errors[:entity]).to eq ["must exist"]
+      end
+
+      it "still accepts a change to an owner that exists" do
+        loaded = Email.find(email.id)
+        loaded.entity_id = User.create!.id
+        expect(loaded).to be_valid
+      end
+    end
+
     # RFC-0003 / ADR-0005: unique per table, DB-enforced.
     it "refuses a second row for one entity" do
       user = User.create!

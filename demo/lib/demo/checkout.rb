@@ -121,10 +121,8 @@ module Demo
       line.unit_price_money.assign_attributes(product.price_money.attributes.slice("amount_cents", "currency"))
       line.save!
 
-      # The lock loaded the stock row without its owner. Handing it the product
-      # already in memory (the same id) lets its required belongs_to validate
-      # without reading the product again.
-      stock.entity = product
+      # The lock loaded the stock row without its owner, and since ECS-47 that
+      # is fine: an unchanged entity_id is not checked by reading it back.
       stock.update!(count: available - item.quantity)
       line.line_total
     end

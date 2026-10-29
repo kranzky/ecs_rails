@@ -49,13 +49,23 @@ module EcsRails
     # Entity.instantiate_instance_of (ADR-0008's amendment). This makes `email.entity`
     # return a User rather than an ApplicationEntity (RFC-0003, ADR-0008).
     #
-    # `optional: false` is explicit rather than inherited from
-    # `belongs_to_required_by_default`. That config is applied by the Rails
-    # railtie via load_defaults, so its value depends on the host app's
-    # configured defaults and is not visible in bare ActiveRecord. RFC-0003
-    # requires entity_id to be required unconditionally, so we state it here
-    # rather than inherit a host's setting. (Same reasoning as RFC-0001's
-    # readonly guard in entity.rb.)
+    # The owner is required, but the requirement is written out below rather
+    # than left to `optional: false` (RFC-0003's ECS-47 amendment). Rails
+    # builds a required belongs_to's validator from two host settings, both
+    # applied by the railtie via load_defaults: `belongs_to_required_by_default`
+    # and, since 7.1, `belongs_to_required_validates_foreign_key`. Both are read
+    # once, when `belongs_to` runs — and this line runs when the gem is
+    # required, before any host's defaults apply. So `optional: false` always
+    # got the pre-7.1 validator, which loads the owner on every save even when
+    # entity_id did not change: one SELECT per update of a component loaded on
+    # its own (`Counter.where(...).lock`, `Email.find(id).update!`).
+    #
+    # Hence `optional: true` (no validator from Rails) plus the 7.1 rule stated
+    # here: check the owner when entity_id is nil or changed. That is the same
+    # in every host, as RFC-0003 wants (the reasoning of RFC-0001's readonly
+    # guard in entity.rb), and the skipped read guards nothing: every component
+    # table's entity_id is a foreign key to entities(id) with ON DELETE
+    # CASCADE, so an unchanged key cannot point at a missing entity.
     #
     # Deliberately no `dependent:` option. Cascade is owned by the database:
     # every component table has an ON DELETE CASCADE foreign key to
@@ -64,7 +74,9 @@ module EcsRails
     # invert the ownership — destroying a component would destroy its entity,
     # and with it every sibling component. That is the wrong direction and
     # destructive; the DB layer already has the right one.
-    belongs_to :entity, class_name: "ApplicationEntity", optional: false
+    belongs_to :entity, class_name: "ApplicationEntity", optional: true
+    validates :entity, presence: { message: :required },
+                       if: -> { entity_id.nil? || entity_id_changed? }
 
     # The unique index on (entity_id, slot) (ADR-0005, generalised by ADR-0015)
     # is the real enforcement, and a uniqueness validation here would cost a
