@@ -409,6 +409,13 @@
       "humanMinutes": 2,
       "aiMinutes": 60,
       "costs": []
+    },
+    {
+      "date": "2026-10-29",
+      "summary": "Shipped ecs_on_rails 0.4.0 (ECS-43): user pushed the gem to RubyGems (sha256 f4a153e2...61bc, built from 28d3368); tagged v0.4.0 and created the GitHub release from the CHANGELOG. Repinned the demo to the published gem (~> 0.4.0; lock resolves from RubyGems), so the Docker build context is self-contained and Fly deploys resume; demo README, DEPLOY.md and CLAUDE.md updated. 144 demo examples and zeitwerk:check green on the installed gem. Project on hold at 0.4.0: video (ECS-10) dropped, no milestone open; status stays launched.",
+      "humanMinutes": 2,
+      "aiMinutes": 15,
+      "costs": []
     }
   ]
 }

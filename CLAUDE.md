@@ -15,9 +15,16 @@ the project-specific rule set.
   markers and systems are pure Ruby. Design of record:
   [ADR-0017](docs/adr/0017-shared-relationships-table.md) (one shared
   `relationships` table) and [ADR-0018](docs/adr/0018-catalogue-in-the-gem.md)
-  (the catalogue ships in the gem). Ends in gem 0.3.0, the marketplace demo
-  (`docs/design/marketplace-demo.md`) and a blog post, "The Last Migration"
-  (ECS-20, still to write), then the video (ECS-10).
+  (the catalogue ships in the gem), with the marketplace demo
+  (`docs/design/marketplace-demo.md`) and the blog post "The Last Migration"
+  (ECS-20, `docs/blog/the-last-migration.md`).
+- **0.4.0 shipped** (2026-10-29): *less work, same API* — the ECS-37
+  performance epic, measured in `docs/design/performance-comparison.md`. Same
+  declarations and schema as 0.3.0; component saves no longer read their entity
+  back (ECS-46, ECS-47).
+- **On hold at 0.4.0.** The user dropped the video (ECS-10) and is holding the
+  project here: no milestone is open. Take new work only when the user hands
+  you an issue.
 
 ## Read in this order
 
@@ -36,7 +43,7 @@ demo/   a Rails 8 bulletin board + marketplace built on the gem. Deployed to Fly
 docs/   architecture, ADRs, RFCs, backlog, friction log, design, blog.
 ```
 
-The demo pins the published gem (`~> 0.3.0`) between builds. During a build it
+The demo pins the published gem (`~> 0.4.0`) between builds. During a build it
 switches to `path: "../gem"` so gem changes are felt in the demo the same day. Since ECS-17 the demo is composed from the
 catalogue only: `db/migrate` holds exactly one file (the install migration,
 generated with `--sets core commerce` — Money is in the commerce set),
