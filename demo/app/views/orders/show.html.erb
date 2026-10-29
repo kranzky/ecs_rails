@@ -51,4 +51,13 @@
       <% end %>
     </ul>
   <% end %>
+
+  <%= render layout: "shared/how_this_works", locals: { entity: @order } do %>
+    <p>Checkout copied the customer's shipping and billing addresses into this order's own
+       <code>Address</code> slots, and each product's title and price onto the order's lines. These are
+       copies, not links, so editing the product or the profile later leaves this order alone.</p>
+    <p><strong>Mark shipped</strong> transitions the <code>State</code> in slot <code>fulfilment</code>,
+       which appends to its <code>transitions</code> log. Checkout's request key is stored here too, but this
+       page never shows it, so it is never read.</p>
+  <% end %>
 </div>

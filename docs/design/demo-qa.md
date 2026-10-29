@@ -100,7 +100,26 @@ focus is visible on every page; the order itself was read from the recorded
 stops for the tour, product, basket and checkout only. Those
 are worth doing before anything beyond a demo.
 
-## Reproducing
+## Amendment — the "How this works" panels (ECS-45, 29 October 2026)
+
+ECS-45 added a closed `<details>` panel to the post, product, profile and order
+pages. `pages.js` now opens every panel before the screenshots, the overflow
+check and axe, so they cover what the panels hold. The rerun, on all 21 pages
+and 7 states:
+
+| Check | Result |
+|---|---|
+| axe violations, 21 pages × 2 schemes, panels open | **0** |
+| axe violations, 7 states × 2 schemes | **0** |
+| Phone horizontal overflow | 0 pages |
+| Tab stops without a visible focus ring | 0 (the panel's summary is a stop, with a ring) |
+
+The first run found one `heading-order` violation: on the post page, the
+panel's `h3` headings followed the `h1` directly. Panel headings are `h2`,
+which skips no level on any page. By eye, a three-column row table on a phone
+broke values mid-word, so the table and slot now share one column, and values
+wrap only at spaces.
+
 
 ```sh
 cd demo

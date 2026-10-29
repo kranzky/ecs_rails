@@ -41,6 +41,14 @@
       ♥ Like <span class="count">· <%= likes_count(@post) %></span>
     <% end %>
   </div>
+
+  <%= render layout: "shared/how_this_works", locals: { entity: @post } do %>
+    <p><strong>♥ Like</strong> runs <code>post.likes_counter.increment!</code>. The first like inserts a
+       <code>counters</code> row in slot <code>likes</code>, and each later like updates it. Before the
+       first like there is no row at all: the count you see is the column default, 0.</p>
+    <p><strong>Publish now</strong> transitions the <code>State</code> in slot <code>publish</code>. The
+       author is a row in the shared <code>relationships</code> table, not a column on the post.</p>
+  <% end %>
 </article>
 
 <% unless @post.draft? %>

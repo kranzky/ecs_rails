@@ -8,7 +8,12 @@ class UsersController < ApplicationController
   end
 
   def show
-    @user = User.find(params[:id])
+    # The badges and buttons ask moderator? and administrator?. Unloaded, each
+    # is an EXISTS that leaves nothing loaded (RFC-0016), so the page's "How
+    # this works" rows (ECS-45) could not show the markers. Preloaded, a loaded
+    # marker answers every call, for the same two reads the EXISTS made (Rails'
+    # query cache answered their repeats).
+    @user = User.preload(:moderator_marker, :administrator_marker).find(params[:id])
     # The inverse association (RFC-0015): user.posts is a collection.
     # The profile lists titles, draft badges and likes, never a body (ECS-38).
     @posts = paginate_list(@user.posts.order(created_at: :desc, id: :asc))

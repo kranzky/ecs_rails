@@ -70,6 +70,13 @@ async function keyboardPass(page) {
         const response = await page.goto(BASE + url, { waitUntil: "networkidle0" });
         const key = `${vpName}-${scheme}`;
         const entry = { status: response.status(), finalUrl: page.url().replace(BASE, "") };
+        // "How this works" panels (ECS-45) start closed; open them so the
+        // screenshots, the overflow check and axe all cover what they hold.
+        entry.panels = await page.evaluate(() => {
+          const panels = document.querySelectorAll("details.how");
+          panels.forEach((panel) => { panel.open = true; });
+          return panels.length;
+        });
         await page.screenshot({ path: path.join(OUT, `${name}-${key}.png`), fullPage: true });
         if (vpName === "phone") {
           entry.overflow = await page.evaluate(() => {

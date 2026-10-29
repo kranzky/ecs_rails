@@ -1532,3 +1532,32 @@ Six new component specs, two of which fail on the old code. The checkout's
 flat-reads spec passes without the workaround, and without the gem change
 fails by one read per line. All 960 gem examples and 144 demo examples pass,
 eager loading is clean and YARD is at 100%. One install migration remains.
+
+## ECS-45 — "How this works" beside the interactions
+
+**Problem.** The demo explained the gem on its own page, away from what a
+visitor does. ECS-35 deferred a local explanation: beside a like, a listing or
+a marker, the declaration and the rows it writes.
+
+**Change.** A closed `<details>` panel beside the buttons on the post,
+product, profile and order pages. Each has a sentence or two about that page's buttons,
+the class's declaration lines read from its source file (through
+`Object.const_source_location`, so the quote cannot drift), and a row table
+from `component_declarations` and `association(reader_name)`. A loaded slot
+shows its stored columns, or "No row" when it is virtual. A slot the page
+never read shows "Not read by this page", and that line is what keeps a
+panel query-free. It renders after the content it explains, so the rows are
+the page's own. The profile now preloads its two markers.
+
+**Verdict.** The public API was enough to inspect any entity with no
+knowledge of its type, as a system would. Declarations carry the table,
+slot and reader, and Rails' association state says what is loaded. One
+friction point: `moderator?` answers with an `EXISTS` that loads nothing
+(RFC-0016), so nothing can show a marker without a preload. Preloading them
+cost the profile the same two reads, because Rails' query cache had answered
+the repeated `EXISTS` calls. "Not read" turned out to be the clearest lesson
+the panels teach. The order's checkout request key and every search vector
+show it: laziness means a slot nobody asks for costs nothing. Six new specs,
+including one that renders a panel over an unread entity with no SQL at all.
+150 demo examples pass, and the QA pass, with panels open, finds no
+violations on 21 pages and 7 states.

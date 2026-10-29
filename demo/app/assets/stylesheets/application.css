@@ -385,6 +385,29 @@ kbd, code { font-family: var(--mono); font-size: .88em; background: var(--surfac
 .tour__action { margin: .75rem 0 0; }
 .tour__action a { font-weight: 600; }
 
+/* --- "How this works" panels (ECS-45) ---------------------------------------
+   A native <details>: closed by default, keyboard- and screen-reader-operable
+   with no script. Inside, a code block and a table that scroll rather than
+   widen the card. */
+.how { margin-top: 1.5rem; border: 1px solid var(--border); border-radius: var(--radius-s);
+       background: var(--surface-2); }
+.how > summary { cursor: pointer; padding: .6rem .9rem; font-weight: 600; font-size: .92rem; color: var(--brand); }
+.how > summary:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: var(--radius-s); }
+.how__body { padding: 0 .9rem .9rem; min-width: 0; }
+.how__intro { font-size: .95rem; }
+.how__intro p { margin: 0 0 .75rem; }
+.how .section-title { margin: 1rem 0 .5rem; }
+.how .section-title code { text-transform: none; letter-spacing: 0; }
+.how .code-block { background: var(--surface); margin: 0; }
+.how__rows { font-size: .88rem; background: var(--surface); }
+.how__rows td { vertical-align: top; }
+.how__rows td:first-child { width: 34%; }
+.how__slot { display: block; margin-top: .2rem; color: var(--muted); font-size: .82rem; }
+.how__rows code { background: var(--surface-2); }
+.how__values { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .25rem .4rem; }
+.how__values code { overflow-wrap: break-word; }
+.how__none { color: var(--muted); }
+
 /* Code blocks: the inline `code` chip style must not box every line. */
 pre code { background: none; border: 0; padding: 0; border-radius: 0; font-size: inherit; }
 

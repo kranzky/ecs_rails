@@ -1,0 +1,46 @@
+<%# A "How this works" panel (ECS-45). The block is the page's own sentence
+    about the interaction; the source and rows come from the entity. Render it
+    after the view has read what it shows: rows are the page's loaded ones. %>
+<% source_path, source = declaration_source(entity.class) %>
+<details class="how">
+  <summary>How this works</summary>
+  <div class="how__body">
+    <div class="prose how__intro"><%= yield %></div>
+
+    <h2 class="section-title">The declaration · <code><%= source_path %></code></h2>
+    <pre class="code-block" tabindex="0"><code><%= source %></code></pre>
+
+    <h2 class="section-title">The rows behind it</h2>
+    <div class="table-scroll">
+      <table class="table how__rows">
+        <thead><tr><th scope="col">Where</th><th scope="col">Row</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code class="how__table"><%= entity.class.table_name %></code></td>
+            <td><%= render "shared/how_values", values: entity_row_values(entity) %></td>
+          </tr>
+          <% slot_rows(entity).each do |row| %>
+            <tr>
+              <td>
+                <code class="how__table"><%= row.table %></code>
+                <span class="how__slot"><%= row.slot.empty? ? "default slot" : safe_join(["slot ", tag.code(row.slot)]) %></span>
+              </td>
+              <td>
+                <% if row.state == :row %>
+                  <%= render "shared/how_values", values: row.values %>
+                <% elsif row.state == :virtual %>
+                  <span class="how__none">No row: <code><%= row.reader %></code> reads its column defaults</span>
+                <% else %>
+                  <span class="how__none">Not read by this page, so not queried</span>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <p class="hint" style="margin:.6rem 0 0">Every slot row also has <code>id</code>, <code>entity_id</code> (this
+       entity's id) and timestamps. Ids are cut to their first block. The rows are the ones this page loaded,
+       so the panel adds no queries.</p>
+  </div>
+</details>

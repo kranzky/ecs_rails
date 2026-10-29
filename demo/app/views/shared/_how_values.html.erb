@@ -1,0 +1,9 @@
+<% if values.empty? %>
+  <span class="how__none">A row, with no other columns</span>
+<% else %>
+  <ul class="how__values">
+    <% values.each do |column, value| %>
+      <li><code><%= column %> = <%= value %></code></li>
+    <% end %>
+  </ul>
+<% end %>
