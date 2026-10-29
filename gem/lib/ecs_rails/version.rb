@@ -3,6 +3,6 @@
 module EcsRails
   # The gem version. Published on RubyGems as `ecs_on_rails`.
   #
-  # @return [String] the semantic version, e.g. `"0.3.0"`
-  VERSION = "0.3.0"
+  # @return [String] the semantic version, e.g. `"0.4.0"`
+  VERSION = "0.4.0"
 end
