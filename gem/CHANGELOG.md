@@ -6,6 +6,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **"How this works" panels in the demo** (ECS-45): the post, product, profile
+  and order pages have a closed panel beside their buttons, showing the entity's declarations,
+  quoted from its source file, and one row per slot. The rows are the ones the
+  page has already loaded, read through `component_declarations` and
+  `association(name).loaded?`, so a panel adds no queries. A slot without a row
+  says so, and so does one the page never read. No gem change.
+
 ## [0.4.0] — 2026-10-29
 
 **Less work, same API.** 0.4.0 keeps 0.3.0's declarations, saves and schema.

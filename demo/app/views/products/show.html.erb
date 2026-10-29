@@ -49,6 +49,16 @@
         <% if @managers.any? %>Act as <%= @managers.map { |user| display_name(user) }.to_sentence(last_word_connector: ", or ", two_words_connector: " or ") %> to do this.<% end %></p>
     <% end %>
   <% end %>
+
+  <%= render layout: "shared/how_this_works", locals: { entity: @product } do %>
+    <p>This product is one row in <code>entities</code> plus one row for each slot that holds a value, in
+       tables the catalogue shares with every other entity type. The title and the description are both
+       <code>Text</code>, in the <code>texts</code> table under slots <code>title</code> and <code>body</code>.</p>
+    <p><strong>List now</strong> and <strong>Delist</strong> transition the <code>State</code> in slot
+       <code>listing</code>. <strong>Add to basket</strong> leaves this product's rows alone. It writes to the
+       acting user's basket instead: a new basket item (a separate entity that relates to this product), or a
+       higher quantity on the one already there.</p>
+  <% end %>
 </article>
 
 <section style="margin-top:2rem">

@@ -66,6 +66,15 @@
       </div>
       <%= f.submit "Save contact details", class: "btn btn--sm btn--primary" %>
     <% end %>
+
+    <%= render layout: "shared/how_this_works", locals: { entity: @user } do %>
+      <p><strong>Make moderator</strong> is <code>user.add(:moderator)</code>: one row in
+         <code>markers</code> under slot <code>moderator</code>. <strong>Remove moderator</strong> deletes it.
+         A marker has no columns of its own, because whether the row exists is the whole answer.</p>
+      <p><strong>Save contact details</strong> writes only the slots that hold a value. Both addresses live in
+         the <code>addresses</code> table, which also holds the sellers' addresses and the orders' copies. The
+         slot is what tells them apart.</p>
+    <% end %>
   </div>
 </section>
 

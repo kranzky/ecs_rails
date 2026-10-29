@@ -416,6 +416,13 @@
       "humanMinutes": 2,
       "aiMinutes": 15,
       "costs": []
+    },
+    {
+      "date": "2026-10-29",
+      "summary": "ECS-45 'How this works' panels in the demo: closed <details> panels beside the buttons on the post, product, profile and order pages, each with a sentence or two on that page's buttons, the entity's declaration lines quoted from its source file, and one row per slot built from component_declarations + association(...).loaded?. Loaded slots show stored columns or 'No row'; unread slots say so, so a panel never queries (pinned by a spec that renders one with zero SQL). The profile preloads its two markers (same 2 reads; the query cache had answered the repeated EXISTS calls). 6 new specs, 150 demo examples; QA pass (pages.js now opens panels) 0 axe violations on 21 pages x 2 schemes and 7 states, no phone overflow. Docs: friction log, demo-qa amendment, demo README, About page, CHANGELOG Unreleased (demo-only).",
+      "humanMinutes": 1,
+      "aiMinutes": 50,
+      "costs": []
     }
   ]
 }

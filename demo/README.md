@@ -91,6 +91,13 @@ the declaration behind each step and links to the live page. In order:
 The bulletin board (`/posts`), groups and moderator/admin markers cover the
 rest of the gem.
 
+**How this works.** A post, a product, a profile and an order each have a
+closed **How this works** panel beside their buttons. Open it to see the
+entity's declarations, quoted from its source file, and the rows behind the
+page: one per slot, in tables shared with every other entity type. A slot
+without a row says so, and so does a slot the page never read. The panel
+shows only rows the page has already loaded, so it adds no queries.
+
 **Acting as.** There are no accounts. The bar under the navigation picks who
 you act as, kept in the session and defaulting to Ada; that person writes
 posts, comments and reviews, fills the basket, and is judged by the seller
@@ -133,8 +140,8 @@ class file. The generator does not delete data.
 ## Rendered and accessibility review
 
 `script/qa/` screenshots every page at desktop and phone widths in light and
-dark schemes, runs axe-core (WCAG 2.1 AA) on each, checks phone overflow and
-walks the keyboard focus order; `states.js` covers validation errors, a
+dark schemes, with every "How this works" panel open, runs axe-core (WCAG 2.1
+AA) on each, checks phone overflow and walks the keyboard focus order; `states.js` covers validation errors, a
 declined checkout and empty states. See
 [the review and how to rerun it](../docs/design/demo-qa.md). It needs Node and
 a local Chrome; it is not part of CI.

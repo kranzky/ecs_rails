@@ -74,7 +74,7 @@ RSpec.describe "acting as", type: :request do
 
     get product_path(wire)
     expect(response.body).to include("cannot manage this listing", "Act as Grace Hopper or Katherine Johnson")
-    expect(response.body).not_to include(">Delist<")
+    expect(response.body).not_to include(%(action="#{delist_product_path(wire)}")) # no Delist button
 
     patch delist_product_path(wire)
     expect(flash[:alert]).to eq "Alan Turing does not work at Nanosecond Supply Co. " \
