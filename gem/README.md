@@ -3,8 +3,9 @@
 Compose ordinary Rails models from reusable components. Install their tables
 once; add entity types, labelled slots, relationships and markers in Ruby.
 
-> This guide is for **0.3.0**, the zero-migrations release. Upgrading from
-> 0.2.x? See [Upgrading an existing installation](#upgrading-an-existing-installation)
+> This guide is for **0.4.0**, which keeps 0.3.0's zero-migrations API and
+> schema and does less work underneath. Upgrading from 0.3.x or 0.2.x? See
+> [Upgrading an existing installation](#upgrading-an-existing-installation)
 > and the [changelog](https://github.com/kranzky/ecs_rails/blob/main/gem/CHANGELOG.md).
 
 ## Quickstart: a contacts directory
@@ -18,7 +19,7 @@ From a directory where you keep projects:
 ```sh
 rails new contacts --minimal --database=postgresql
 cd contacts
-bundle add ecs_on_rails --version "~> 0.3.0"
+bundle add ecs_on_rails --version "~> 0.4.0"
 ```
 
 To follow unreleased work on `main` instead, clone the repository and use
@@ -365,9 +366,18 @@ This app now has a second migration and a dedicated `temperatures` table.
 
 ## Upgrading an existing installation
 
-Back up the database and try the upgrade on a copy first. From 0.2.x, change
-the Gemfile entry to `gem "ecs_on_rails", "~> 0.3.0"`, then run `bundle update
-ecs_on_rails`. Use development (without eager loading) for generation: an old
+Back up the database and try the upgrade on a copy first.
+
+From 0.3.x, change the Gemfile entry to `gem "ecs_on_rails", "~> 0.4.0"` and
+run `bundle update ecs_on_rails`. 0.4.0 changes no tables, so there is nothing
+to generate or migrate: run the two verification commands at the end of this
+section; `ecs_rails:upgrade` should report every table current and write no
+migration. One validation is narrower (see the
+[changelog](https://github.com/kranzky/ecs_rails/blob/main/gem/CHANGELOG.md)):
+a component's owner is checked only when `entity_id` is new or changed.
+
+From 0.2.x, change the Gemfile entry to `gem "ecs_on_rails", "~> 0.4.0"`, then
+run `bundle update ecs_on_rails`. Use development (without eager loading) for generation: an old
 app needs the new generated classes before it can fully boot. Set
 `RAILS_ENV=development` in your shell, then run:
 
@@ -410,7 +420,8 @@ rows when the migration runs. See the
 The gem requires Ruby >= 3.2 and Rails >= 7.1, < 9. The representative CI matrix
 covers Ruby/Rails 3.2/7.1, 3.2/7.2, 3.3/8.0, 3.2/8.1, 3.4/8.1 and 4.0/8.1,
 resolving current patches within each Rails minor. It runs PostgreSQL gem specs
-and packaged fresh-install/0.2.2-upgrade checks for each entry. The package
+and packaged fresh-install, 0.2.2-upgrade and 0.3.0-upgrade checks for each
+entry. The package
 check extracts the marked code and Rails command blocks from this README,
 then verifies the tutorial's stored results, rendered page, the preload
 example's output and the bespoke component. The demo suite, eager loading and

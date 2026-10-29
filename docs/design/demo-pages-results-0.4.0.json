@@ -1,0 +1,2562 @@
+{
+  "format_version": 1,
+  "measured_at": "2026-10-29T09:21:51Z",
+  "command": {
+    "sizes": [
+      100,
+      1000,
+      5000
+    ],
+    "warmups": 3,
+    "samples": 20,
+    "output": "/Users/kranzky/dev/lean-machine/project-025-rorecs/tmp/ecs43-pages.json",
+    "pages": true
+  },
+  "source": {
+    "commit": "396a9ffc48888698ec4a1c712470cffabcf68f7e",
+    "uncommitted": [
+      "M demo/Gemfile.lock"
+    ],
+    "benchmark_sha256": {
+      "script/performance/checkout.rb": "2045a3f630e9ca2492a67f401d8b212e89e5e1be3a067c0b4924a07a5d73eeea",
+      "script/performance/fixtures.rb": "d8d603821b34ad8685c7eaff3f7d753953e37cd1d653eb05c63d0e54ad5a8428",
+      "script/performance/measurement.rb": "631fe37a2f5d476ec1df84dbb1e69660edd8a0158abc34c39517c4e2d0125d7e",
+      "script/performance/models.rb": "30b147b3672f820a215a5f31d734628a99a6f389901e0dbf72d8cab7823f06f9",
+      "script/performance/pages.rb": "1b31d7b03e65ff0f44a19814ce8bd23622d9e4cd32b68e7e882eaabc9e85250f",
+      "script/performance/schema.rb": "bfb53bbb2f2009b28f97a378407e9ef24e2e978e7d6004c2712f99001a8d59db",
+      "script/performance/verify.rb": "e71c11693a5c9084d1ca829fa132590a7986b972a42179171cc3f3b74096abc0",
+      "script/performance/views/catalogue.html.erb": "379a7bc82b382e873afcbdb850a8fca4b3231907b3af4075e0b1e8c2b4e49a50",
+      "script/performance/views/detail.html.erb": "32d004e9a74f8c6ec1d1c725735cb051d08bd0cd3743e52f5188d6f9d678955e",
+      "script/performance/worker.rb": "4d6d0d0a9e4b93a5d48f111139cecd319e67d5d0fc6fc2f0b492067c24b62a30",
+      "script/performance/workloads.rb": "57339d09733635d4ed7169bec15cd4d57e934fe4a940689d9affbf2f1a611e4f",
+      "script/compare_performance.rb": "1aca49ba31a684276d96a893595d205041ddfbccd3949529b2ff347234861f79"
+    },
+    "demo_lock_sha256": "39120e1b8abc59a11c9a7842d948fbd65eee24a6c9a6ea1907c369d49b08a36d"
+  },
+  "host": {
+    "platform": "arm64-darwin24",
+    "os": "Darwin 27.2.0",
+    "machdep.cpu.brand_string": "Apple M1 Pro",
+    "hw.memsize": "34359738368",
+    "hw.logicalcpu": "10"
+  },
+  "versions": {
+    "ruby": "ruby 3.4.5 (2025-07-16 revision 20cda200d3) +PRISM [arm64-darwin24]",
+    "rails": "8.1.3",
+    "ecs_on_rails": "0.4.0",
+    "postgresql": "PostgreSQL 17.11 (Homebrew) on aarch64-apple-darwin25.6.0, compiled by Apple clang version 21.0.0 (clang-2100.1.1.101), 64-bit"
+  },
+  "pages": [
+    {
+      "page": "catalogue",
+      "first_call": {
+        "milliseconds": 65.28700000035315,
+        "allocated_objects": 45132,
+        "sql": {
+          "reads": 16,
+          "writes": 0,
+          "transactions": 0,
+          "schema": 0,
+          "other": 0,
+          "cached": 0
+        }
+      },
+      "samples": [
+        {
+          "milliseconds": 14.248000000407046,
+          "allocated_objects": 9825,
+          "sql": {
+            "reads": 16,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 66.13599999946018,
+          "allocated_objects": 9825,
+          "sql": {
+            "reads": 16,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 14.516000000185159,
+          "allocated_objects": 9825,
+          "sql": {
+            "reads": 16,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 17.186999999466934,
+          "allocated_objects": 9825,
+          "sql": {
+            "reads": 16,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 32.95299999990675,
+          "allocated_objects": 9825,
+          "sql": {
+            "reads": 16,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 16.090000000076543,
+          "allocated_objects": 9825,
+          "sql": {
+            "reads": 16,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 15.913999999611406,
+          "allocated_objects": 9825,
+          "sql": {
+            "reads": 16,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 17.136999999820546,
+          "allocated_objects": 9825,
+          "sql": {
+            "reads": 16,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 16.69300000048679,
+          "allocated_objects": 9825,
+          "sql": {
+            "reads": 16,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 18.015999999988708,
+          "allocated_objects": 9825,
+          "sql": {
+            "reads": 16,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 17.64400000047317,
+          "allocated_objects": 9825,
+          "sql": {
+            "reads": 16,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 17.917000000124972,
+          "allocated_objects": 9825,
+          "sql": {
+            "reads": 16,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 23.34100000007311,
+          "allocated_objects": 9825,
+          "sql": {
+            "reads": 16,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 79.31899999948655,
+          "allocated_objects": 9825,
+          "sql": {
+            "reads": 16,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 51.61599999973987,
+          "allocated_objects": 9825,
+          "sql": {
+            "reads": 16,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 29.96900000016467,
+          "allocated_objects": 9825,
+          "sql": {
+            "reads": 16,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 23.800999999366468,
+          "allocated_objects": 9825,
+          "sql": {
+            "reads": 16,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 28.154999999969732,
+          "allocated_objects": 9825,
+          "sql": {
+            "reads": 16,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 25.187000000187254,
+          "allocated_objects": 9825,
+          "sql": {
+            "reads": 16,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 28.056999999535037,
+          "allocated_objects": 9825,
+          "sql": {
+            "reads": 16,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        }
+      ],
+      "html_sha256": "10003b31a2cf469a26b6f6336aa82f5e64adc1343e2121466f14a427d62f48d5",
+      "html_bytes": 10909,
+      "summary": {
+        "milliseconds": {
+          "min": 14.248000000407046,
+          "p50": 18.015999999988708,
+          "p95": 66.13599999946018,
+          "max": 79.31899999948655
+        },
+        "allocated_objects": {
+          "min": 9825,
+          "p50": 9825,
+          "p95": 9825,
+          "max": 9825
+        },
+        "sql_reads": {
+          "min": 16,
+          "p50": 16,
+          "p95": 16,
+          "max": 16
+        }
+      }
+    },
+    {
+      "page": "product",
+      "first_call": {
+        "milliseconds": 54.492999999638414,
+        "allocated_objects": 18191,
+        "sql": {
+          "reads": 33,
+          "writes": 0,
+          "transactions": 0,
+          "schema": 0,
+          "other": 0,
+          "cached": 1
+        }
+      },
+      "samples": [
+        {
+          "milliseconds": 34.970000000612345,
+          "allocated_objects": 12888,
+          "sql": {
+            "reads": 33,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 31.38799999942421,
+          "allocated_objects": 12888,
+          "sql": {
+            "reads": 33,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 32.15100000033999,
+          "allocated_objects": 12888,
+          "sql": {
+            "reads": 33,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 34.03600000001461,
+          "allocated_objects": 12888,
+          "sql": {
+            "reads": 33,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 31.370000000606524,
+          "allocated_objects": 12888,
+          "sql": {
+            "reads": 33,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 32.52299999985553,
+          "allocated_objects": 12888,
+          "sql": {
+            "reads": 33,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 32.14300000036019,
+          "allocated_objects": 12888,
+          "sql": {
+            "reads": 33,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 32.59500000058324,
+          "allocated_objects": 12888,
+          "sql": {
+            "reads": 33,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 32.9490000003716,
+          "allocated_objects": 12888,
+          "sql": {
+            "reads": 33,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 27.120999999169726,
+          "allocated_objects": 12888,
+          "sql": {
+            "reads": 33,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 33.86000000045897,
+          "allocated_objects": 12888,
+          "sql": {
+            "reads": 33,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 30.260999999882188,
+          "allocated_objects": 12888,
+          "sql": {
+            "reads": 33,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 28.726999999889813,
+          "allocated_objects": 12888,
+          "sql": {
+            "reads": 33,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 29.396999999335094,
+          "allocated_objects": 12888,
+          "sql": {
+            "reads": 33,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 36.53299999950832,
+          "allocated_objects": 12888,
+          "sql": {
+            "reads": 33,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 17.72400000027119,
+          "allocated_objects": 12888,
+          "sql": {
+            "reads": 33,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 64.35400000009395,
+          "allocated_objects": 12888,
+          "sql": {
+            "reads": 33,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 20.037999999658496,
+          "allocated_objects": 12888,
+          "sql": {
+            "reads": 33,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 24.539000000004307,
+          "allocated_objects": 12888,
+          "sql": {
+            "reads": 33,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 32.34299999985524,
+          "allocated_objects": 12888,
+          "sql": {
+            "reads": 33,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        }
+      ],
+      "html_sha256": "1d0788dc5169898ad5745e689c76b88ba655df743dcf84c163af679e0b8c93bf",
+      "html_bytes": 6996,
+      "summary": {
+        "milliseconds": {
+          "min": 17.72400000027119,
+          "p50": 32.14300000036019,
+          "p95": 36.53299999950832,
+          "max": 64.35400000009395
+        },
+        "allocated_objects": {
+          "min": 12888,
+          "p50": 12888,
+          "p95": 12888,
+          "max": 12888
+        },
+        "sql_reads": {
+          "min": 33,
+          "p50": 33,
+          "p95": 33,
+          "max": 33
+        }
+      }
+    },
+    {
+      "page": "user",
+      "first_call": {
+        "milliseconds": 20.868999999947846,
+        "allocated_objects": 11216,
+        "sql": {
+          "reads": 23,
+          "writes": 0,
+          "transactions": 0,
+          "schema": 0,
+          "other": 0,
+          "cached": 3
+        }
+      },
+      "samples": [
+        {
+          "milliseconds": 13.976000000184285,
+          "allocated_objects": 9564,
+          "sql": {
+            "reads": 23,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 3
+          }
+        },
+        {
+          "milliseconds": 18.74000000043452,
+          "allocated_objects": 9564,
+          "sql": {
+            "reads": 23,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 3
+          }
+        },
+        {
+          "milliseconds": 14.35700000001816,
+          "allocated_objects": 9564,
+          "sql": {
+            "reads": 23,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 3
+          }
+        },
+        {
+          "milliseconds": 30.310000000099535,
+          "allocated_objects": 9564,
+          "sql": {
+            "reads": 23,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 3
+          }
+        },
+        {
+          "milliseconds": 22.531999999955588,
+          "allocated_objects": 9564,
+          "sql": {
+            "reads": 23,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 3
+          }
+        },
+        {
+          "milliseconds": 21.63699999982782,
+          "allocated_objects": 9564,
+          "sql": {
+            "reads": 23,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 3
+          }
+        },
+        {
+          "milliseconds": 19.336999999723048,
+          "allocated_objects": 9564,
+          "sql": {
+            "reads": 23,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 3
+          }
+        },
+        {
+          "milliseconds": 17.65499999964959,
+          "allocated_objects": 9564,
+          "sql": {
+            "reads": 23,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 3
+          }
+        },
+        {
+          "milliseconds": 17.643000000134634,
+          "allocated_objects": 9564,
+          "sql": {
+            "reads": 23,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 3
+          }
+        },
+        {
+          "milliseconds": 16.978999999992084,
+          "allocated_objects": 9564,
+          "sql": {
+            "reads": 23,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 3
+          }
+        },
+        {
+          "milliseconds": 15.37800000005518,
+          "allocated_objects": 9564,
+          "sql": {
+            "reads": 23,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 3
+          }
+        },
+        {
+          "milliseconds": 19.941999999900872,
+          "allocated_objects": 9564,
+          "sql": {
+            "reads": 23,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 3
+          }
+        },
+        {
+          "milliseconds": 17.83900000009453,
+          "allocated_objects": 9564,
+          "sql": {
+            "reads": 23,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 3
+          }
+        },
+        {
+          "milliseconds": 18.30599999993865,
+          "allocated_objects": 9564,
+          "sql": {
+            "reads": 23,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 3
+          }
+        },
+        {
+          "milliseconds": 18.13300000048912,
+          "allocated_objects": 9564,
+          "sql": {
+            "reads": 23,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 3
+          }
+        },
+        {
+          "milliseconds": 17.70200000009936,
+          "allocated_objects": 9564,
+          "sql": {
+            "reads": 23,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 3
+          }
+        },
+        {
+          "milliseconds": 17.36299999993207,
+          "allocated_objects": 9564,
+          "sql": {
+            "reads": 23,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 3
+          }
+        },
+        {
+          "milliseconds": 21.031000000220956,
+          "allocated_objects": 9564,
+          "sql": {
+            "reads": 23,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 3
+          }
+        },
+        {
+          "milliseconds": 16.604999999799475,
+          "allocated_objects": 9564,
+          "sql": {
+            "reads": 23,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 3
+          }
+        },
+        {
+          "milliseconds": 16.472000000248954,
+          "allocated_objects": 9564,
+          "sql": {
+            "reads": 23,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 3
+          }
+        }
+      ],
+      "html_sha256": "a37c563f6f77658a957ef980b9e775e91d865bc8ae4feb900311abf3fc19d62c",
+      "html_bytes": 9614,
+      "summary": {
+        "milliseconds": {
+          "min": 13.976000000184285,
+          "p50": 17.70200000009936,
+          "p95": 22.531999999955588,
+          "max": 30.310000000099535
+        },
+        "allocated_objects": {
+          "min": 9564,
+          "p50": 9564,
+          "p95": 9564,
+          "max": 9564
+        },
+        "sql_reads": {
+          "min": 23,
+          "p50": 23,
+          "p95": 23,
+          "max": 23
+        }
+      }
+    },
+    {
+      "page": "company",
+      "first_call": {
+        "milliseconds": 32.10800000033487,
+        "allocated_objects": 13013,
+        "sql": {
+          "reads": 28,
+          "writes": 0,
+          "transactions": 0,
+          "schema": 0,
+          "other": 0,
+          "cached": 2
+        }
+      },
+      "samples": [
+        {
+          "milliseconds": 30.494999999973516,
+          "allocated_objects": 11704,
+          "sql": {
+            "reads": 28,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 2
+          }
+        },
+        {
+          "milliseconds": 22.955999999794585,
+          "allocated_objects": 11704,
+          "sql": {
+            "reads": 28,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 2
+          }
+        },
+        {
+          "milliseconds": 21.361000000069907,
+          "allocated_objects": 11704,
+          "sql": {
+            "reads": 28,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 2
+          }
+        },
+        {
+          "milliseconds": 23.979999999937718,
+          "allocated_objects": 11704,
+          "sql": {
+            "reads": 28,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 2
+          }
+        },
+        {
+          "milliseconds": 26.0309999994206,
+          "allocated_objects": 11704,
+          "sql": {
+            "reads": 28,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 2
+          }
+        },
+        {
+          "milliseconds": 21.31400000052963,
+          "allocated_objects": 11704,
+          "sql": {
+            "reads": 28,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 2
+          }
+        },
+        {
+          "milliseconds": 22.33799999976327,
+          "allocated_objects": 11704,
+          "sql": {
+            "reads": 28,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 2
+          }
+        },
+        {
+          "milliseconds": 22.05599999979313,
+          "allocated_objects": 11704,
+          "sql": {
+            "reads": 28,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 2
+          }
+        },
+        {
+          "milliseconds": 21.203999999670486,
+          "allocated_objects": 11704,
+          "sql": {
+            "reads": 28,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 2
+          }
+        },
+        {
+          "milliseconds": 21.34600000044884,
+          "allocated_objects": 11704,
+          "sql": {
+            "reads": 28,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 2
+          }
+        },
+        {
+          "milliseconds": 21.846999999979744,
+          "allocated_objects": 11704,
+          "sql": {
+            "reads": 28,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 2
+          }
+        },
+        {
+          "milliseconds": 18.18199999979697,
+          "allocated_objects": 11704,
+          "sql": {
+            "reads": 28,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 2
+          }
+        },
+        {
+          "milliseconds": 66.66099999983999,
+          "allocated_objects": 11704,
+          "sql": {
+            "reads": 28,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 2
+          }
+        },
+        {
+          "milliseconds": 18.50300000023708,
+          "allocated_objects": 11704,
+          "sql": {
+            "reads": 28,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 2
+          }
+        },
+        {
+          "milliseconds": 35.89800000008836,
+          "allocated_objects": 11704,
+          "sql": {
+            "reads": 28,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 2
+          }
+        },
+        {
+          "milliseconds": 48.488999999790394,
+          "allocated_objects": 11704,
+          "sql": {
+            "reads": 28,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 2
+          }
+        },
+        {
+          "milliseconds": 20.733000000291213,
+          "allocated_objects": 11704,
+          "sql": {
+            "reads": 28,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 2
+          }
+        },
+        {
+          "milliseconds": 19.769000000451342,
+          "allocated_objects": 11704,
+          "sql": {
+            "reads": 28,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 2
+          }
+        },
+        {
+          "milliseconds": 25.314000000435044,
+          "allocated_objects": 11704,
+          "sql": {
+            "reads": 28,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 2
+          }
+        },
+        {
+          "milliseconds": 25.324999999611464,
+          "allocated_objects": 11704,
+          "sql": {
+            "reads": 28,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 2
+          }
+        }
+      ],
+      "html_sha256": "7e344010b5dfdd1f2a0211c02766239f88e8710cbf989e3742d6346d678de1ea",
+      "html_bytes": 7500,
+      "summary": {
+        "milliseconds": {
+          "min": 18.18199999979697,
+          "p50": 22.05599999979313,
+          "p95": 48.488999999790394,
+          "max": 66.66099999983999
+        },
+        "allocated_objects": {
+          "min": 11704,
+          "p50": 11704,
+          "p95": 11704,
+          "max": 11704
+        },
+        "sql_reads": {
+          "min": 28,
+          "p50": 28,
+          "p95": 28,
+          "max": 28
+        }
+      }
+    },
+    {
+      "page": "groups",
+      "first_call": {
+        "milliseconds": 11.238000000048487,
+        "allocated_objects": 4616,
+        "sql": {
+          "reads": 8,
+          "writes": 0,
+          "transactions": 0,
+          "schema": 0,
+          "other": 0,
+          "cached": 0
+        }
+      },
+      "samples": [
+        {
+          "milliseconds": 11.186000000634522,
+          "allocated_objects": 3939,
+          "sql": {
+            "reads": 8,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 12.112999999772,
+          "allocated_objects": 3939,
+          "sql": {
+            "reads": 8,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 10.678000000552856,
+          "allocated_objects": 3938,
+          "sql": {
+            "reads": 8,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 9.164000000055239,
+          "allocated_objects": 3938,
+          "sql": {
+            "reads": 8,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 10.288999999829684,
+          "allocated_objects": 3938,
+          "sql": {
+            "reads": 8,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 9.855000000243308,
+          "allocated_objects": 3938,
+          "sql": {
+            "reads": 8,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 8.609999999862339,
+          "allocated_objects": 3938,
+          "sql": {
+            "reads": 8,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 8.958999999777006,
+          "allocated_objects": 3938,
+          "sql": {
+            "reads": 8,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 9.208000000398897,
+          "allocated_objects": 3938,
+          "sql": {
+            "reads": 8,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 8.799000000180968,
+          "allocated_objects": 3938,
+          "sql": {
+            "reads": 8,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 8.953999999903317,
+          "allocated_objects": 3938,
+          "sql": {
+            "reads": 8,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 8.688999999321823,
+          "allocated_objects": 3938,
+          "sql": {
+            "reads": 8,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 8.82000000001426,
+          "allocated_objects": 3938,
+          "sql": {
+            "reads": 8,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 9.504000000561064,
+          "allocated_objects": 3938,
+          "sql": {
+            "reads": 8,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 9.919000000081724,
+          "allocated_objects": 3938,
+          "sql": {
+            "reads": 8,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 6.317999999737367,
+          "allocated_objects": 3938,
+          "sql": {
+            "reads": 8,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 35.966999999800464,
+          "allocated_objects": 3939,
+          "sql": {
+            "reads": 8,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 15.88400000036927,
+          "allocated_objects": 3939,
+          "sql": {
+            "reads": 8,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 8.151999999427062,
+          "allocated_objects": 3938,
+          "sql": {
+            "reads": 8,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 10.419999999612628,
+          "allocated_objects": 3938,
+          "sql": {
+            "reads": 8,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        }
+      ],
+      "html_sha256": "ec698f20a244410bd2d24e4eee50fb9f15ae2dfb9edb829fe4a2b9544a5fe8e5",
+      "html_bytes": 3464,
+      "summary": {
+        "milliseconds": {
+          "min": 6.317999999737367,
+          "p50": 9.208000000398897,
+          "p95": 15.88400000036927,
+          "max": 35.966999999800464
+        },
+        "allocated_objects": {
+          "min": 3938,
+          "p50": 3938,
+          "p95": 3939,
+          "max": 3939
+        },
+        "sql_reads": {
+          "min": 8,
+          "p50": 8,
+          "p95": 8,
+          "max": 8
+        }
+      }
+    },
+    {
+      "page": "geocoder",
+      "first_call": {
+        "milliseconds": 43.38900000038848,
+        "allocated_objects": 10034,
+        "sql": {
+          "reads": 15,
+          "writes": 0,
+          "transactions": 0,
+          "schema": 0,
+          "other": 0,
+          "cached": 0
+        }
+      },
+      "samples": [
+        {
+          "milliseconds": 29.32000000055268,
+          "allocated_objects": 8271,
+          "sql": {
+            "reads": 15,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 22.519000000102096,
+          "allocated_objects": 8271,
+          "sql": {
+            "reads": 15,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 15.089000000443775,
+          "allocated_objects": 8271,
+          "sql": {
+            "reads": 15,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 20.52700000058394,
+          "allocated_objects": 8271,
+          "sql": {
+            "reads": 15,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 20.072999999683816,
+          "allocated_objects": 8271,
+          "sql": {
+            "reads": 15,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 75.79100000020844,
+          "allocated_objects": 8271,
+          "sql": {
+            "reads": 15,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 47.058000000106404,
+          "allocated_objects": 8271,
+          "sql": {
+            "reads": 15,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 51.29500000020926,
+          "allocated_objects": 8271,
+          "sql": {
+            "reads": 15,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 43.07599999992817,
+          "allocated_objects": 8271,
+          "sql": {
+            "reads": 15,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 28.438000000278407,
+          "allocated_objects": 8271,
+          "sql": {
+            "reads": 15,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 44.244000000617234,
+          "allocated_objects": 8271,
+          "sql": {
+            "reads": 15,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 20.265000000108557,
+          "allocated_objects": 8271,
+          "sql": {
+            "reads": 15,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 15.167999999903259,
+          "allocated_objects": 8271,
+          "sql": {
+            "reads": 15,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 17.8169999999227,
+          "allocated_objects": 8271,
+          "sql": {
+            "reads": 15,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 15.507999999499589,
+          "allocated_objects": 8271,
+          "sql": {
+            "reads": 15,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 15.176000000792556,
+          "allocated_objects": 8271,
+          "sql": {
+            "reads": 15,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 12.243999999554944,
+          "allocated_objects": 8271,
+          "sql": {
+            "reads": 15,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 18.197999999756576,
+          "allocated_objects": 8271,
+          "sql": {
+            "reads": 15,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 55.99999999958527,
+          "allocated_objects": 8271,
+          "sql": {
+            "reads": 15,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 13.7670000003709,
+          "allocated_objects": 8271,
+          "sql": {
+            "reads": 15,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        }
+      ],
+      "html_sha256": "a4eeb50cc6c194473ce38e4cabc6711223174dc284661ce086e44519eec526bf",
+      "html_bytes": 49469,
+      "summary": {
+        "milliseconds": {
+          "min": 12.243999999554944,
+          "p50": 20.265000000108557,
+          "p95": 55.99999999958527,
+          "max": 75.79100000020844
+        },
+        "allocated_objects": {
+          "min": 8271,
+          "p50": 8271,
+          "p95": 8271,
+          "max": 8271
+        },
+        "sql_reads": {
+          "min": 15,
+          "p50": 15,
+          "p95": 15,
+          "max": 15
+        }
+      }
+    },
+    {
+      "page": "orders",
+      "first_call": {
+        "milliseconds": 49.430000000029395,
+        "allocated_objects": 5915,
+        "sql": {
+          "reads": 12,
+          "writes": 0,
+          "transactions": 0,
+          "schema": 0,
+          "other": 0,
+          "cached": 0
+        }
+      },
+      "samples": [
+        {
+          "milliseconds": 8.994000000711821,
+          "allocated_objects": 5186,
+          "sql": {
+            "reads": 12,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 10.355999999774212,
+          "allocated_objects": 5186,
+          "sql": {
+            "reads": 12,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 18.105999999534106,
+          "allocated_objects": 5187,
+          "sql": {
+            "reads": 12,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 9.399999999914144,
+          "allocated_objects": 5186,
+          "sql": {
+            "reads": 12,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 9.352000000035332,
+          "allocated_objects": 5186,
+          "sql": {
+            "reads": 12,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 9.797000000617118,
+          "allocated_objects": 5186,
+          "sql": {
+            "reads": 12,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 20.596000000296044,
+          "allocated_objects": 5187,
+          "sql": {
+            "reads": 12,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 22.124999999505235,
+          "allocated_objects": 5187,
+          "sql": {
+            "reads": 12,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 15.135999999984051,
+          "allocated_objects": 5187,
+          "sql": {
+            "reads": 12,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 12.97800000065763,
+          "allocated_objects": 5187,
+          "sql": {
+            "reads": 12,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 10.071999999127002,
+          "allocated_objects": 5186,
+          "sql": {
+            "reads": 12,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 19.591000000218628,
+          "allocated_objects": 5187,
+          "sql": {
+            "reads": 12,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 11.018000000149186,
+          "allocated_objects": 5187,
+          "sql": {
+            "reads": 12,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 13.010999999096384,
+          "allocated_objects": 5187,
+          "sql": {
+            "reads": 12,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 9.832999999161984,
+          "allocated_objects": 5186,
+          "sql": {
+            "reads": 12,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 10.757999999441381,
+          "allocated_objects": 5186,
+          "sql": {
+            "reads": 12,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 11.328999999932421,
+          "allocated_objects": 5187,
+          "sql": {
+            "reads": 12,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 11.389999999664724,
+          "allocated_objects": 5187,
+          "sql": {
+            "reads": 12,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 10.926999999355758,
+          "allocated_objects": 5187,
+          "sql": {
+            "reads": 12,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        },
+        {
+          "milliseconds": 11.762000000089756,
+          "allocated_objects": 5187,
+          "sql": {
+            "reads": 12,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 0
+          }
+        }
+      ],
+      "html_sha256": "2f5568fd6008cde7eb6148eed1f2314c29fec94f8b20ec9728a388d83297a5f8",
+      "html_bytes": 3591,
+      "summary": {
+        "milliseconds": {
+          "min": 8.994000000711821,
+          "p50": 11.018000000149186,
+          "p95": 20.596000000296044,
+          "max": 22.124999999505235
+        },
+        "allocated_objects": {
+          "min": 5186,
+          "p50": 5187,
+          "p95": 5187,
+          "max": 5187
+        },
+        "sql_reads": {
+          "min": 12,
+          "p50": 12,
+          "p95": 12,
+          "max": 12
+        }
+      }
+    },
+    {
+      "page": "posts",
+      "first_call": {
+        "milliseconds": 15.978999999788357,
+        "allocated_objects": 7920,
+        "sql": {
+          "reads": 13,
+          "writes": 0,
+          "transactions": 0,
+          "schema": 0,
+          "other": 0,
+          "cached": 1
+        }
+      },
+      "samples": [
+        {
+          "milliseconds": 13.404999999693246,
+          "allocated_objects": 7023,
+          "sql": {
+            "reads": 13,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 13.785999999527121,
+          "allocated_objects": 7023,
+          "sql": {
+            "reads": 13,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 14.944000000468805,
+          "allocated_objects": 7023,
+          "sql": {
+            "reads": 13,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 14.850999999907799,
+          "allocated_objects": 7023,
+          "sql": {
+            "reads": 13,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 13.588000000709144,
+          "allocated_objects": 7023,
+          "sql": {
+            "reads": 13,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 16.01100000061706,
+          "allocated_objects": 7023,
+          "sql": {
+            "reads": 13,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 14.524999999594002,
+          "allocated_objects": 7023,
+          "sql": {
+            "reads": 13,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 13.810999999805063,
+          "allocated_objects": 7023,
+          "sql": {
+            "reads": 13,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 14.53999999921507,
+          "allocated_objects": 7023,
+          "sql": {
+            "reads": 13,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 13.966999999865948,
+          "allocated_objects": 7023,
+          "sql": {
+            "reads": 13,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 14.509999999972933,
+          "allocated_objects": 7023,
+          "sql": {
+            "reads": 13,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 13.01699999930861,
+          "allocated_objects": 7023,
+          "sql": {
+            "reads": 13,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 15.873000000283355,
+          "allocated_objects": 7023,
+          "sql": {
+            "reads": 13,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 14.900999999554188,
+          "allocated_objects": 7023,
+          "sql": {
+            "reads": 13,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 14.569000000847154,
+          "allocated_objects": 7023,
+          "sql": {
+            "reads": 13,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 20.635000000766013,
+          "allocated_objects": 7023,
+          "sql": {
+            "reads": 13,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 14.106999999967229,
+          "allocated_objects": 7023,
+          "sql": {
+            "reads": 13,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 13.804000000163796,
+          "allocated_objects": 7023,
+          "sql": {
+            "reads": 13,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 13.989000000037777,
+          "allocated_objects": 7023,
+          "sql": {
+            "reads": 13,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 13.629000000037195,
+          "allocated_objects": 7023,
+          "sql": {
+            "reads": 13,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        }
+      ],
+      "html_sha256": "297820a190dc324672c1e119fb44faee86366e47419a7722bb06941062a27c68",
+      "html_bytes": 6233,
+      "summary": {
+        "milliseconds": {
+          "min": 13.01699999930861,
+          "p50": 14.106999999967229,
+          "p95": 16.01100000061706,
+          "max": 20.635000000766013
+        },
+        "allocated_objects": {
+          "min": 7023,
+          "p50": 7023,
+          "p95": 7023,
+          "max": 7023
+        },
+        "sql_reads": {
+          "min": 13,
+          "p50": 13,
+          "p95": 13,
+          "max": 13
+        }
+      }
+    },
+    {
+      "page": "people",
+      "first_call": {
+        "milliseconds": 10.355000000345171,
+        "allocated_objects": 6053,
+        "sql": {
+          "reads": 10,
+          "writes": 0,
+          "transactions": 0,
+          "schema": 0,
+          "other": 0,
+          "cached": 1
+        }
+      },
+      "samples": [
+        {
+          "milliseconds": 9.67899999977817,
+          "allocated_objects": 5576,
+          "sql": {
+            "reads": 10,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 9.634999999434513,
+          "allocated_objects": 5576,
+          "sql": {
+            "reads": 10,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 10.240999999950873,
+          "allocated_objects": 5576,
+          "sql": {
+            "reads": 10,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 9.729999999763095,
+          "allocated_objects": 5576,
+          "sql": {
+            "reads": 10,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 10.667999999895983,
+          "allocated_objects": 5577,
+          "sql": {
+            "reads": 10,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 10.55999999971391,
+          "allocated_objects": 5576,
+          "sql": {
+            "reads": 10,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 11.278000000856991,
+          "allocated_objects": 5577,
+          "sql": {
+            "reads": 10,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 11.048999999729858,
+          "allocated_objects": 5577,
+          "sql": {
+            "reads": 10,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 10.718999999880907,
+          "allocated_objects": 5576,
+          "sql": {
+            "reads": 10,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 9.796000000278582,
+          "allocated_objects": 5576,
+          "sql": {
+            "reads": 10,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 14.760000000023865,
+          "allocated_objects": 5577,
+          "sql": {
+            "reads": 10,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 12.872000000243133,
+          "allocated_objects": 5577,
+          "sql": {
+            "reads": 10,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 12.162999999418389,
+          "allocated_objects": 5577,
+          "sql": {
+            "reads": 10,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 11.410000000068976,
+          "allocated_objects": 5577,
+          "sql": {
+            "reads": 10,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 11.031000000002678,
+          "allocated_objects": 5577,
+          "sql": {
+            "reads": 10,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 11.446000000432832,
+          "allocated_objects": 5577,
+          "sql": {
+            "reads": 10,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 13.154000000213273,
+          "allocated_objects": 5577,
+          "sql": {
+            "reads": 10,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 13.0010000002585,
+          "allocated_objects": 5577,
+          "sql": {
+            "reads": 10,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 13.575999999375199,
+          "allocated_objects": 5577,
+          "sql": {
+            "reads": 10,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        },
+        {
+          "milliseconds": 12.323999999352964,
+          "allocated_objects": 5577,
+          "sql": {
+            "reads": 10,
+            "writes": 0,
+            "transactions": 0,
+            "schema": 0,
+            "other": 0,
+            "cached": 1
+          }
+        }
+      ],
+      "html_sha256": "1aef37b90610777de96bbc71f0213b0064e0ea23f2c954ce7a0df7bd5f05a52b",
+      "html_bytes": 5036,
+      "summary": {
+        "milliseconds": {
+          "min": 9.634999999434513,
+          "p50": 11.048999999729858,
+          "p95": 13.575999999375199,
+          "max": 14.760000000023865
+        },
+        "allocated_objects": {
+          "min": 5576,
+          "p50": 5577,
+          "p95": 5577,
+          "max": 5577
+        },
+        "sql_reads": {
+          "min": 10,
+          "p50": 10,
+          "p95": 10,
+          "max": 10
+        }
+      }
+    }
+  ]
+}

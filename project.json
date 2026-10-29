@@ -402,6 +402,13 @@
       "humanMinutes": 2,
       "aiMinutes": 40,
       "costs": []
+    },
+    {
+      "date": "2026-10-29",
+      "summary": "ECS-43 release prep for ecs_on_rails 0.4.0: version bump; CHANGELOG [0.4.0] with summary and 'Upgrading from 0.3' (Gemfile change, no migration); gem README guide and upgrade section for 0.3.x; package smoke gains a published-0.3.0 upgrade (identities kept, no migration generated, no owner read on component update, new entity's components point at it). Final ECS-33 rerun at 396a9ff (machine shared with a CPU-bound process; counts are the result): checkout reads 60->21, catalogue 20->11, sweep 5,609/5,000 -> 406/203 at 5,000 products; allocations checkout 21,725->14,605, catalogue 18,742->10,805, sweep -65%; conventional counts unchanged; 5,000-product p50 ratios checkout 3.91x->3.19x, catalogue 2.02x->1.56x, sweep 2.02x->1.27x (not like-for-like). Demo pages: ECS-38 counts and byte-identical HTML. Raw JSON checked in. Verified gemspec URIs (rubydoc.info returned 520/timeout, an outage; same URI as 0.3.0), package builds with the same 68 files as 0.3.0, 960 gem examples, YARD 100%, package smoke, 144 demo examples, eager loading, one install migration. User decided to drop the video (ECS-10) and hold the project after 0.4.0.",
+      "humanMinutes": 2,
+      "aiMinutes": 60,
+      "costs": []
     }
   ]
 }

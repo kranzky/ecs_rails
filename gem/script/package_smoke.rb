@@ -38,6 +38,7 @@ class PackageSmoke
       fresh_install
       entity_layout
       legacy_upgrade
+      published_upgrade
     end
     puts "Package smoke passed: Ruby #{RUBY_VERSION}, Rails #{@rails_version}."
   ensure
@@ -248,6 +249,42 @@ class PackageSmoke
     before = Dir.glob(File.join(path, "db/migrate/*"))
     readme_commands(path, url, "upgrade", "verify")
     raise "Repeated upgrade generated another migration" unless Dir.glob(File.join(path, "db/migrate/*")) == before
+  end
+
+  # From the published 0.3.0, the README's upgrade is a Gemfile change: the
+  # candidate's catalogue matches the installed schema, so the generator must
+  # write nothing, and existing rows keep their identities (ECS-43).
+  def published_upgrade
+    home = File.join(@directory, "published_gems")
+    command(RbConfig.ruby, "-S", "gem", "fetch", "ecs_on_rails", "--version", "0.3.0",
+            chdir: @directory, gem_home: home)
+    install(File.join(@directory, "ecs_on_rails-0.3.0.gem"), home)
+    url = database("published")
+    path = application("published", version: "0.3.0", home: home)
+    rails(path, url, "generate", "ecs_rails:install", home: home)
+    rails(path, url, "db:migrate", home: home)
+    write(path, "app/entities/company.rb", "class Company < ApplicationEntity\n  component Text, prefix: :name\nend\n")
+    write(path, "app/entities/person.rb", <<~RUBY)
+      class Person < ApplicationEntity
+        component Name
+        component Email
+        component Phone, prefix: :mobile
+        relates_to :employer, Company
+        marker :admin
+      end
+    RUBY
+    fixture(path, "published")
+    rails(path, url, "runner", "script/published.rb", home: home)
+
+    gemfile = File.join(path, "Gemfile")
+    File.write(gemfile, File.read(gemfile).sub('gem "ecs_on_rails", "= 0.3.0"', "gem \"ecs_on_rails\", \"= #{@candidate_version}\""))
+    command(RbConfig.ruby, "-S", "bundle", "update", "ecs_on_rails", "--local", chdir: path)
+    before = Dir.glob(File.join(path, "db/migrate/*"))
+    readme_commands(path, url, "upgrade", "verify")
+    raise "Upgrading from 0.3.0 generated a migration" unless Dir.glob(File.join(path, "db/migrate/*")) == before
+
+    fixture(path, "published_upgraded")
+    rails(path, url, "runner", "script/published_upgraded.rb")
   end
 end
 
