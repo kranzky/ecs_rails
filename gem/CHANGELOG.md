@@ -6,6 +6,26 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-10-29
+
+**Less work, same API.** 0.4.0 keeps 0.3.0's declarations, saves and schema.
+In the gem, component saves no longer read their entity back (ECS-46,
+ECS-47). The rest is how an app uses it, shown in the README and the demo:
+preload the slots a page shows, read a basket's products once, and write a
+system's batch in one statement. Against the ECS-33 workloads on the published
+0.3.0, the demo checkout drops from 60 SQL reads to 21, the catalogue page from
+20 to 11, and a full indexing sweep of 5,000 products from 5,609 reads and
+5,000 writes to 406 and 203. Conventional Rails is still faster in every
+workload; the gaps are narrower. See the
+[performance comparison](https://github.com/kranzky/ecs_rails/blob/main/docs/design/performance-comparison.md).
+
+### Upgrading from 0.3
+
+Change the Gemfile to `gem "ecs_on_rails", "~> 0.4.0"` and run
+`bundle update ecs_on_rails`. There is no migration: `bin/rails generate
+ecs_rails:upgrade` reports every table current. The one behaviour change is
+the owner check below.
+
 ### Changed
 
 - A component's required owner is checked only when `entity_id` is nil or

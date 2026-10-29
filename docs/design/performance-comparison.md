@@ -170,6 +170,77 @@ latencies and widened some tails: the 5,000-product conventional sweep has a
 p95 of 8,675 ms against a p50 of 1,946 ms. The 14 September tables above remain
 the cleaner absolute measurement.
 
+## Rerun on the 0.4.0 candidate — 29 October 2026
+
+The same command, at commit `396a9ff`: the gem at version 0.4.0, which the
+demo runs from source. The run's one uncommitted file is the demo lockfile's
+path-gem version line (0.3.0 → 0.4.0). Same machine, Ruby 3.4.5, Rails 8.1.3
+and PostgreSQL 17.11 as the 0.3.0 rerun; macOS had moved from Darwin 25.6 to
+27.2. Raw results:
+[performance-comparison-results-0.4.0.json](performance-comparison-results-0.4.0.json).
+
+As on 12 October, the machine was shared with an unrelated CPU-bound process
+(load average about 11 on 10 cores) for the whole run. The 100-product
+latencies are not usable: conventional Rails, whose code did not change, went
+from 5.20 to 18.81 ms on the catalogue with a 102.63 ms p95. **The SQL and
+allocation counts are the result**: they are identical in every sample and do
+not depend on load.
+
+Median SQL and allocations per call. Reads and writes are the same at every
+size except the sweep (5,000 products); allocations are at 5,000 products.
+Conventional Rails' counts are unchanged in every workload.
+
+| Workload | ECS reads 0.3.0 → 0.4.0 | ECS writes | ECS allocations | Conventional reads / writes | From |
+|---|---:|---:|---:|---:|---|
+| Catalogue render | 20 → 11 | 0 | 18,742 → 10,805 | 3 / 0 | ECS-38 |
+| Detail render | 22 → 22 | 0 | 11,124 → 11,066 | 5 / 0 | ECS-38 |
+| All-slot projection | 13 → 13 | 0 | 11,378 → 11,378 | 1 / 0 | (type-wide by design) |
+| Selected-slot projection | 3 → 3 | 0 | 2,626 → 2,626 | 1 / 0 | — |
+| Full indexing sweep | 5,609 → 406 | 5,000 → 203 | 2,053,415 → 713,468 | 51 / 5,000 | ECS-39 |
+| Committed checkout | 60 → 21 | 40 → 40 | 21,725 → 14,605 | 9 / 14 | ECS-46, ECS-40, ECS-47 |
+
+The checkout allocates 74 more objects than ECS-40's own run (14,531), which
+measured before ECS-47 removed the demo's `stock.entity = product` line.
+
+Warm p50 at 5,000 products, where both runs' tails were tighter, as a ratio of
+ECS to conventional Rails:
+
+| Workload | 0.4.0 p50 ms ECS / plain | 0.4.0 ratio | 0.3.0 ratio |
+|---|---:|---:|---:|
+| Catalogue render | 31.27 / 20.10 | 1.56× | 2.02× |
+| Detail render | 14.22 / 3.99 | 3.57× | 4.02× |
+| All-slot projection | 14.27 / 1.59 | 8.99× | 8.81× |
+| Selected-slot projection | 7.10 / 0.99 | 7.15× | 4.72× |
+| Full indexing sweep | 1963.89 / 1551.61 | 1.27× | 2.02× |
+| Committed checkout | 33.43 / 10.49 | 3.19× | 3.91× |
+
+The selected-slot projection's ECS code path and counts did not change, yet
+its ratio moved from 4.72× to 7.15×: that is the size of this run's noise, and
+smaller ratio moves should be read with it. The sweep ratio is not
+like-for-like since ECS-39: the ECS indexer writes one upsert per batch while
+the conventional sweep still writes per row. Conventional Rails is faster in
+every workload at every size.
+
+The demo's own pages on its seed data (`--pages`, the ordinary small-app case)
+make the same reads and allocations as after ECS-38, and render byte-identical
+HTML to ECS-38's baseline on the published 0.3.0
+([focused-preloads-pages-before.json](focused-preloads-pages-before.json)), the
+"0.3.0" column below. ECS-46, ECS-40 and ECS-47 changed write paths, which no
+page measured here exercises. Raw results:
+[demo-pages-results-0.4.0.json](demo-pages-results-0.4.0.json).
+
+| Page | SQL reads 0.3.0 → 0.4.0 | Allocations 0.3.0 → 0.4.0 |
+|---|---:|---:|
+| Market `/products` | 17 → 16 | 10,431 → 9,825 |
+| Product page | 34 → 33 | 13,287 → 12,888 |
+| Profile `/users/:id` | 24 → 23 | 9,946 → 9,564 |
+| Seller `/companies/:id` | 30 → 28 | 12,516 → 11,704 |
+| Groups `/groups` | 9 → 8 | 4,295 → 3,938 |
+| Geocoder `/geocoder` | 20 → 15 | 9,163 → 8,271 |
+| Orders `/users/:id/orders` | 13 → 12 | 5,540 → 5,187 |
+| Posts *(control)* | 13 → 13 | 7,023 → 7,023 |
+| People *(control)* | 10 → 10 | 5,576 → 5,577 |
+
 ## Reproduce
 
 From the repository root, with the demo bundle installed and PostgreSQL running:

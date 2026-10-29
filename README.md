@@ -4,7 +4,9 @@ An Entity–Component–System reimagining of ActiveRecord that stays idiomatic 
 Ruby on Rails.
 
 > **Published as [`ecs_on_rails`](https://rubygems.org/gems/ecs_on_rails)
-> (0.3.0), the zero-migrations release.** After `rails g ecs_rails:install`
+> (0.4.0).** 0.3.0 was the zero-migrations release; 0.4.0 keeps its API and
+> schema and does less work: no owner reads on component saves, and measured
+> guidance for preloading and bulk writes. After `rails g ecs_rails:install`
 > and one `db:migrate`, entities, labelled slots, relationships, markers and
 > systems are plain Ruby: the catalogue ships the components
 > ([ADR-0018](docs/adr/0018-catalogue-in-the-gem.md)) and one shared table
@@ -12,8 +14,10 @@ Ruby on Rails.
 > ([ADR-0017](docs/adr/0017-shared-relationships-table.md)). Tested on real
 > PostgreSQL across Rails 7.1–8.1. The companion bulletin board and
 > marketplace run at [ecs-rails.kranzky.com](https://ecs-rails.kranzky.com).
-> Upgrading from 0.2? See the
-> [changelog](gem/CHANGELOG.md). The launch post is
+> Upgrading? See the [changelog](gem/CHANGELOG.md). Where the time goes, and
+> what composition still costs against conventional Rails:
+> [the performance comparison](docs/design/performance-comparison.md). The
+> 0.3.0 launch post is
 > ["The Last Migration"](docs/blog/the-last-migration.md). Earlier: the
 > [v0.1 retrospective](docs/retrospective-v0.1.md) and
 > ["Composing Rails"](docs/blog/composing-rails.md).
