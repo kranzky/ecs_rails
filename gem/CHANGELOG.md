@@ -6,6 +6,19 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- A component's required owner is checked only when `entity_id` is nil or
+  changed — Rails 7.1's `belongs_to_required_validates_foreign_key = false`
+  rule, now stated by the gem and the same in every app. Before, the gem's
+  `belongs_to :entity` was declared before the app's `load_defaults` applied,
+  so it always used the old rule and read the owner back on every save of a
+  component loaded on its own (`Counter.where(...).lock`,
+  `Email.find(id).update!`): one SELECT per update. The skipped read guarded
+  nothing, since each component table's `entity_id` is a foreign key to
+  `entities`. Apps on pre-7.1 defaults no longer get that read either. A
+  missing or changed owner still fails with "must exist" (ECS-47).
+
 ### Performance
 
 - Saving a new entity no longer reads it back once per dirty component. The

@@ -395,6 +395,13 @@
       "humanMinutes": 0,
       "aiMinutes": 45,
       "costs": []
+    },
+    {
+      "date": "2026-10-29",
+      "summary": "ECS-47 (option 2, user's choice after pros/cons): EcsRails::Component's belongs_to :entity was declared at gem require time, before the app's load_defaults set belongs_to_required_validates_foreign_key, so every app got the pre-7.1 validator and read the owner back on each update of a component loaded on its own (locked counters, Email.find(id).update!). Now optional: true plus validates :entity presence (message :required) if entity_id nil or changed; the FK with ON DELETE CASCADE makes the skipped read redundant. 6 component specs (2 fail on old code); demo checkout drops its stock.entity = product workaround and checkout_reads_spec stays flat (old gem without it: 22 -> 26 reads, 1 -> 5 lines). RFC-0003 amendment, CHANGELOG Changed entry, checkout-concurrency.md amendment, friction log. Earlier 2026-10-26: merged #66, #67, #61 at the user's request (main merged into each later branch, CI green first).",
+      "humanMinutes": 2,
+      "aiMinutes": 40,
+      "costs": []
     }
   ]
 }

@@ -109,3 +109,13 @@ medians moved within noise (−8% to +5%). Against the 0.3.0 baseline the
 checkout now makes 21 reads instead of 60 and 33% fewer allocations; the
 conventional checkout makes 9 reads and 14 writes. Raw results:
 [before](checkout-reads-stress-before.json), [after](checkout-reads-stress-after.json).
+
+## Amendment — the stock row's owner, from the gem (ECS-47, 29 October 2026)
+
+The third ECS-40 step above is gone. The gem now checks a component's owner
+only when its `entity_id` is nil or changed (RFC-0003's ECS-47 amendment), so a
+locked stock row updates without reading its product back, and the checkout no
+longer assigns `stock.entity = product`. `spec/checkout_reads_spec.rb` is
+unchanged and passes: reads stay flat with basket size. Without the gem
+change, removing that line makes them grow again by one read per line: 26
+for five lines against 22 for one.
